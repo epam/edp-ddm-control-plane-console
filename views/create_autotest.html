@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>EDP Admin Console</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="{{ .BasePath }}/static/css/index.css">
+    <link rel="stylesheet" href="{{ .BasePath }}/static/css/validation.css">
+</head>
+<body>
+<main>
+    {{template "template/header_template.html" .}}
+    <section class="content d-flex">
+        <aside class="p-0 bg-dark active js-aside-menu aside-menu active">
+            {{template "template/navbar_template.html" .}}
+        </aside>
+        <div class="flex-fill pl-4 pr-4 wrapper">
+
+            <form class="edp-form" id="createAutotest" method="post" action="{{ .BasePath }}/admin/edp/autotest">
+                <h1 class="edp-form-header">
+                    <a href="{{ .BasePath }}/admin/edp/autotest/overview" class="edp-back-link"></a>
+                    Create Autotest
+                </h1>
+                <p>
+                    To create an autotest, pass all the steps below and receive the following: Gerrit Project, Code
+                    Review, Jenkins Pipelines.
+                </p>
+                {{ if .Error }}
+                <div class="form-error">
+                    <p>{{ .Error }}</p>
+                </div>
+                {{ end }}
+
+                <div class="accordion" id="accordionCreateCodebase">
+                    {{template "template/accordion_codebase_template.html" .}}
+
+                    <div class="card main-block" data-codebase-type="autotest">
+                        <div class="card-header collapsed" id="headingTwo" data-toggle="collapse"
+                             data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                            <h5 class="mb-0">
+                                <button class="btn btn-link" type="button">
+                                    Autotest Info
+                                </button>
+                            </h5>
+                        </div>
+
+                        <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo"
+                             data-parent="#accordionCreateCodebase">
+                            <div class="card-body">
+                                <div class="form-group app-name">
+                                    <label for="appName">Autotest Name
+                                        <span class="tooltip-icon" data-toggle="tooltip" data-placement="top"
+                                              title="Autotest name may contain only: lower-case letters, numbers and dashes and cannot start and end with dash. Minimum 2 characters."></span>
+                                    </label>
+                                    <input name="appName" type="text" class="codebase-name form-control" id="appName"
+                                           placeholder="Type your autotest name">
+                                    <div class="codebase-name-validation invalid-feedback regex-error">
+                                        Autotest name may contain only: lower-case letters, numbers and dashes
+                                        and cannot start and end with dash. Minimum 2 characters.
+                                    </div>
+                                    <div class="app-name-duplicate-validation">
+                                        <div class="invalid-feedback duplicate-msg">
+                                            Current autotest is already exists.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {{template "template/default_branch_template.html" .}}
+
+                                <div class="form-group autotest-description">
+                                    <label for="description">Description
+                                        <span class="tooltip-icon" data-toggle="tooltip" data-placement="top"
+                                              title="Autotest description can not be empty."></span>
+                                    </label>
+                                    <input name="description" type="text" class="form-control" id="description"
+                                           placeholder="Enter autotest description">
+                                    <div class="description-validation invalid-feedback regex-error">
+                                        Can not be empty. Can contain only letters or numbers.
+                                    </div>
+                                </div>
+
+                                <p class="form-group">Autotest Code Language
+                                    <span class="tooltip-icon" data-toggle="tooltip" data-placement="top"
+                                          title="Select autotest language and build tool."></span>
+                                </p>
+                                <div class="form__input-wrapper">
+                                    {{template "template/language_template.html" .}}
+                                    {{template "template/java_framework_template.html" .}}
+                                    <input name="framework" type="hidden" id="framework-other" value="other" disabled>
+                                </div>
+                                <div class="invalid-feedback appLangError">
+                                    Please select autotest type.
+                                </div>
+                                <div class="invalid-feedback frameworkError">
+                                    Please select framework.
+                                </div>
+
+                                {{template "template/build_tool_template.html" .}}
+
+                                <div class="form-group">
+                                    <div class="js-form-subsection-autotest-framework">
+                                        <label for="testReportFramework">Autotest Report Framework
+                                            <span class="tooltip-icon" data-toggle="tooltip" data-placement="top"
+                                                  title="Autotest Report Framework"></span>
+                                        </label>
+                                        <select class="form-control test-report-framework" name="testReportFramework">
+                                            {{range $report := .TestReportTools}}
+                                                <option value="{{$report}}">{{$report}}</option>
+                                            {{end}}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <button type="button" class="autotest-submit edp-submit-form-btn btn btn-primary"
+                                        data-toggle="collapse"
+                                        data-target="#collapseThree"
+                                        aria-expanded="false"
+                                        aria-controls="collapseTwo">
+                                    Proceed
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{template "template/advanced_settings_block_template.html" .}}
+
+                    {{if .IsVcsEnabled}}
+                        {{template "template/accordion_vcs_template.html" .}}
+                    {{end}}
+                </div>
+                {{ .xsrfdata }}
+            </form>
+        </div>
+    </section>
+    {{template "template/footer_template.html" .}}
+    {{template "template/confirmation_popup_template.html" .}}
+
+</main>
+<script src="{{ .BasePath }}/static/js/jquery-3.3.1.js"></script>
+<script src="{{ .BasePath }}/static/js/popper.js"></script>
+<script src="{{ .BasePath }}/static/js/bootstrap.js"></script>
+<script src="{{ .BasePath }}/static/js/util.js"></script>
+<script src="{{ .BasePath }}/static/js/branch-util.js"></script>
+<script src="{{ .BasePath }}/static/js/codebase-validation.js"></script>
+<script src="{{ .BasePath }}/static/js/bootstrap-notify.js"></script>
+</body>
+</html>
