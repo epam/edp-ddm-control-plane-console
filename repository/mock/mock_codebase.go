@@ -1,7 +1,7 @@
 package mock
 
 import (
-	"edp-admin-console/models/query"
+	"ddm-admin-console/models/query"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -30,7 +30,7 @@ func (m MockCodebase) GetCodebaseByName(name string) (*query.Codebase, error) {
 	return &c, args.Error(1)
 }
 
-func (m MockCodebase) GetCodebaseById(id int) (*query.Codebase, error) {
+func (m MockCodebase) GetCodebaseByID(id int) (*query.Codebase, error) {
 	panic("implement me")
 }
 

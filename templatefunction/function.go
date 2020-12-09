@@ -1,8 +1,8 @@
-package template_function
+package templatefunction
 
 import (
-	"edp-admin-console/models/query"
-	"edp-admin-console/util"
+	"ddm-admin-console/models/query"
+	"ddm-admin-console/util"
 	"github.com/astaxie/beego"
 	"github.com/blang/semver"
 	"github.com/pkg/errors"
@@ -43,7 +43,7 @@ func incrementVersion(v string) (*string, error) {
 		return nil, err
 	}
 
-	pv.Minor += 1
+	pv.Minor++
 
 	res := util.TrimSuffix(pv.String(), "-SNAPSHOT")
 	return &res, nil

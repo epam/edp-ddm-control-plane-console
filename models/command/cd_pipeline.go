@@ -1,6 +1,6 @@
 package command
 
-import "edp-admin-console/models"
+import "ddm-admin-console/models"
 
 type CDPipelineCommand struct {
 	Name                 string                                `json:"name" valid:"Required;Match(/^[a-z0-9]([-a-z0-9]*[a-z0-9])$/)"`

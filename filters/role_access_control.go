@@ -8,7 +8,7 @@ import (
 
 func RoleAccessControlFilter(context *bgCtx.Context) {
 	log.Debug("Start Role Access Control filter..")
-	contextRoles := context.Input.Session("realm_roles").([]string)
+	contextRoles, _ := context.Input.Session("realm_roles").([]string)
 
 	isPageAvailable := IsPageAvailable(fmt.Sprintf("%s %s", context.Input.Method(), context.Input.URI()), contextRoles)
 

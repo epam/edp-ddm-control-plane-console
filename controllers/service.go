@@ -1,8 +1,8 @@
 package controllers
 
 import (
-	"edp-admin-console/context"
-	"edp-admin-console/service"
+	"ddm-admin-console/console"
+	"ddm-admin-console/service"
 	"github.com/astaxie/beego"
 )
 
@@ -18,11 +18,11 @@ func (s *ThirdPartyServiceController) GetServicePage() {
 		return
 	}
 
-	s.Data["EDPVersion"] = context.EDPVersion
+	s.Data["EDPVersion"] = console.EDPVersion
 	s.Data["Username"] = s.Ctx.Input.Session("username")
 	s.Data["Services"] = services
 	s.Data["Type"] = "services"
-	s.Data["BasePath"] = context.BasePath
-	s.Data["DiagramPageEnabled"] = context.DiagramPageEnabled
+	s.Data["BasePath"] = console.BasePath
+	s.Data["DiagramPageEnabled"] = console.DiagramPageEnabled
 	s.TplName = "service.html"
 }

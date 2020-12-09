@@ -1,11 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>EDP Admin Console</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" href="{{ .BasePath }}/static/css/index.css">
+    {{template "template/head.html" .}}
+
     <link rel="stylesheet" href="{{ .BasePath }}/static/css/validation.css">
     <link rel="stylesheet" href="{{ .BasePath }}/static/css/codebase-overview.css">
 </head>
@@ -21,15 +18,15 @@
             <div class="edp-form wide col-12 nosidepadding" id="createAppForm">
                 <h1 class="edp-form-header">
                     {{if eq .Type "application"}}
-                        <a href="{{ .BasePath }}/admin/edp/application/overview" class="edp-back-link"></a>
+                        <a href="{{ .BasePath }}/admin/application/overview" class="edp-back-link"></a>
                     {{else if eq .Type "autotests"}}
-                        <a href="{{ .BasePath }}/admin/edp/autotest/overview" class="edp-back-link"></a>
+                        <a href="{{ .BasePath }}/admin/autotest/overview" class="edp-back-link"></a>
                     {{else}}
-                        <a href="{{ .BasePath }}/admin/edp/library/overview" class="edp-back-link"></a>
+                        <a href="{{ .BasePath }}/admin/library/overview" class="edp-back-link"></a>
                     {{end}}
                     {{.TypeCaption}} "{{.Codebase.Name}}"
                     {{if .Codebase.JiraServer}}
-                        <a href="{{ .BasePath }}/admin/edp/codebase/{{.Codebase.Name}}/update">
+                        <a href="{{ .BasePath }}/admin/codebase/{{.Codebase.Name}}/update">
                             <button class="delete">
                                 <i class="icon-pencil"></i>
                             </button>
@@ -359,7 +356,7 @@
                     </button>
                 </div>
                 <div class="modal-body create-new-branch-modal">
-                    <form id="create-branch-action" action="{{ .BasePath }}/admin/edp/codebase/{{.Codebase.Name}}/branch"
+                    <form id="create-branch-action" action="{{ .BasePath }}/admin/codebase/{{.Codebase.Name}}/branch"
                           method="post">
                         {{if .Codebase.StartVersioningFrom}}
                             <div class="form-group">
@@ -453,7 +450,7 @@
         </div>
     </div>
 </main>
-{{template "template/delete_confirmation_template.html" params "action" (print .BasePath "/admin/edp/codebase/branch/delete") "kind" "codebase-branch" "codebasename" .Codebase.Name "xsrfdata" .xsrfdata "error" .ErrorBranch}}
+{{template "template/delete_confirmation_template.html" params "action" (print .BasePath "/admin/codebase/branch/delete") "kind" "codebase-branch" "codebasename" .Codebase.Name "xsrfdata" .xsrfdata "error" .ErrorBranch}}
 <script src="{{ .BasePath }}/static/js/jquery-3.3.1.js"></script>
 <script src="{{ .BasePath }}/static/js/popper.js"></script>
 <script src="{{ .BasePath }}/static/js/bootstrap.js"></script>

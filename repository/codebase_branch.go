@@ -17,7 +17,7 @@
 package repository
 
 import (
-	"edp-admin-console/models/query"
+	"ddm-admin-console/models/query"
 	"github.com/astaxie/beego/orm"
 )
 

@@ -17,17 +17,17 @@
 package controllers
 
 import (
-	"edp-admin-console/context"
-	"edp-admin-console/controllers/validation"
-	"edp-admin-console/models/command"
-	"edp-admin-console/models/query"
-	"edp-admin-console/service"
-	cbs "edp-admin-console/service/codebasebranch"
-	ec "edp-admin-console/service/edp-component"
-	"edp-admin-console/util"
-	"edp-admin-console/util/auth"
-	"edp-admin-console/util/consts"
-	dberror "edp-admin-console/util/error/db-errors"
+	"ddm-admin-console/console"
+	"ddm-admin-console/controllers/validation"
+	"ddm-admin-console/models/command"
+	"ddm-admin-console/models/query"
+	"ddm-admin-console/service"
+	cbs "ddm-admin-console/service/codebasebranch"
+	ec "ddm-admin-console/service/edp-component"
+	"ddm-admin-console/util"
+	"ddm-admin-console/util/auth"
+	"ddm-admin-console/util/consts"
+	dberror "ddm-admin-console/util/error/db-errors"
 	"errors"
 	"fmt"
 	"html/template"
@@ -40,13 +40,15 @@ type CodebaseController struct {
 	beego.Controller
 	CodebaseService  service.CodebaseService
 	EDPTenantService service.EDPTenantService
-	BranchService    cbs.CodebaseBranchService
+	BranchService    cbs.Service
 	GitServerService service.GitServerService
 	EDPComponent     ec.EDPComponentService
 }
 
 const (
 	paramWaitingForBranch = "waitingforbranch"
+	codebaseTypeAutotest  = "autotest"
+	defaultGitServer      = "gerrit"
 )
 
 func (c *CodebaseController) GetCodebaseOverviewPage() {
@@ -65,7 +67,7 @@ func (c *CodebaseController) GetCodebaseOverviewPage() {
 		return
 	}
 
-	if err := c.createBranchLinks(*codebase, context.Tenant); err != nil {
+	if err := c.createBranchLinks(*codebase, console.Tenant); err != nil {
 		log.Error("an error has occurred while creating link to Git provider", zap.Error(err))
 		c.Abort("500")
 		return
@@ -78,14 +80,14 @@ func (c *CodebaseController) GetCodebaseOverviewPage() {
 		c.Data["ErrorBranch"] = flash.Data["error"]
 	}
 
-	c.Data["EDPVersion"] = context.EDPVersion
+	c.Data["EDPVersion"] = console.EDPVersion
 	c.Data["Username"] = c.Ctx.Input.Session("username")
 	c.Data["Codebase"] = codebase
 	c.Data["Type"] = codebase.Type
 	c.Data["HasRights"] = auth.IsAdmin(c.GetSession("realm_roles").([]string))
-	c.Data["xsrfdata"] = template.HTML(c.XSRFFormHTML())
-	c.Data["BasePath"] = context.BasePath
-	c.Data["DiagramPageEnabled"] = context.DiagramPageEnabled
+	c.Data["xsrfdata"] = template.HTML(c.XSRFFormHTML()) //nolint
+	c.Data["BasePath"] = console.BasePath
+	c.Data["DiagramPageEnabled"] = console.DiagramPageEnabled
 	c.setCodebaseTypeCaptions(string(codebase.Type))
 	c.TplName = "codebase_overview.html"
 }
@@ -142,7 +144,7 @@ func (c CodebaseController) createLinksForGitProvider(codebase query.Codebase, t
 		return err
 	}
 	if g == nil {
-		return errors.New(fmt.Sprintf("unexpected behaviour. couldn't find %v GitServer in DB", *codebase.GitServer))
+		return errors.New(fmt.Sprintf("unexpected behaviour. couldn't find %v GitServer in DB", *codebase.GitServer)) //nolint
 	}
 
 	jc, err := c.EDPComponent.GetEDPComponent(consts.Jenkins)
@@ -157,7 +159,7 @@ func (c CodebaseController) createLinksForGitProvider(codebase query.Codebase, t
 
 	for i, b := range codebase.CodebaseBranch {
 		codebase.CodebaseBranch[i].VCSLink = util.CreateGitLink(g.Hostname, *codebase.GitProjectPath, b.Name)
-		codebase.CodebaseBranch[i].CICDLink = getCiLink(codebase, jc.Url, b.Name, g.Hostname)
+		codebase.CodebaseBranch[i].CICDLink = getCiLink(codebase, jc.URL, b.Name, g.Hostname)
 	}
 
 	return nil
@@ -192,8 +194,8 @@ func (c CodebaseController) createLinksForGerritProvider(codebase query.Codebase
 	}
 
 	for i, b := range codebase.CodebaseBranch {
-		codebase.CodebaseBranch[i].VCSLink = util.CreateGerritLink(cg.Url, codebase.Name, b.Name)
-		codebase.CodebaseBranch[i].CICDLink = util.CreateCICDApplicationLink(cj.Url, codebase.Name,
+		codebase.CodebaseBranch[i].VCSLink = util.CreateGerritLink(cg.URL, codebase.Name, b.Name)
+		codebase.CodebaseBranch[i].CICDLink = util.CreateCICDApplicationLink(cj.URL, codebase.Name,
 			util.ProcessNameToKubernetesConvention(b.Name))
 	}
 
@@ -207,7 +209,7 @@ func (c *CodebaseController) Delete() {
 	ct := c.GetString("codebase-type")
 	if err := c.CodebaseService.Delete(cn, ct); err != nil {
 		if dberror.CodebaseIsUsed(err) {
-			cerr := err.(dberror.CodebaseIsUsedByCDPipeline)
+			cerr, _ := err.(dberror.CodebaseIsUsedByCDPipeline)
 			flash.Error(cerr.Message)
 			flash.Store(&c.Controller)
 			log.Error(cerr.Message, zap.Error(err))
@@ -224,17 +226,17 @@ func (c *CodebaseController) Delete() {
 
 func createCodebaseIsUsedURL(codebaseName, codebaseType string) string {
 	if codebaseType == consts.Autotest {
-		codebaseType = "autotest"
+		codebaseType = codebaseTypeAutotest
 	}
-	return fmt.Sprintf("%s/admin/edp/%v/overview?codebase=%v#codebaseIsUsed", context.BasePath,
+	return fmt.Sprintf("%s/admin/%v/overview?codebase=%v#codebaseIsUsed", console.BasePath,
 		codebaseType, codebaseName)
 }
 
 func createCodebaseIsDeletedURL(codebaseName, codebaseType string) string {
 	if codebaseType == consts.Autotest {
-		codebaseType = "autotest"
+		codebaseType = codebaseTypeAutotest
 	}
-	return fmt.Sprintf("%s/admin/edp/%v/overview?codebase=%v#codebaseIsDeleted", context.BasePath, codebaseType, codebaseName)
+	return fmt.Sprintf("%s/admin/%v/overview?codebase=%v#codebaseIsDeleted", console.BasePath, codebaseType, codebaseName)
 }
 
 func (c *CodebaseController) GetEditCodebasePage() {
@@ -253,11 +255,11 @@ func (c *CodebaseController) GetEditCodebasePage() {
 		return
 	}
 
-	c.Data["xsrfdata"] = template.HTML(c.XSRFFormHTML())
-	c.Data["BasePath"] = context.BasePath
+	c.Data["xsrfdata"] = template.HTML(c.XSRFFormHTML()) //nolint
+	c.Data["BasePath"] = console.BasePath
 	c.Data["Codebase"] = codebase
 	c.Data["Type"] = codebase.Type
-	c.Data["DiagramPageEnabled"] = context.DiagramPageEnabled
+	c.Data["DiagramPageEnabled"] = console.DiagramPageEnabled
 	c.TplName = "edit_codebase.html"
 }
 
@@ -277,7 +279,7 @@ func (c *CodebaseController) Update() {
 		log.Error("Codebase update request data is invalid", zap.String("err", errMsg.Message))
 		flash.Error(errMsg.Message)
 		flash.Store(&c.Controller)
-		c.Redirect(fmt.Sprintf("%v/admin/edp/codebase/%v/update", context.BasePath, cc.Name), 302)
+		c.Redirect(fmt.Sprintf("%v/admin/codebase/%v/update", console.BasePath, cc.Name), 302)
 		return
 	}
 
@@ -288,13 +290,13 @@ func (c *CodebaseController) Update() {
 		return
 	}
 
-	c.Redirect(fmt.Sprintf("%v/admin/edp/%v/overview#codebaseUpdateSuccessModal",
-		context.BasePath, getType(codebase.Spec.Type)), 302)
+	c.Redirect(fmt.Sprintf("%v/admin/%v/overview#codebaseUpdateSuccessModal",
+		console.BasePath, getType(codebase.Spec.Type)), 302)
 }
 
 func getType(codebaseType string) string {
 	if codebaseType == "autotests" {
-		return "autotest"
+		return codebaseTypeAutotest
 	}
 	return codebaseType
 }

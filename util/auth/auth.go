@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"edp-admin-console/util"
+	"ddm-admin-console/util"
 	"github.com/astaxie/beego"
 )
 

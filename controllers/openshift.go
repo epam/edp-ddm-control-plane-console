@@ -17,7 +17,7 @@
 package controllers
 
 import (
-	"edp-admin-console/service"
+	"ddm-admin-console/service"
 	"github.com/astaxie/beego"
 	"net/http"
 )
@@ -27,14 +27,14 @@ type OpenshiftRestController struct {
 	ClusterService service.ClusterService
 }
 
-func (this *OpenshiftRestController) GetAllStorageClasses() {
-	storageClasses, err := this.ClusterService.GetAllStorageClasses()
+func (c *OpenshiftRestController) GetAllStorageClasses() {
+	storageClasses, err := c.ClusterService.GetAllStorageClasses()
 
 	if err != nil {
-		http.Error(this.Ctx.ResponseWriter, err.Error(), http.StatusInternalServerError)
+		http.Error(c.Ctx.ResponseWriter, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	this.Data["json"] = storageClasses
-	this.ServeJSON()
+	c.Data["json"] = storageClasses
+	c.ServeJSON()
 }

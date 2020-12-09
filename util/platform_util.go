@@ -52,7 +52,7 @@ func TrimSuffix(v, s string) string {
 }
 
 func ProcessNameToKubernetesConvention(name string) string {
-	return strings.Replace(name, "/", "-", -1)
+	return strings.ReplaceAll(name, "/", "-")
 }
 
 func GetStringP(val string) *string {

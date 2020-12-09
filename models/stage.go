@@ -1,9 +1,9 @@
 package models
 
-import "edp-admin-console/models/query"
+import "ddm-admin-console/models/query"
 
 type StageView struct {
-	Id              int64               `json:"-"`
+	ID              int64               `json:"-"`
 	Name            string              `json:"name"`
 	CDPipeline      string              `json:"cdPipeline"`
 	Description     string              `json:"description"`

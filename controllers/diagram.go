@@ -17,11 +17,11 @@
 package controllers
 
 import (
-	"edp-admin-console/context"
-	"edp-admin-console/models/query"
-	"edp-admin-console/service"
-	pipelineService "edp-admin-console/service/cd_pipeline"
-	"edp-admin-console/util"
+	"ddm-admin-console/console"
+	"ddm-admin-console/models/query"
+	"ddm-admin-console/service"
+	pipelineService "ddm-admin-console/service/cd_pipeline"
+	"ddm-admin-console/util"
 	"encoding/json"
 	"github.com/astaxie/beego"
 	"go.uber.org/zap"
@@ -37,21 +37,21 @@ const diagramPageType = "diagram"
 
 func (c *DiagramController) GetDiagramPage() {
 	log.Debug("start rendering delivery_dashboard_diagram.html page")
-	cJson, err := c.getCodebasesJson()
+	cJSON, err := c.getCodebasesJSON()
 	if err != nil {
 		log.Error("couldn't get codebases from db", zap.Error(err))
 		c.Abort("500")
 		return
 	}
 
-	pJson, err := c.getPipelinesJson()
+	pJSON, err := c.getPipelinesJSON()
 	if err != nil {
 		log.Error("couldn't get pipelines from db", zap.Error(err))
 		c.Abort("500")
 		return
 	}
 
-	sJson, err := c.getCodebaseDokcerStreamsJson()
+	sJSON, err := c.getCodebaseDokcerStreamsJSON()
 	if err != nil {
 		log.Error("couldn't get codebase docker streams from db", zap.Error(err))
 		c.Abort("500")
@@ -59,17 +59,17 @@ func (c *DiagramController) GetDiagramPage() {
 	}
 
 	c.Data["Username"] = c.Ctx.Input.Session("username")
-	c.Data["EDPVersion"] = context.EDPVersion
-	c.Data["CodebasesJson"] = cJson
-	c.Data["PipelinesJson"] = pJson
-	c.Data["CodebaseDockerStreamsJson"] = sJson
-	c.Data["DiagramPageEnabled"] = context.DiagramPageEnabled
+	c.Data["EDPVersion"] = console.EDPVersion
+	c.Data["CodebasesJson"] = cJSON
+	c.Data["PipelinesJson"] = pJSON
+	c.Data["CodebaseDockerStreamsJson"] = sJSON
+	c.Data["DiagramPageEnabled"] = console.DiagramPageEnabled
 	c.Data["Type"] = diagramPageType
-	c.Data["BasePath"] = context.BasePath
+	c.Data["BasePath"] = console.BasePath
 	c.TplName = "delivery_dashboard_diagram.html"
 }
 
-func (c *DiagramController) getCodebasesJson() (*string, error) {
+func (c *DiagramController) getCodebasesJSON() (*string, error) {
 	codebases, err := c.CodebaseService.GetCodebasesByCriteria(query.CodebaseCriteria{})
 	if err != nil {
 		return nil, err
@@ -81,7 +81,7 @@ func (c *DiagramController) getCodebasesJson() (*string, error) {
 	return util.GetStringP(string(buf)), nil
 }
 
-func (c *DiagramController) getPipelinesJson() (*string, error) {
+func (c *DiagramController) getPipelinesJSON() (*string, error) {
 	pipelines, err := c.PipelineService.GetAllPipelines(query.CDPipelineCriteria{})
 	if err != nil {
 		return nil, err
@@ -93,7 +93,7 @@ func (c *DiagramController) getPipelinesJson() (*string, error) {
 	return util.GetStringP(string(buf)), nil
 }
 
-func (c *DiagramController) getCodebaseDokcerStreamsJson() (*string, error) {
+func (c *DiagramController) getCodebaseDokcerStreamsJSON() (*string, error) {
 	streams, err := c.PipelineService.GetAllCodebaseDockerStreams()
 	if err != nil {
 		return nil, err

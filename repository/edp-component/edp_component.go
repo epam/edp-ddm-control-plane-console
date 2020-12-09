@@ -1,8 +1,8 @@
-package edp_component
+package edp_component //nolint
 
 import (
-	"edp-admin-console/models/query"
-	dberror "edp-admin-console/util/error/db-errors"
+	"ddm-admin-console/models/query"
+	dberror "ddm-admin-console/util/error/db-errors"
 	"github.com/astaxie/beego/orm"
 )
 

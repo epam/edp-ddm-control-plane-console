@@ -1,4 +1,4 @@
-package db_errors
+package dberrors
 
 type StatusError struct {
 	Status StatusReason

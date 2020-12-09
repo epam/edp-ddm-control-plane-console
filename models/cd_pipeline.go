@@ -1,6 +1,6 @@
 package models
 
-import "edp-admin-console/models/dto"
+import "ddm-admin-console/models/dto"
 
 type CDPipelineDTO struct {
 	Name                string                                                  `json:"name"`

@@ -1,4 +1,4 @@
-package context
+package console
 
 import (
 	"github.com/astaxie/beego"

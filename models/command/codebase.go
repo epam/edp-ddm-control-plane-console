@@ -18,7 +18,7 @@ type CreateCodebase struct {
 	Username            string      `json:"username"`
 	GitServer           string      `json:"gitServer"`
 	Versioning          Versioning  `json:"versioning"`
-	GitUrlPath          *string     `json:"gitUrlPath"`
+	GitURLPath          *string     `json:"gitUrlPath"`
 	JenkinsSlave        *string     `json:"jenkinsSlave,omitempty"`
 	JobProvisioning     *string     `json:"jobProvisioning,omitempty"`
 	DeploymentScript    string      `json:"deploymentScript"`
@@ -29,7 +29,7 @@ type CreateCodebase struct {
 }
 
 type Repository struct {
-	Url      string `json:"url,omitempty" valid:"Required;Match(/(?:^git|^ssh|^https?|^git@[-\\w.]+):(\\/\\/)?(.*?)(\\.git)(\\/?|\\#[-\\d\\w._]+?)$/)"`
+	URL      string `json:"url,omitempty" valid:"Required;Match(/(?:^git|^ssh|^https?|^git@[-\\w.]+):(\\/\\/)?(.*?)(\\.git)(\\/?|\\#[-\\d\\w._]+?)$/)"`
 	Login    string `json:"login,omitempty"`
 	Password string `json:"password,omitempty"`
 }

@@ -1,9 +1,9 @@
 package controllers
 
 import (
-	validation2 "edp-admin-console/controllers/validation"
-	"edp-admin-console/service"
-	"edp-admin-console/util"
+	validation2 "ddm-admin-console/controllers/validation"
+	"ddm-admin-console/service"
+	"ddm-admin-console/util"
 	"encoding/json"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/validation"
@@ -16,27 +16,27 @@ type RepositoryRestController struct {
 }
 
 type RepoData struct {
-	Url      string `json:"url,omitempty"`
+	URL      string `json:"url,omitempty"`
 	Login    string `json:"login,omitempty"`
 	Password string `json:"password,omitempty"`
 }
 
-func (this *RepositoryRestController) IsGitRepoAvailable() {
+func (rrc *RepositoryRestController) IsGitRepoAvailable() {
 	var repo RepoData
-	err := json.NewDecoder(this.Ctx.Request.Body).Decode(&repo)
+	err := json.NewDecoder(rrc.Ctx.Request.Body).Decode(&repo)
 	if err != nil {
-		http.Error(this.Ctx.ResponseWriter, err.Error(), http.StatusInternalServerError)
+		http.Error(rrc.Ctx.ResponseWriter, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	errMsg := validRepoRequestData(repo)
 	if errMsg != nil {
-		http.Error(this.Ctx.ResponseWriter, errMsg.Message, errMsg.StatusCode)
+		http.Error(rrc.Ctx.ResponseWriter, errMsg.Message, errMsg.StatusCode)
 		return
 	}
 
-	this.Data["json"] = util.IsGitRepoAvailable(repo.Url, repo.Login, repo.Password)
-	this.ServeJSON()
+	rrc.Data["json"] = util.IsGitRepoAvailable(repo.URL, repo.Login, repo.Password)
+	rrc.ServeJSON()
 }
 
 func validRepoRequestData(repo RepoData) *validation2.ErrMsg {

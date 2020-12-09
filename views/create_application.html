@@ -1,11 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>EDP Admin Console</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" href="{{ .BasePath }}/static/css/index.css">
+    {{template "template/head.html" .}}
     <link rel="stylesheet" href="{{ .BasePath }}/static/css/validation.css">
 </head>
 <body>
@@ -17,9 +13,9 @@
         </aside>
         <div class="flex-fill pl-4 pr-4 wrapper">
 
-            <form class="edp-form" id="createAppForm" method="post" action="{{ .BasePath }}/admin/edp/application">
+            <form class="edp-form" id="createAppForm" method="post" action="{{ .BasePath }}/admin/application">
                 <h1 class="edp-form-header">
-                    <a href="{{ .BasePath }}/admin/edp/application/overview" class="edp-back-link"></a>
+                    <a href="{{ .BasePath }}/admin/application/overview" class="edp-back-link"></a>
                     Create Application
                 </h1>
                 <p>

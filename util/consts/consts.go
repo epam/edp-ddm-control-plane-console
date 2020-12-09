@@ -1,7 +1,7 @@
 package consts
 
 const (
-	//EDP Components
+	// EDP Components
 	Jenkins        = "jenkins"
 	Openshift      = "openshift"
 	Kubernetes     = "kubernetes"
@@ -10,7 +10,6 @@ const (
 
 	Application = "application"
 	Autotest    = "autotests"
-	Library     = "library"
 
 	CodebasePlural       = "codebases"
 	CodebaseBranchPlural = "codebasebranches"

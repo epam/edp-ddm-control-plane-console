@@ -63,7 +63,7 @@ SOFTWARE.*/
     /******/ 	// expose the module cache
     /******/ 	__webpack_require__.c = installedModules;
     /******/
-    /******/ 	// identity function for calling harmony imports with the correct context
+    /******/ 	// identity function for calling harmony imports with the correct console
     /******/ 	__webpack_require__.i = function(value) { return value; };
     /******/
     /******/ 	// define getter function for harmony exports

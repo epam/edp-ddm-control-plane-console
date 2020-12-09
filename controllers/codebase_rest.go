@@ -17,12 +17,12 @@
 package controllers
 
 import (
-	"edp-admin-console/controllers/validation"
-	"edp-admin-console/models/command"
-	edperror "edp-admin-console/models/error"
-	"edp-admin-console/models/query"
-	"edp-admin-console/service"
-	dberror "edp-admin-console/util/error/db-errors"
+	"ddm-admin-console/controllers/validation"
+	"ddm-admin-console/models/command"
+	edperror "ddm-admin-console/models/error"
+	"ddm-admin-console/models/query"
+	"ddm-admin-console/service"
+	dberror "ddm-admin-console/util/error/db-errors"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -98,9 +98,9 @@ func (c *CodebaseRestController) CreateCodebase() {
 	}
 
 	if codebase.Strategy != "import" {
-		codebase.GitServer = "gerrit"
+		codebase.GitServer = defaultGitServer
 	} else {
-		codebase.Name = path.Base(*codebase.GitUrlPath)
+		codebase.Name = path.Base(*codebase.GitURLPath)
 	}
 
 	errMsg := validation.ValidCodebaseRequestData(codebase)
@@ -114,7 +114,7 @@ func (c *CodebaseRestController) CreateCodebase() {
 
 	createdObject, err := c.CodebaseService.CreateCodebase(codebase)
 	if err != nil {
-		c.checkError(err, codebase.Name, codebase.GitUrlPath)
+		c.checkError(err, codebase.Name, codebase.GitURLPath)
 		return
 	}
 
@@ -130,7 +130,7 @@ func (c *CodebaseRestController) checkError(err error, name string, url *string)
 	case *edperror.CodebaseAlreadyExistsError:
 		errMsg := fmt.Sprintf("Codebase %v already exists.", name)
 		http.Error(c.Ctx.ResponseWriter, errMsg, http.StatusBadRequest)
-	case *edperror.CodebaseWithGitUrlPathAlreadyExistsError:
+	case *edperror.CodebaseWithGitURLPathAlreadyExistsError:
 		errMsg := fmt.Sprintf("Codebase %v with %v project path already exists.", name, *url)
 		http.Error(c.Ctx.ResponseWriter, errMsg, http.StatusBadRequest)
 	default:
@@ -163,7 +163,7 @@ func (c *CodebaseRestController) Delete() {
 
 	if err := c.CodebaseService.Delete(cr.Name, string(cdb.Type)); err != nil {
 		if dberror.CodebaseIsUsed(err) {
-			cerr := err.(dberror.CodebaseIsUsedByCDPipeline)
+			cerr, _ := err.(dberror.CodebaseIsUsedByCDPipeline)
 			log.Error(cerr.Message, zap.Error(err))
 			http.Error(c.Ctx.ResponseWriter, cerr.Message, http.StatusConflict)
 			return

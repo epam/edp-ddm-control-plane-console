@@ -17,7 +17,7 @@
 package k8s
 
 import (
-	"edp-admin-console/service/logger"
+	"ddm-admin-console/service/logger"
 	edppipelinesv1alpha1 "github.com/epmd-edp/cd-pipeline-operator/v2/pkg/apis/edp/v1alpha1"
 	edpv1alpha1 "github.com/epmd-edp/codebase-operator/v2/pkg/apis/edp/v1alpha1"
 	appsV1Client "github.com/openshift/client-go/apps/clientset/versioned/typed/apps/v1"

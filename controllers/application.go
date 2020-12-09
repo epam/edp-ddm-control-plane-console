@@ -17,18 +17,17 @@
 package controllers
 
 import (
-	"edp-admin-console/context"
-	"edp-admin-console/controllers/validation"
-	"edp-admin-console/models/command"
-	edperror "edp-admin-console/models/error"
-	"edp-admin-console/models/query"
-	"edp-admin-console/service"
-	cbs "edp-admin-console/service/codebasebranch"
-	jiraservice "edp-admin-console/service/jira-server"
-	"edp-admin-console/service/logger"
-	"edp-admin-console/service/platform"
-	"edp-admin-console/util"
-	"edp-admin-console/util/auth"
+	"ddm-admin-console/console"
+	"ddm-admin-console/controllers/validation"
+	"ddm-admin-console/models/command"
+	edperror "ddm-admin-console/models/error"
+	"ddm-admin-console/models/query"
+	"ddm-admin-console/service"
+	cbs "ddm-admin-console/service/codebasebranch"
+	"ddm-admin-console/service/logger"
+	"ddm-admin-console/service/platform"
+	"ddm-admin-console/util"
+	"ddm-admin-console/util/auth"
 	"fmt"
 	"html/template"
 	"strings"
@@ -43,11 +42,10 @@ type ApplicationController struct {
 	beego.Controller
 	CodebaseService  service.CodebaseService
 	EDPTenantService service.EDPTenantService
-	BranchService    cbs.CodebaseBranchService
+	BranchService    cbs.Service
 	GitServerService service.GitServerService
 	SlaveService     service.SlaveService
 	JobProvisioning  service.JobProvisioning
-	JiraServer       jiraservice.JiraServer
 
 	IntegrationStrategies []string
 	BuildTools            []string
@@ -59,6 +57,7 @@ type ApplicationController struct {
 const (
 	paramWaitingForCodebase = "waitingforcodebase"
 	scope                   = "ci"
+	tplCodebase             = "codebase.html"
 )
 
 func (c *ApplicationController) GetApplicationsOverviewPage() {
@@ -78,17 +77,17 @@ func (c *ApplicationController) GetApplicationsOverviewPage() {
 	if flash.Data["error"] != "" {
 		c.Data["DeletionError"] = flash.Data["error"]
 	}
-	contextRoles := c.GetSession("realm_roles").([]string)
-	c.Data["EDPVersion"] = context.EDPVersion
+	contextRoles, _ := c.GetSession("realm_roles").([]string)
+	c.Data["EDPVersion"] = console.EDPVersion
 	c.Data["Username"] = c.Ctx.Input.Session("username")
 	c.Data["HasRights"] = auth.IsAdmin(contextRoles)
 	c.Data["Codebases"] = applications
 	c.Data["Type"] = query.App
 	c.Data["VersioningTypes"] = c.VersioningTypes
-	c.Data["xsrfdata"] = template.HTML(c.XSRFFormHTML())
-	c.Data["BasePath"] = context.BasePath
-	c.Data["DiagramPageEnabled"] = context.DiagramPageEnabled
-	c.TplName = "codebase.html"
+	c.Data["xsrfdata"] = template.HTML(c.XSRFFormHTML()) //nolint
+	c.Data["BasePath"] = console.BasePath
+	c.Data["DiagramPageEnabled"] = console.DiagramPageEnabled
+	c.TplName = tplCodebase
 }
 
 func addCodebaseInProgressIfAny(codebases []*query.Codebase, codebaseInProgress string) []*query.Codebase {
@@ -144,14 +143,7 @@ func (c *ApplicationController) GetCreateApplicationPage() {
 		return
 	}
 
-	servers, err := c.JiraServer.GetJiraServers()
-	if err != nil {
-		log.Error(err.Error())
-		c.Abort("500")
-		return
-	}
-
-	c.Data["EDPVersion"] = context.EDPVersion
+	c.Data["EDPVersion"] = console.EDPVersion
 	c.Data["Username"] = c.Ctx.Input.Session("username")
 	c.Data["IsVcsEnabled"] = isVcsEnabled
 	c.Data["Type"] = query.App
@@ -163,10 +155,9 @@ func (c *ApplicationController) GetCreateApplicationPage() {
 	c.Data["VersioningTypes"] = c.VersioningTypes
 	c.Data["DeploymentScripts"] = c.DeploymentScript
 	c.Data["IsOpenshift"] = platform.IsOpenshift()
-	c.Data["xsrfdata"] = template.HTML(c.XSRFFormHTML())
-	c.Data["BasePath"] = context.BasePath
-	c.Data["JiraServer"] = servers
-	c.Data["DiagramPageEnabled"] = context.DiagramPageEnabled
+	c.Data["xsrfdata"] = template.HTML(c.XSRFFormHTML()) //nolint
+	c.Data["BasePath"] = console.BasePath
+	c.Data["DiagramPageEnabled"] = console.DiagramPageEnabled
 	c.Data["CiTools"] = c.CiTools
 	c.TplName = "create_application.html"
 }
@@ -192,7 +183,7 @@ func (c *ApplicationController) CreateApplication() {
 		log.Error("failed to validate request data", zap.String("message", errMsg.Message))
 		flash.Error(errMsg.Message)
 		flash.Store(&c.Controller)
-		c.Redirect(fmt.Sprintf("%s/admin/edp/application/create", context.BasePath), 302)
+		c.Redirect(fmt.Sprintf("%s/admin/application/create", console.BasePath), 302)
 		return
 	}
 	ld := validation.CreateCodebaseLogRequestData(codebase)
@@ -200,14 +191,14 @@ func (c *ApplicationController) CreateApplication() {
 
 	createdObject, err := c.CodebaseService.CreateCodebase(codebase)
 	if err != nil {
-		c.checkError(err, flash, codebase.Name, codebase.GitUrlPath)
+		c.checkError(err, flash, codebase.Name, codebase.GitURLPath)
 		return
 	}
 
 	log.Info("application object is saved into cluster", zap.String("name", createdObject.Name))
 	flash.Success("Application object is created.")
 	flash.Store(&c.Controller)
-	c.Redirect(fmt.Sprintf("%s/admin/edp/application/overview?%s=%s#codebaseSuccessModal", context.BasePath, paramWaitingForCodebase, codebase.Name), 302)
+	c.Redirect(fmt.Sprintf("%s/admin/application/overview?%s=%s#codebaseSuccessModal", console.BasePath, paramWaitingForCodebase, codebase.Name), 302)
 }
 
 func (c *ApplicationController) checkError(err error, flash *beego.FlashData, name string, url *string) {
@@ -215,11 +206,11 @@ func (c *ApplicationController) checkError(err error, flash *beego.FlashData, na
 	case *edperror.CodebaseAlreadyExistsError:
 		flash.Error("Application %v already exists.", name)
 		flash.Store(&c.Controller)
-		c.Redirect(fmt.Sprintf("%s/admin/edp/application/create", context.BasePath), 302)
-	case *edperror.CodebaseWithGitUrlPathAlreadyExistsError:
+		c.Redirect(fmt.Sprintf("%s/admin/application/create", console.BasePath), 302)
+	case *edperror.CodebaseWithGitURLPathAlreadyExistsError:
 		flash.Error("Application %v with %v project path already exists.", name, *url)
 		flash.Store(&c.Controller)
-		c.Redirect(fmt.Sprintf("%s/admin/edp/application/create", context.BasePath), 302)
+		c.Redirect(fmt.Sprintf("%s/admin/application/create", console.BasePath), 302)
 	default:
 		log.Error("couldn't create codebase", zap.Error(err))
 		c.Abort("500")
@@ -267,9 +258,9 @@ func (c *ApplicationController) extractApplicationRequestData() command.CreateCo
 	if codebase.Strategy == "import" {
 		codebase.GitServer = c.GetString("gitServer")
 		gitRepoPath := c.GetString("gitRelativePath")
-		codebase.GitUrlPath = &gitRepoPath
+		codebase.GitURLPath = &gitRepoPath
 	} else {
-		codebase.GitServer = "gerrit"
+		codebase.GitServer = defaultGitServer
 	}
 
 	framework := c.GetString("framework")
@@ -283,10 +274,10 @@ func (c *ApplicationController) extractApplicationRequestData() command.CreateCo
 		codebase.Framework = &multimoduleApp
 	}
 
-	repoUrl := c.GetString("gitRepoUrl")
-	if repoUrl != "" {
+	repoURL := c.GetString("gitRepoUrl")
+	if repoURL != "" {
 		codebase.Repository = &command.Repository{
-			Url: repoUrl,
+			URL: repoURL,
 		}
 
 		isRepoPrivate, _ := c.GetBool("isRepoPrivate", false)
@@ -324,6 +315,6 @@ func (c *ApplicationController) extractApplicationRequestData() command.CreateCo
 			Storage:  c.GetString("dbPersistentStorage"),
 		}
 	}
-	codebase.Username = c.Ctx.Input.Session("username").(string)
+	codebase.Username, _ = c.Ctx.Input.Session("username").(string)
 	return codebase
 }

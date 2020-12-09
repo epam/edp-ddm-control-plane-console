@@ -44,13 +44,13 @@ func NewCodebaseAlreadyExistsError() error {
 	return &CodebaseAlreadyExistsError{}
 }
 
-type CodebaseWithGitUrlPathAlreadyExistsError struct {
+type CodebaseWithGitURLPathAlreadyExistsError struct {
 }
 
-func (e *CodebaseWithGitUrlPathAlreadyExistsError) Error() string {
+func (e *CodebaseWithGitURLPathAlreadyExistsError) Error() string {
 	return "codebase with git url path already exists"
 }
 
-func NewCodebaseWithGitUrlPathAlreadyExistsError() error {
-	return &CodebaseWithGitUrlPathAlreadyExistsError{}
+func NewCodebaseWithGitURLPathAlreadyExistsError() error {
+	return &CodebaseWithGitURLPathAlreadyExistsError{}
 }

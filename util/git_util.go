@@ -17,7 +17,7 @@
 package util
 
 import (
-	"edp-admin-console/service/logger"
+	"ddm-admin-console/service/logger"
 	"go.uber.org/zap"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/config"

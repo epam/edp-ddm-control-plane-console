@@ -17,18 +17,18 @@
 package service
 
 import (
-	"edp-admin-console/context"
-	"edp-admin-console/k8s"
-	"edp-admin-console/models"
-	"edp-admin-console/models/command"
-	edperror "edp-admin-console/models/error"
-	"edp-admin-console/models/query"
-	"edp-admin-console/repository"
-	cbs "edp-admin-console/service/codebasebranch"
-	"edp-admin-console/service/logger"
-	"edp-admin-console/util"
-	"edp-admin-console/util/consts"
-	dberror "edp-admin-console/util/error/db-errors"
+	"ddm-admin-console/console"
+	"ddm-admin-console/k8s"
+	"ddm-admin-console/models"
+	"ddm-admin-console/models/command"
+	edperror "ddm-admin-console/models/error"
+	"ddm-admin-console/models/query"
+	"ddm-admin-console/repository"
+	cbs "ddm-admin-console/service/codebasebranch"
+	"ddm-admin-console/service/logger"
+	"ddm-admin-console/util"
+	"ddm-admin-console/util/consts"
+	dberror "ddm-admin-console/util/error/db-errors"
 	"fmt"
 	edpv1alpha1 "github.com/epmd-edp/codebase-operator/v2/pkg/apis/edp/v1alpha1"
 	"github.com/pkg/errors"
@@ -46,7 +46,7 @@ type CodebaseService struct {
 	Clients               k8s.ClientSet
 	ICodebaseRepository   repository.ICodebaseRepository
 	ICDPipelineRepository repository.ICDPipelineRepository
-	BranchService         cbs.CodebaseBranchService
+	BranchService         cbs.Service
 }
 
 func (s CodebaseService) CreateCodebase(codebase command.CreateCodebase) (*edpv1alpha1.Codebase, error) {
@@ -68,10 +68,10 @@ func (s CodebaseService) CreateCodebase(codebase command.CreateCodebase) (*edpv1
 		return nil, edperror.NewCodebaseAlreadyExistsError()
 	}
 
-	if s.findCodebaseByProjectPath(codebase.GitUrlPath) {
+	if s.findCodebaseByProjectPath(codebase.GitURLPath) {
 		clog.Info("Codebase with the same gitUrlPath already exists in DB",
-			zap.String("gitUrlPath", *codebase.GitUrlPath))
-		return nil, edperror.NewCodebaseWithGitUrlPathAlreadyExistsError()
+			zap.String("gitUrlPath", *codebase.GitURLPath))
+		return nil, edperror.NewCodebaseWithGitURLPathAlreadyExistsError()
 	}
 
 	edpClient := s.Clients.EDPRestClient
@@ -84,7 +84,7 @@ func (s CodebaseService) CreateCodebase(codebase command.CreateCodebase) (*edpv1
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       codebase.Name,
-			Namespace:  context.Namespace,
+			Namespace:  console.Namespace,
 			Finalizers: []string{"foregroundDeletion"},
 		},
 		Spec: convertData(codebase),
@@ -100,12 +100,12 @@ func (s CodebaseService) CreateCodebase(codebase command.CreateCodebase) (*edpv1
 	}
 	clog.Debug("CR was generated. Waiting to save ...", zap.String("name", c.Name))
 
-	if err := createTempSecrets(context.Namespace, codebase, coreClient); err != nil {
+	if err := createTempSecrets(console.Namespace, codebase, coreClient); err != nil {
 		return nil, err
 	}
 
 	result := &edpv1alpha1.Codebase{}
-	err = edpClient.Post().Namespace(context.Namespace).Resource(consts.CodebasePlural).Body(c).Do().Into(result)
+	err = edpClient.Post().Namespace(console.Namespace).Resource(consts.CodebasePlural).Body(c).Do().Into(result)
 	if err != nil {
 		clog.Error("an error has occurred while creating codebase resource in cluster", zap.Error(err))
 		return &edpv1alpha1.Codebase{}, err
@@ -159,7 +159,7 @@ func (s CodebaseService) ExistCodebaseAndBranch(cbName, brName string) bool {
 	return s.ICodebaseRepository.ExistCodebaseAndBranch(cbName, brName)
 }
 
-func createSecret(namespace string, secret *v1.Secret, coreClient *coreV1Client.CoreV1Client) (*v1.Secret, error) {
+func createSecret(namespace string, secret *v1.Secret, coreClient *coreV1Client.CoreV1Client) (*v1.Secret, error) { //nolint
 	createdSecret, err := coreClient.Secrets(namespace).Create(secret)
 	if err != nil {
 		clog.Error("an error has occurred while saving secret", zap.Error(err))
@@ -223,14 +223,14 @@ func convertData(codebase command.CreateCodebase) edpv1alpha1.CodebaseSpec {
 		CiTool:               codebase.CiTool,
 	}
 	if cs.Strategy == "import" {
-		cs.GitUrlPath = codebase.GitUrlPath
+		cs.GitUrlPath = codebase.GitURLPath
 	}
 	if codebase.Framework != nil {
 		cs.Framework = codebase.Framework
 	}
 	if codebase.Repository != nil {
 		cs.Repository = &edpv1alpha1.Repository{
-			Url: codebase.Repository.Url,
+			Url: codebase.Repository.URL,
 		}
 	}
 	if codebase.Route != nil {
@@ -275,8 +275,8 @@ func (s CodebaseService) CheckBranch(apps []models.CDPipelineApplicationCommand)
 	return true, nil
 }
 
-func (s CodebaseService) GetApplicationsToPromote(cdPipelineId int) ([]string, error) {
-	appsToPromote, err := s.ICodebaseRepository.SelectApplicationToPromote(cdPipelineId)
+func (s CodebaseService) GetApplicationsToPromote(cdPipelineID int) ([]string, error) {
+	appsToPromote, err := s.ICodebaseRepository.SelectApplicationToPromote(cdPipelineID)
 	if err != nil {
 		return nil, fmt.Errorf("an error has occurred while fetching Ids of applications which shoould be promoted: %v", err)
 	}
@@ -286,9 +286,9 @@ func (s CodebaseService) GetApplicationsToPromote(cdPipelineId int) ([]string, e
 func (s CodebaseService) selectApplicationNames(applicationsToPromote []*query.ApplicationsToPromote) ([]string, error) {
 	var result []string
 	for _, app := range applicationsToPromote {
-		codebase, err := s.ICodebaseRepository.GetCodebaseById(app.CodebaseId)
+		codebase, err := s.ICodebaseRepository.GetCodebaseByID(app.CodebaseID)
 		if err != nil {
-			return nil, fmt.Errorf("an error has occurred while fetching Codebase by Id %v: %v", app.CodebaseId, err)
+			return nil, fmt.Errorf("an error has occurred while fetching Codebase by ID %v: %v", app.CodebaseID, err)
 		}
 		result = append(result, codebase.Name)
 	}
@@ -303,7 +303,7 @@ func (s CodebaseService) Delete(name, codebaseType string) error {
 		return err
 	}
 	if cdp != nil {
-		p := strings.Join(cdp[:], ",")
+		p := strings.Join(cdp, ",")
 		return dberror.CodebaseIsUsedByCDPipeline{
 			Status:   dberror.StatusReasonCodebaseIsUsedByCDPipeline,
 			Message:  fmt.Sprintf("%v %v is used by %v CD Pipeline(s). couldn't delete.", codebaseType, name, p),
@@ -320,19 +320,20 @@ func (s CodebaseService) Delete(name, codebaseType string) error {
 }
 
 func (s CodebaseService) getCdPipelinesUsingCodebase(name, codebaseType string) ([]string, error) {
-	if consts.Application == codebaseType {
+	switch codebaseType {
+	case consts.Application:
 		cdp, err := s.ICDPipelineRepository.GetCDPipelinesUsingApplication(name)
 		if err != nil {
 			return nil, err
 		}
 		return cdp, nil
-	} else if consts.Autotest == codebaseType {
+	case consts.Autotest:
 		cdp, err := s.ICDPipelineRepository.GetCDPipelinesUsingAutotest(name)
 		if err != nil {
 			return nil, err
 		}
 		return cdp, nil
-	} else {
+	default:
 		cdp, err := s.ICDPipelineRepository.GetCDPipelinesUsingLibrary(name)
 		if err != nil {
 			return nil, err
@@ -345,7 +346,7 @@ func (s CodebaseService) deleteCodebase(name string) error {
 	clog.Debug("start executing codebase delete request", zap.String("codebase", name))
 	r := &edpv1alpha1.Codebase{}
 	err := s.Clients.EDPRestClient.Delete().
-		Namespace(context.Namespace).
+		Namespace(console.Namespace).
 		Resource(consts.CodebasePlural).
 		Name(name).
 		Do().Into(r)
@@ -395,7 +396,7 @@ func (s *CodebaseService) Update(command command.UpdateCodebaseCommand) (*edpv1a
 
 func (s *CodebaseService) executeUpdateRequest(c *edpv1alpha1.Codebase) error {
 	err := s.Clients.EDPRestClient.Put().
-		Namespace(context.Namespace).
+		Namespace(console.Namespace).
 		Resource("codebases").
 		Name(c.Name).
 		Body(c).

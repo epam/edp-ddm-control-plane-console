@@ -1,11 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>EDP Admin Console</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" href="{{ .BasePath }}/static/css/index.css">
+    {{template "template/head.html" .}}
     <link rel="stylesheet" href="{{ .BasePath }}/static/css/cd-pipeline.css">
     <link rel="stylesheet" href="{{ .BasePath }}/static/css/validation.css">
 </head>
@@ -18,9 +14,9 @@
         </aside>
         <div class="flex-fill pl-4 pr-4 wrapper">
 
-            <form class="edp-form" id="createCDCR" method="post" action="{{ .BasePath }}/admin/edp/cd-pipeline">
+            <form class="edp-form" id="createCDCR" method="post" action="{{ .BasePath }}/admin/cd-pipeline">
                 <h1 class="edp-form-header">
-                    <a href="{{ .BasePath }}/admin/edp/cd-pipeline/overview" class="edp-back-link"></a>
+                    <a href="{{ .BasePath }}/admin/cd-pipeline/overview" class="edp-back-link"></a>
                     Create CD Pipeline
                 </h1>
                 <p>Select which applications within this pipeline user wants to deploy.</p>

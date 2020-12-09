@@ -18,8 +18,8 @@ package filters
 
 import (
 	ctx "context"
-	appCtx "edp-admin-console/context"
-	"edp-admin-console/service/logger"
+	appCtx "ddm-admin-console/console"
+	"ddm-admin-console/service/logger"
 	"encoding/json"
 	bgCtx "github.com/astaxie/beego/context"
 	"github.com/coreos/go-oidc"
@@ -40,7 +40,7 @@ func AuthFilter(context *bgCtx.Context) {
 		startAuth(context)
 		return
 	}
-	ts := tsRaw.(oauth2.TokenSource)
+	ts, _ := tsRaw.(oauth2.TokenSource)
 	token, err := ts.Token()
 	if err != nil {
 		log.Debug("Token source presented in the session is not valid")
@@ -98,5 +98,5 @@ func getUserInfoFromToken(context *bgCtx.Context, token *oidc.IDToken, userKey s
 		log.Error("Error has been occurred during the parsing token", zap.Any("token", token))
 		context.Abort(200, "500")
 	}
-	return strings.Replace(string(*claim[userKey]), "\"", "", -1)
+	return strings.ReplaceAll(string(*claim[userKey]), "\"", "")
 }

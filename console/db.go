@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-package context
+package console
 
 import (
-	"edp-admin-console/models/query"
-	"edp-admin-console/service/logger"
+	"ddm-admin-console/models/query"
+	"ddm-admin-console/service/logger"
 	"fmt"
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
 	"github.com/golang-migrate/migrate"
 	"github.com/golang-migrate/migrate/database/postgres"
-	_ "github.com/golang-migrate/migrate/database/postgres"
-	_ "github.com/golang-migrate/migrate/source/file"
-	_ "github.com/lib/pq"
+	_ "github.com/golang-migrate/migrate/database/postgres" //nolint
+	_ "github.com/golang-migrate/migrate/source/file"       //nolint
+	_ "github.com/lib/pq"                                   //nolint
 	"go.uber.org/zap"
 )
 
@@ -56,6 +56,9 @@ func InitDb() {
 	db, err := orm.GetDB("default")
 	checkErr(err)
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
+	if err != nil {
+		log.Error("Cannot get postgres driver", zap.Error(err))
+	}
 	m, err := migrate.NewWithDatabaseInstance(
 		"file://db/migrations",
 		pgDatabase, driver)

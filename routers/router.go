@@ -17,22 +17,19 @@
 package routers
 
 import (
-	"edp-admin-console/context"
-	"edp-admin-console/controllers"
-	"edp-admin-console/controllers/auth"
-	cdPipeController "edp-admin-console/controllers/cd-pipeline"
-	"edp-admin-console/filters"
-	"edp-admin-console/k8s"
-	"edp-admin-console/repository"
-	edpComponentRepo "edp-admin-console/repository/edp-component"
-	jirarepo "edp-admin-console/repository/jira-server"
-	"edp-admin-console/service"
-	"edp-admin-console/service/cd_pipeline"
-	cbs "edp-admin-console/service/codebasebranch"
-	edpComponentService "edp-admin-console/service/edp-component"
-	jiraservice "edp-admin-console/service/jira-server"
-	"edp-admin-console/service/logger"
-	"edp-admin-console/util"
+	"ddm-admin-console/console"
+	"ddm-admin-console/controllers"
+	"ddm-admin-console/controllers/auth"
+	"ddm-admin-console/filters"
+	"ddm-admin-console/k8s"
+	"ddm-admin-console/repository"
+	edpComponentRepo "ddm-admin-console/repository/edp-component"
+	"ddm-admin-console/service"
+	"ddm-admin-console/service/cd_pipeline"
+	cbs "ddm-admin-console/service/codebasebranch"
+	edpComponentService "ddm-admin-console/service/edp-component"
+	"ddm-admin-console/service/logger"
+	"ddm-admin-console/util"
 	"fmt"
 
 	"github.com/astaxie/beego"
@@ -48,14 +45,11 @@ const (
 	testReportTools       = "testReportTools"
 	deploymentScript      = "deploymentScript"
 	ciTools               = "ciTools"
-
-	CreateStrategy = "Create"
 )
 
 func init() {
 	log.Info("Start application...",
-		zap.String("mode", beego.AppConfig.String("runmode")),
-		zap.String("edp version", context.EDPVersion))
+		zap.String("mode", beego.AppConfig.String("runmode")))
 	authEnabled, err := beego.AppConfig.Bool("keycloakAuthEnabled")
 	if err != nil {
 		log.Error("Cannot read property keycloakAuthEnabled. Set default: true", zap.Error(err))
@@ -63,14 +57,14 @@ func init() {
 	}
 
 	if authEnabled {
-		context.InitAuth()
-		beego.Router(fmt.Sprintf("%s/auth/callback", context.BasePath), &auth.AuthController{}, "get:Callback")
-		beego.InsertFilter(fmt.Sprintf("%s/admin/*", context.BasePath), beego.BeforeRouter, filters.AuthFilter)
-		beego.InsertFilter(fmt.Sprintf("%s/api/v1/edp/*", context.BasePath), beego.BeforeRouter, filters.AuthRestFilter)
-		beego.InsertFilter(fmt.Sprintf("%s/admin/edp/*", context.BasePath), beego.BeforeRouter, filters.RoleAccessControlFilter)
-		beego.InsertFilter(fmt.Sprintf("%s/api/v1/edp/*", context.BasePath), beego.BeforeRouter, filters.RoleAccessControlRestFilter)
+		console.InitAuth()
+		beego.Router(fmt.Sprintf("%s/auth/callback", console.BasePath), &auth.Controller{}, "get:Callback")
+		beego.InsertFilter(fmt.Sprintf("%s/admin/*", console.BasePath), beego.BeforeRouter, filters.AuthFilter)
+		beego.InsertFilter(fmt.Sprintf("%s/api/v1/*", console.BasePath), beego.BeforeRouter, filters.AuthRestFilter)
+		beego.InsertFilter(fmt.Sprintf("%s/admin/*", console.BasePath), beego.BeforeRouter, filters.RoleAccessControlFilter)
+		beego.InsertFilter(fmt.Sprintf("%s/api/v1/*", console.BasePath), beego.BeforeRouter, filters.RoleAccessControlRestFilter)
 	} else {
-		beego.InsertFilter(fmt.Sprintf("%s/*", context.BasePath), beego.BeforeRouter, filters.StubAuthFilter)
+		beego.InsertFilter(fmt.Sprintf("%s/*", console.BasePath), beego.BeforeRouter, filters.StubAuthFilter)
 	}
 
 	dbEnable, err := beego.AppConfig.Bool("dbEnabled")
@@ -80,7 +74,7 @@ func init() {
 	}
 
 	if dbEnable {
-		context.InitDb()
+		console.InitDb()
 	}
 
 	clients := k8s.CreateOpenShiftClients()
@@ -88,16 +82,12 @@ func init() {
 	branchRepository := repository.CodebaseBranchRepository{}
 	pipelineRepository := repository.CDPipelineRepository{}
 	serviceRepository := repository.ServiceCatalogRepository{}
-	gitServerRepository := repository.GitServerRepository{}
-	sr := repository.SlaveRepository{}
-	pr := repository.JobProvisioning{}
 	ecr := edpComponentRepo.EDPComponent{}
-	jsr := jirarepo.JiraServer{}
 
 	ecs := edpComponentService.EDPComponentService{IEDPComponent: ecr}
 	edpService := service.EDPTenantService{Clients: clients}
 	clusterService := service.ClusterService{Clients: clients}
-	branchService := cbs.CodebaseBranchService{
+	branchService := cbs.Service{
 		Clients:                  clients,
 		IReleaseBranchRepository: branchRepository,
 		ICDPipelineRepository:    pipelineRepository,
@@ -122,14 +112,15 @@ func init() {
 		EDPComponent:          ecs,
 	}
 	thirdPartyService := service.ThirdPartyService{IServiceCatalogRepository: serviceRepository}
-	gitServerService := service.GitServerService{IGitServerRepository: gitServerRepository}
-	ss := service.SlaveService{ISlaveRepository: sr}
-	ps := service.JobProvisioning{IJobProvisioningRepository: pr}
-	js := jiraservice.JiraServer{IJiraServer: jsr}
+
+	ec := controllers.EDPTenantController{
+		EDPTenantService: edpService,
+		EDPComponent:     ecs,
+	}
 
 	beego.ErrorController(&controllers.ErrorController{})
-	beego.Router(fmt.Sprintf("%s/", context.BasePath), &controllers.MainController{EDPTenantService: edpService}, "get:Index")
-	beego.SetStaticPath(fmt.Sprintf("%s/static", context.BasePath), "static")
+	beego.Router(fmt.Sprintf("%s/", console.BasePath), &ec, "get:GetEDPComponents")
+	beego.SetStaticPath(fmt.Sprintf("%s/static", console.BasePath), "static")
 
 	integrationStrategies := util.GetValuesFromConfig(integrationStrategies)
 	if integrationStrategies == nil {
@@ -164,84 +155,8 @@ func init() {
 	is := make([]string, len(integrationStrategies))
 	copy(is, integrationStrategies)
 
-	appc := controllers.ApplicationController{
-		CodebaseService:  codebaseService,
-		EDPTenantService: edpService,
-		BranchService:    branchService,
-		GitServerService: gitServerService,
-		SlaveService:     ss,
-		JobProvisioning:  ps,
-		JiraServer:       js,
-
-		IntegrationStrategies: is,
-		BuildTools:            buildTools,
-		VersioningTypes:       vt,
-		DeploymentScript:      ds,
-		CiTools:               ciTools,
-	}
-
 	autis := make([]string, len(integrationStrategies))
 	copy(autis, integrationStrategies)
-
-	autc := controllers.AutotestsController{
-		EDPTenantService: edpService,
-		CodebaseService:  codebaseService,
-		BranchService:    branchService,
-		GitServerService: gitServerService,
-		SlaveService:     ss,
-		JobProvisioning:  ps,
-		JiraServer:       js,
-
-		IntegrationStrategies: util.RemoveElByValue(autis, CreateStrategy),
-		BuildTools:            buildTools,
-		VersioningTypes:       vt,
-		TestReportTools:       testReportTools,
-		DeploymentScript:      ds,
-		CiTools:               ciTools,
-	}
-
-	lc := controllers.LibraryController{
-		EDPTenantService: edpService,
-		CodebaseService:  codebaseService,
-		GitServerService: gitServerService,
-		SlaveService:     ss,
-		JobProvisioning:  ps,
-		JiraServer:       js,
-
-		IntegrationStrategies: is,
-		BuildTools:            buildTools,
-		VersioningTypes:       vt,
-		DeploymentScript:      ds,
-		CiTools:               ciTools,
-	}
-
-	ec := controllers.EDPTenantController{
-		EDPTenantService: edpService,
-		EDPComponent:     ecs,
-	}
-
-	cc := controllers.CodebaseController{
-		CodebaseService:  codebaseService,
-		EDPTenantService: edpService,
-		BranchService:    branchService,
-		GitServerService: gitServerService,
-		EDPComponent:     ecs,
-	}
-
-	cpc := cdPipeController.CDPipelineController{
-		CodebaseService:   codebaseService,
-		PipelineService:   pipelineService,
-		EDPTenantService:  edpService,
-		BranchService:     branchService,
-		ThirdPartyService: thirdPartyService,
-		EDPComponent:      ecs,
-		JobProvisioning:   ps,
-	}
-
-	cbc := controllers.BranchController{
-		BranchService:   branchService,
-		CodebaseService: codebaseService,
-	}
 
 	tpsc := controllers.ThirdPartyServiceController{
 		ThirdPartyService: thirdPartyService,
@@ -252,34 +167,8 @@ func init() {
 		PipelineService: pipelineService,
 	}
 
-	adminEdpNamespace := beego.NewNamespace(fmt.Sprintf("%s/admin/edp", context.BasePath),
+	adminEdpNamespace := beego.NewNamespace(fmt.Sprintf("%s/admin/edp", console.BasePath),
 		beego.NSRouter("/overview", &ec, "get:GetEDPComponents"),
-		beego.NSRouter("/application/overview", &appc, "get:GetApplicationsOverviewPage"),
-		beego.NSRouter("/application/create", &appc, "get:GetCreateApplicationPage"),
-		beego.NSRouter("/application", &appc, "post:CreateApplication"),
-
-		beego.NSRouter("/cd-pipeline/overview", &cpc, "get:GetContinuousDeliveryPage"),
-		beego.NSRouter("/cd-pipeline/create", &cpc, "get:GetCreateCDPipelinePage"),
-		beego.NSRouter("/cd-pipeline/:name/update", &cpc, "get:GetEditCDPipelinePage"),
-		beego.NSRouter("/cd-pipeline", &cpc, "post:CreateCDPipeline"),
-		beego.NSRouter("/cd-pipeline/:name/update", &cpc, "post:UpdateCDPipeline"),
-		beego.NSRouter("/cd-pipeline/:pipelineName/overview", &cpc, "get:GetCDPipelineOverviewPage"),
-		beego.NSRouter("/autotest/overview", &autc, "get:GetAutotestsOverviewPage"),
-		beego.NSRouter("/autotest/create", &autc, "get:GetCreateAutotestsPage"),
-		beego.NSRouter("/autotest", &autc, "post:CreateAutotests"),
-
-		beego.NSRouter("/codebase/:codebaseName/overview", &cc, "get:GetCodebaseOverviewPage"),
-		beego.NSRouter("/codebase", &cc, "post:Delete"),
-		beego.NSRouter("/codebase/branch/delete", &cbc, "post:Delete"),
-		beego.NSRouter("/codebase/:name/update", &cc, "get:GetEditCodebasePage"),
-		beego.NSRouter("/codebase/:name/update", &cc, "post:Update"),
-		beego.NSRouter("/stage", &cpc, "post:DeleteCDStage"),
-		beego.NSRouter("/cd-pipeline/delete", &cpc, "post:DeleteCDPipeline"),
-		beego.NSRouter("/codebase/:codebaseName/branch", &cbc, "post:CreateCodebaseBranch"),
-
-		beego.NSRouter("/library/overview", &lc, "get:GetLibraryListPage"),
-		beego.NSRouter("/library/create", &lc, "get:GetCreatePage"),
-		beego.NSRouter("/library", &lc, "post:Create"),
 
 		beego.NSRouter("/service/overview", &tpsc, "get:GetServicePage"),
 
@@ -287,21 +176,7 @@ func init() {
 	)
 	beego.AddNamespace(adminEdpNamespace)
 
-	apiV1EdpNamespace := beego.NewNamespace(fmt.Sprintf("%s/api/v1/edp", context.BasePath),
-		beego.NSRouter("/codebase", &controllers.CodebaseRestController{CodebaseService: codebaseService}, "post:CreateCodebase"),
-		beego.NSRouter("/codebase", &controllers.CodebaseRestController{CodebaseService: codebaseService}, "get:GetCodebases"),
-		beego.NSRouter("/codebase/:codebaseName", &controllers.CodebaseRestController{CodebaseService: codebaseService}, "get:GetCodebase"),
-		beego.NSRouter("/vcs", &ec, "get:GetVcsIntegrationValue"),
-		beego.NSRouter("/cd-pipeline/:name", &controllers.CDPipelineRestController{CDPipelineService: pipelineService}, "get:GetCDPipelineByName"),
-		beego.NSRouter("/cd-pipeline/:pipelineName/stage/:stageName", &controllers.CDPipelineRestController{CDPipelineService: pipelineService}, "get:GetStage"),
-		beego.NSRouter("/cd-pipeline", &controllers.CDPipelineRestController{CDPipelineService: pipelineService}, "post:CreateCDPipeline"),
-		beego.NSRouter("/cd-pipeline/:name", &controllers.CDPipelineRestController{CDPipelineService: pipelineService}, "put:UpdateCDPipeline"),
-		beego.NSRouter("/codebase", &controllers.CodebaseRestController{CodebaseService: codebaseService}, "delete:Delete"),
-		beego.NSRouter("/stage", &controllers.CDPipelineRestController{CDPipelineService: pipelineService}, "delete:DeleteCDStage"),
-	)
-	beego.AddNamespace(apiV1EdpNamespace)
-
-	apiV1Namespace := beego.NewNamespace(fmt.Sprintf("%s/api/v1", context.BasePath),
+	apiV1Namespace := beego.NewNamespace(fmt.Sprintf("%s/api/v1", console.BasePath),
 		beego.NSRouter("/storage-class", &controllers.OpenshiftRestController{ClusterService: clusterService}, "get:GetAllStorageClasses"),
 		beego.NSRouter("/repository/available", &controllers.RepositoryRestController{}, "post:IsGitRepoAvailable"),
 	)

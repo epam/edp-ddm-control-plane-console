@@ -9,7 +9,7 @@ RUN addgroup --gid ${USER_UID} ${USER_NAME} \
 
 WORKDIR /go/bin
 
-COPY edp-admin-console .
+COPY ddm-admin-console .
 COPY static static
 COPY views views
 COPY conf conf
@@ -17,4 +17,4 @@ COPY db db
 
 USER ${USER_UID}
 
-ENTRYPOINT ["edp-admin-console"]
+ENTRYPOINT ["ddm-admin-console"]

@@ -1,7 +1,7 @@
 package query
 
 type CDPipeline struct {
-	Id                    int                                                     `json:"id" orm:"column(id)"`
+	ID                    int                                                     `json:"id" orm:"column(id)"`
 	Name                  string                                                  `json:"name" orm:"column(name)"`
 	Status                string                                                  `json:"status" orm:"column(status)"`
 	JenkinsLink           string                                                  `json:"jenkinsLink" orm:"-"`
@@ -34,6 +34,6 @@ type CDPipelineCriteria struct {
 	Status Status
 }
 
-func (cb *CDPipeline) TableName() string {
+func (c *CDPipeline) TableName() string {
 	return "cd_pipeline"
 }

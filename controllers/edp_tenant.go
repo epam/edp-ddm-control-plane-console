@@ -17,9 +17,9 @@
 package controllers
 
 import (
-	"edp-admin-console/context"
-	"edp-admin-console/service"
-	ec "edp-admin-console/service/edp-component"
+	"ddm-admin-console/console"
+	"ddm-admin-console/service"
+	ec "ddm-admin-console/service/edp-component"
 	"github.com/astaxie/beego"
 	"net/http"
 	"strings"
@@ -39,28 +39,28 @@ func (c *EDPTenantController) GetEDPComponents() {
 	}
 
 	c.Data["Username"] = c.Ctx.Input.Session("username")
-	c.Data["InputURL"] = strings.TrimSuffix(c.Ctx.Input.URL(), "/"+context.Tenant)
-	c.Data["EDPTenantName"] = context.Tenant
-	c.Data["EDPVersion"] = context.EDPVersion
+	c.Data["InputURL"] = strings.TrimSuffix(c.Ctx.Input.URL(), "/"+console.Tenant)
+	c.Data["EDPTenantName"] = console.Tenant
+	c.Data["EDPVersion"] = console.EDPVersion
 	c.Data["EDPComponents"] = comp
 	c.Data["Type"] = "overview"
-	c.Data["BasePath"] = context.BasePath
-	c.Data["DiagramPageEnabled"] = context.DiagramPageEnabled
+	c.Data["BasePath"] = console.BasePath
+	c.Data["DiagramPageEnabled"] = console.DiagramPageEnabled
 	c.TplName = "edp_components.html"
 }
 
-func (this *EDPTenantController) GetVcsIntegrationValue() {
-	isVcsEnabled, err := this.EDPTenantService.GetVcsIntegrationValue()
+func (c *EDPTenantController) GetVcsIntegrationValue() {
+	isVcsEnabled, err := c.EDPTenantService.GetVcsIntegrationValue()
 
 	if err != nil {
 		if err.Error() == "NOT_FOUND" {
-			http.Error(this.Ctx.ResponseWriter, err.Error(), http.StatusNotFound)
+			http.Error(c.Ctx.ResponseWriter, err.Error(), http.StatusNotFound)
 			return
 		}
-		http.Error(this.Ctx.ResponseWriter, err.Error(), http.StatusInternalServerError)
+		http.Error(c.Ctx.ResponseWriter, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	this.Data["json"] = isVcsEnabled
-	this.ServeJSON()
+	c.Data["json"] = isVcsEnabled
+	c.ServeJSON()
 }

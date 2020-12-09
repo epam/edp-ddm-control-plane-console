@@ -17,7 +17,7 @@
 package repository
 
 import (
-	"edp-admin-console/models/query"
+	"ddm-admin-console/models/query"
 
 	"github.com/astaxie/beego/orm"
 )
@@ -25,10 +25,10 @@ import (
 type ICodebaseRepository interface {
 	GetCodebasesByCriteria(criteria query.CodebaseCriteria) ([]*query.Codebase, error)
 	GetCodebaseByName(name string) (*query.Codebase, error)
-	GetCodebaseById(id int) (*query.Codebase, error)
+	GetCodebaseByID(id int) (*query.Codebase, error)
 	ExistActiveBranch(dockerStreamName string) (bool, error)
 	ExistCodebaseAndBranch(cbName, brName string) bool
-	SelectApplicationToPromote(cdPipelineId int) ([]*query.ApplicationsToPromote, error)
+	SelectApplicationToPromote(id int) ([]*query.ApplicationsToPromote, error)
 	FindCodebaseByName(name string) bool
 	FindCodebaseByProjectPath(gitProjectPath *string) bool
 }
@@ -81,20 +81,20 @@ func (CodebaseRepository) GetCodebasesByCriteria(criteria query.CodebaseCriteria
 			}
 		}
 
-		if c.GitServerId != nil {
+		if c.GitServerID != nil {
 			err = loadRelatedGitServerName(c)
 			if err != nil {
 				return nil, err
 			}
 		}
 
-		if c.JiraServerId != nil {
+		if c.JiraServerID != nil {
 			if err := loadRelatedJiraServerName(c); err != nil {
 				return nil, err
 			}
 		}
 
-		if c.JenkinsSlaveId != nil {
+		if c.JenkinsSlaveID != nil {
 			err := loadRelatedJenkinsSlaveName(c)
 			if err != nil {
 				return nil, err
@@ -138,27 +138,27 @@ func (CodebaseRepository) GetCodebaseByName(name string) (*query.Codebase, error
 		return nil, err
 	}
 
-	if codebase.GitServerId != nil {
+	if codebase.GitServerID != nil {
 		err = loadRelatedGitServerName(&codebase)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	if codebase.JiraServerId != nil {
+	if codebase.JiraServerID != nil {
 		if err := loadRelatedJiraServerName(&codebase); err != nil {
 			return nil, err
 		}
 	}
 
-	if codebase.JenkinsSlaveId != nil {
+	if codebase.JenkinsSlaveID != nil {
 		err = loadRelatedJenkinsSlaveName(&codebase)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	if codebase.JobProvisioningId != nil {
+	if codebase.JobProvisioningID != nil {
 		err = loadRelatedJobProvisioner(&codebase)
 		if err != nil {
 			return nil, err
@@ -168,11 +168,11 @@ func (CodebaseRepository) GetCodebaseByName(name string) (*query.Codebase, error
 	return &codebase, nil
 }
 
-func (CodebaseRepository) GetCodebaseById(id int) (*query.Codebase, error) {
+func (CodebaseRepository) GetCodebaseByID(id int) (*query.Codebase, error) {
 	o := orm.NewOrm()
-	codebase := query.Codebase{Id: id}
+	codebase := query.Codebase{ID: id}
 
-	err := o.Read(&codebase, "Id")
+	err := o.Read(&codebase, "ID")
 
 	if err == orm.ErrNoRows {
 		return nil, nil
@@ -192,20 +192,20 @@ func (CodebaseRepository) GetCodebaseById(id int) (*query.Codebase, error) {
 		return nil, err
 	}
 
-	if codebase.GitServerId != nil {
+	if codebase.GitServerID != nil {
 		err = loadRelatedGitServerName(&codebase)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	if codebase.JiraServerId != nil {
+	if codebase.JiraServerID != nil {
 		if err := loadRelatedJiraServerName(&codebase); err != nil {
 			return nil, err
 		}
 	}
 
-	if codebase.JenkinsSlaveId != nil {
+	if codebase.JenkinsSlaveID != nil {
 		err = loadRelatedJenkinsSlaveName(&codebase)
 		if err != nil {
 			return nil, err
@@ -219,7 +219,7 @@ func loadRelatedActionLog(codebase *query.Codebase) error {
 	o := orm.NewOrm()
 
 	_, err := o.QueryTable(new(query.ActionLog)).
-		Filter("codebase__codebase_id", codebase.Id).
+		Filter("codebase__codebase_id", codebase.ID).
 		OrderBy("LastTimeUpdate").
 		Distinct().
 		All(&codebase.ActionLog, "LastTimeUpdate", "UserName",
@@ -237,9 +237,9 @@ func loadRelatedCodebaseBranch(codebase *query.Codebase, status query.Status) er
 		qs = qs.Filter("status", status)
 	}
 
-	_, err := qs.Filter("codebase_id", codebase.Id).
+	_, err := qs.Filter("codebase_id", codebase.ID).
 		OrderBy("Name").
-		All(&codebase.CodebaseBranch, "Id", "Name", "FromCommit", "Status")
+		All(&codebase.CodebaseBranch, "ID", "Name", "FromCommit", "Status")
 
 	return err
 }
@@ -250,8 +250,8 @@ func loadRelatedCodebaseDockerStream(branches []*query.CodebaseBranch) error {
 	for _, branch := range branches {
 		qs := o.QueryTable(new(query.CodebaseDockerStream))
 
-		_, err := qs.Filter("codebase_branch_id", branch.Id).
-			All(&branch.CodebaseDockerStream, "Id", "OcImageStreamName")
+		_, err := qs.Filter("codebase_branch_id", branch.ID).
+			All(&branch.CodebaseDockerStream, "ID", "OcImageStreamName")
 		if err != nil {
 			return err
 		}
@@ -276,7 +276,7 @@ func loadRelatedGitServerName(codebase *query.Codebase) error {
 
 	server := query.GitServer{}
 	err := o.QueryTable(new(query.GitServer)).
-		Filter("id", codebase.GitServerId).
+		Filter("id", codebase.GitServerID).
 		One(&server)
 	if err != nil {
 		return err
@@ -291,7 +291,7 @@ func loadRelatedJiraServerName(codebase *query.Codebase) error {
 	o := orm.NewOrm()
 	server := query.JiraServer{}
 	err := o.QueryTable(new(query.JiraServer)).
-		Filter("id", codebase.JiraServerId).
+		Filter("id", codebase.JiraServerID).
 		One(&server)
 	if err != nil {
 		return err
@@ -305,7 +305,7 @@ func loadRelatedJenkinsSlaveName(c *query.Codebase) error {
 
 	s := query.JenkinsSlave{}
 	err := o.QueryTable(new(query.JenkinsSlave)).
-		Filter("id", c.JenkinsSlaveId).
+		Filter("id", c.JenkinsSlaveID).
 		One(&s)
 	if err != nil {
 		return err
@@ -321,7 +321,7 @@ func loadRelatedJobProvisioner(c *query.Codebase) error {
 
 	s := query.JobProvisioning{}
 	err := o.QueryTable(new(query.JobProvisioning)).
-		Filter("id", c.JobProvisioningId).
+		Filter("id", c.JobProvisioningID).
 		One(&s)
 	if err != nil {
 		return err
@@ -357,12 +357,12 @@ func (CodebaseRepository) ExistCodebaseAndBranch(cbName, brName string) bool {
 		Exist()
 }
 
-func (CodebaseRepository) SelectApplicationToPromote(cdPipelineId int) ([]*query.ApplicationsToPromote, error) {
+func (CodebaseRepository) SelectApplicationToPromote(id int) ([]*query.ApplicationsToPromote, error) {
 	o := orm.NewOrm()
 	var applicationsToPromote []*query.ApplicationsToPromote
 
 	_, err := o.QueryTable(new(query.ApplicationsToPromote)).
-		Filter("cd_pipeline_id", cdPipelineId).All(&applicationsToPromote)
+		Filter("cd_pipeline_id", id).All(&applicationsToPromote)
 
 	return applicationsToPromote, err
 }

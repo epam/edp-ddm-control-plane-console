@@ -2,10 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>EDP Admin Console</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" href="{{ .BasePath }}/static/css/index.css">
+    {{template "template/head.html" .}}
     <link rel="stylesheet" href="{{ .BasePath }}/static/css/validation.css">
 </head>
 <body>
@@ -17,9 +14,9 @@
         </aside>
         <div class="flex-fill pl-4 pr-4 wrapper">
 
-            <form class="edp-form" id="createAutotest" method="post" action="{{ .BasePath }}/admin/edp/autotest">
+            <form class="edp-form" id="createAutotest" method="post" action="{{ .BasePath }}/admin/autotest">
                 <h1 class="edp-form-header">
-                    <a href="{{ .BasePath }}/admin/edp/autotest/overview" class="edp-back-link"></a>
+                    <a href="{{ .BasePath }}/admin/autotest/overview" class="edp-back-link"></a>
                     Create Autotest
                 </h1>
                 <p>

@@ -1,7 +1,7 @@
 package mock
 
 import (
-	"edp-admin-console/models/query"
+	"ddm-admin-console/models/query"
 	"github.com/stretchr/testify/mock"
 )
 

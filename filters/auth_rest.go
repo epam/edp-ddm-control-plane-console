@@ -18,7 +18,7 @@ package filters
 
 import (
 	ctx "context"
-	appCtx "edp-admin-console/context"
+	appCtx "ddm-admin-console/console"
 	bgCtx "github.com/astaxie/beego/context"
 	"go.uber.org/zap"
 	"net/http"
@@ -64,7 +64,7 @@ func tryToRemoveBearerPrefix(token string) (string, error) {
 	}
 
 	if isMatched {
-		return strings.Replace(token, "Bearer", "", -1), nil
+		return strings.ReplaceAll(token, "Bearer", ""), nil
 	}
 	return token, nil
 }

@@ -17,15 +17,15 @@
 package codebasebranch
 
 import (
-	"edp-admin-console/context"
-	"edp-admin-console/k8s"
-	"edp-admin-console/models/command"
-	"edp-admin-console/models/query"
-	"edp-admin-console/repository"
-	"edp-admin-console/service/logger"
-	"edp-admin-console/util"
-	"edp-admin-console/util/consts"
-	dberror "edp-admin-console/util/error/db-errors"
+	"ddm-admin-console/console"
+	"ddm-admin-console/k8s"
+	"ddm-admin-console/models/command"
+	"ddm-admin-console/models/query"
+	"ddm-admin-console/repository"
+	"ddm-admin-console/service/logger"
+	"ddm-admin-console/util"
+	"ddm-admin-console/util/consts"
+	dberror "ddm-admin-console/util/error/db-errors"
 	"fmt"
 	edpv1alpha1 "github.com/epmd-edp/codebase-operator/v2/pkg/apis/edp/v1alpha1"
 	"github.com/pkg/errors"
@@ -40,7 +40,7 @@ import (
 
 var log = logger.GetLogger()
 
-type CodebaseBranchService struct {
+type Service struct {
 	Clients                  k8s.ClientSet
 	IReleaseBranchRepository repository.ICodebaseBranchRepository
 	ICDPipelineRepository    repository.ICDPipelineRepository
@@ -48,14 +48,14 @@ type CodebaseBranchService struct {
 	CodebaseBranchValidation map[string]func(string, string) ([]string, error)
 }
 
-func (s *CodebaseBranchService) CreateCodebaseBranch(branchInfo command.CreateCodebaseBranch, appName string) (*edpv1alpha1.CodebaseBranch, error) {
+func (s *Service) CreateCodebaseBranch(branchInfo command.CreateCodebaseBranch, appName string) (*edpv1alpha1.CodebaseBranch, error) {
 	log.Debug("start creating CodebaseBranch CR",
 		zap.String("codebase", appName), zap.String("branch", branchInfo.Name))
 	edpRestClient := s.Clients.EDPRestClient
 
 	cb := util.ProcessNameToKubernetesConvention(branchInfo.Name)
 
-	releaseBranchCR, err := getReleaseBranchCR(edpRestClient, cb, appName, context.Namespace)
+	releaseBranchCR, err := getReleaseBranchCR(edpRestClient, cb, appName, console.Namespace)
 	if err != nil {
 		return nil, errors.Wrapf(err, "an error has occurred while getting %v CodebaseBranch CR from cluster", cb)
 	}
@@ -76,7 +76,7 @@ func (s *CodebaseBranchService) CreateCodebaseBranch(branchInfo command.CreateCo
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-%s", appName, cb),
-			Namespace: context.Namespace,
+			Namespace: console.Namespace,
 			OwnerReferences: []metav1.OwnerReference{
 				{
 					APIVersion:         "v2.edp.epam.com/v1alpha1",
@@ -107,7 +107,7 @@ func (s *CodebaseBranchService) CreateCodebaseBranch(branchInfo command.CreateCo
 	}
 
 	result := &edpv1alpha1.CodebaseBranch{}
-	err = edpRestClient.Post().Namespace(context.Namespace).Resource("codebasebranches").Body(branch).Do().Into(result)
+	err = edpRestClient.Post().Namespace(console.Namespace).Resource("codebasebranches").Body(branch).Do().Into(result)
 	if err != nil {
 		return &edpv1alpha1.CodebaseBranch{}, errors.Wrap(err, "an error has occurred while creating CodebaseBranch CR in cluster")
 	}
@@ -119,12 +119,12 @@ func newTrue() *bool {
 	return &b
 }
 
-func (s *CodebaseBranchService) UpdateCodebaseBranch(appName, branchName string, version *string) error {
+func (s *Service) UpdateCodebaseBranch(appName, branchName string, version *string) error {
 	log.Debug("start updating CodebaseBranch CR",
 		zap.String("version", *version),
 		zap.String("branch", branchName))
 	edpRestClient := s.Clients.EDPRestClient
-	br, err := getReleaseBranchCR(edpRestClient, branchName, appName, context.Namespace)
+	br, err := getReleaseBranchCR(edpRestClient, branchName, appName, console.Namespace)
 	if err != nil {
 		return err
 	}
@@ -136,7 +136,7 @@ func (s *CodebaseBranchService) UpdateCodebaseBranch(appName, branchName string,
 	}
 
 	err = edpRestClient.Patch(types.MergePatchType).
-		Namespace(context.Namespace).
+		Namespace(console.Namespace).
 		Resource(consts.CodebaseBranchPlural).
 		Name(fmt.Sprintf("%v-%v", appName, branchName)).
 		Body(bytes).
@@ -151,7 +151,7 @@ func (s *CodebaseBranchService) UpdateCodebaseBranch(appName, branchName string,
 	return nil
 }
 
-func (s *CodebaseBranchService) GetCodebaseBranchesByCriteria(criteria query.CodebaseBranchCriteria) ([]query.CodebaseBranch, error) {
+func (s *Service) GetCodebaseBranchesByCriteria(criteria query.CodebaseBranchCriteria) ([]query.CodebaseBranch, error) {
 	codebaseBranches, err := s.IReleaseBranchRepository.GetCodebaseBranchesByCriteria(criteria)
 	if err != nil {
 		return nil, errors.Wrap(err, "an error has occurred while getting branch entities")
@@ -175,7 +175,7 @@ func getReleaseBranchCR(edpRestClient *rest.RESTClient, branchName string, appNa
 	return result, nil
 }
 
-func (s *CodebaseBranchService) Delete(codebase, branch string) error {
+func (s *Service) Delete(codebase, branch string) error {
 	log.Debug("start executing service codebase branch delete method",
 		zap.String("name", codebase),
 		zap.String("branch", branch))
@@ -193,7 +193,7 @@ func (s *CodebaseBranchService) Delete(codebase, branch string) error {
 	return nil
 }
 
-func (s *CodebaseBranchService) canCodebaseBranchBeDeleted(codebase, branch string) error {
+func (s *Service) canCodebaseBranchBeDeleted(codebase, branch string) error {
 	c, err := s.ICodebaseRepository.GetCodebaseByName(codebase)
 	if err != nil {
 		return err
@@ -211,10 +211,10 @@ func (s *CodebaseBranchService) canCodebaseBranchBeDeleted(codebase, branch stri
 	return nil
 }
 
-func (s *CodebaseBranchService) deleteCodebaseBranch(name string) error {
+func (s *Service) deleteCodebaseBranch(name string) error {
 	cb := &edpv1alpha1.CodebaseBranch{}
 	err := s.Clients.EDPRestClient.Delete().
-		Namespace(context.Namespace).
+		Namespace(console.Namespace).
 		Resource(consts.CodebaseBranchPlural).
 		Name(name).
 		Do().Into(cb)

@@ -1,11 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>EDP Admin Console</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" href="{{ .BasePath }}/static/css/index.css">
+    {{template "template/head.html" .}}
+
     <link rel="stylesheet" href="{{ .BasePath }}/static/css/cd-pipeline-list.css">
 </head>
 <body>
@@ -37,7 +34,7 @@
                 {{if .HasRights}}
                     <div class="flex-fill">
                         <div class="float-right">
-                            <a href="{{ .BasePath }}/admin/edp/cd-pipeline/create">
+                            <a href="{{ .BasePath }}/admin/cd-pipeline/create">
                                 <button class="btn btn-success" {{if not .ActiveApplicationsAndBranches}}disabled{{end}}>Create</button>
                             </a>
                         </div>
@@ -65,7 +62,7 @@
                                              alt="" style="width:25px; height:25px;">
                                     </td>
                                     <td class="cd-pipeline-name">
-                                        <a href="{{ $.BasePath }}/admin/edp/cd-pipeline/{{.Name}}/overview"
+                                        <a href="{{ $.BasePath }}/admin/cd-pipeline/{{.Name}}/overview"
                                            class="{{if ne .Status "active"}}disabled{{end}}">{{.Name}}</a>
                                     </td>
                                     <td>
@@ -74,7 +71,7 @@
                                            class="edp-link {{if ne .Status "active"}}disabled{{end}}">Link</a>
                                     </td>
                                     <td>
-                                        <a href="{{ $.BasePath }}/admin/edp/cd-pipeline/{{.Name}}/update"
+                                        <a href="{{ $.BasePath }}/admin/cd-pipeline/{{.Name}}/update"
                                             class="{{if ne .Status "active"}}disabled{{end}}">
                                             <button class="delete">
                                                 <i class="icon-pencil"></i>
@@ -102,7 +99,7 @@
     {{template "template/footer_template.html" .}}
     {{template "template/modal_success_template.html" .}}
 </main>
-{{template "template/delete_confirmation_template.html" params "action" (print .BasePath "/admin/edp/cd-pipeline/delete") "kind" "cd-pipeline" "xsrfdata" .xsrfdata "error" .Error}}
+{{template "template/delete_confirmation_template.html" params "action" (print .BasePath "/admin/cd-pipeline/delete") "kind" "cd-pipeline" "xsrfdata" .xsrfdata "error" .Error}}
 <script src="{{ .BasePath }}/static/js/jquery-3.3.1.js"></script>
 <script src="{{ .BasePath }}/static/js/popper.js"></script>
 <script src="{{ .BasePath }}/static/js/bootstrap.js"></script>

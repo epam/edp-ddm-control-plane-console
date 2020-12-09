@@ -14,23 +14,23 @@
  * limitations under the License.
  */
 
-package cd_pipeline
+package cd_pipeline //nolint
 
 import (
-	"edp-admin-console/context"
-	"edp-admin-console/k8s"
-	"edp-admin-console/models"
-	"edp-admin-console/models/command"
-	edperror "edp-admin-console/models/error"
-	"edp-admin-console/models/query"
-	"edp-admin-console/repository"
-	"edp-admin-console/service"
-	cbs "edp-admin-console/service/codebasebranch"
-	ec "edp-admin-console/service/edp-component"
-	"edp-admin-console/service/logger"
-	"edp-admin-console/service/platform"
-	"edp-admin-console/util/consts"
-	dberror "edp-admin-console/util/error/db-errors"
+	"ddm-admin-console/console"
+	"ddm-admin-console/k8s"
+	"ddm-admin-console/models"
+	"ddm-admin-console/models/command"
+	edperror "ddm-admin-console/models/error"
+	"ddm-admin-console/models/query"
+	"ddm-admin-console/repository"
+	"ddm-admin-console/service"
+	cbs "ddm-admin-console/service/codebasebranch"
+	ec "ddm-admin-console/service/edp-component"
+	"ddm-admin-console/service/logger"
+	"ddm-admin-console/service/platform"
+	"ddm-admin-console/util/consts"
+	dberror "ddm-admin-console/util/error/db-errors"
 	"fmt"
 	openshiftAPi "github.com/openshift/api/apps/v1"
 	v1 "k8s.io/api/apps/v1"
@@ -51,7 +51,7 @@ type CDPipelineService struct {
 	Clients               k8s.ClientSet
 	ICDPipelineRepository repository.ICDPipelineRepository
 	CodebaseService       service.CodebaseService
-	BranchService         cbs.CodebaseBranchService
+	BranchService         cbs.Service
 	EDPComponent          ec.EDPComponentService
 }
 
@@ -101,7 +101,7 @@ func (s *CDPipelineService) CreatePipeline(cdPipeline command.CDPipelineCommand)
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      cdPipeline.Name,
-			Namespace: context.Namespace,
+			Namespace: console.Namespace,
 		},
 		Spec: convertPipelineData(cdPipeline),
 		Status: edppipelinesv1alpha1.CDPipelineStatus{
@@ -117,7 +117,7 @@ func (s *CDPipelineService) CreatePipeline(cdPipeline command.CDPipelineCommand)
 
 	cdPipelineCr := &edppipelinesv1alpha1.CDPipeline{}
 	err = edpRestClient.Post().
-		Namespace(context.Namespace).
+		Namespace(console.Namespace).
 		Resource("cdpipelines").
 		Body(crd).
 		Do().Into(cdPipelineCr)
@@ -160,7 +160,7 @@ func (s *CDPipelineService) GetCDPipelineByName(pipelineName string) (*query.CDP
 			cdPipeline.CodebaseStageMatrix = matrix
 		}
 
-		applicationsToPromote, err := s.CodebaseService.GetApplicationsToPromote(cdPipeline.Id)
+		applicationsToPromote, err := s.CodebaseService.GetApplicationsToPromote(cdPipeline.ID)
 		if err != nil {
 			return nil, errors.Wrapf(err, "an error has occurred while getting Applications To Promote for CD Pipeline %v",
 				"pipe id %v")
@@ -243,7 +243,7 @@ func (s *CDPipelineService) UpdatePipeline(pipeline command.CDPipelineCommand) e
 	edpRestClient := s.Clients.EDPRestClient
 
 	err = edpRestClient.Put().
-		Namespace(context.Namespace).
+		Namespace(console.Namespace).
 		Resource("cdpipelines").
 		Name(pipelineCR.Spec.Name).
 		Body(pipelineCR).
@@ -277,7 +277,7 @@ func (s *CDPipelineService) GetStage(cdPipelineName, stageName string) (*models.
 		return nil, nil
 	}
 
-	gates, err := s.ICDPipelineRepository.GetQualityGates(stage.Id)
+	gates, err := s.ICDPipelineRepository.GetQualityGates(stage.ID)
 	if err != nil {
 		return nil, errors.Wrap(err, "an error has occurred while fetching Quality Gates from DB")
 	}
@@ -289,7 +289,7 @@ func (s *CDPipelineService) GetStage(cdPipelineName, stageName string) (*models.
 
 func createPlatformNames(stages []*query.Stage, cdPipelineName string) {
 	for i, v := range stages {
-		stages[i].PlatformProjectName = fmt.Sprintf("%s-%s-%s", context.Tenant, cdPipelineName, v.Name)
+		stages[i].PlatformProjectName = fmt.Sprintf("%s-%s-%s", console.Tenant, cdPipelineName, v.Name)
 	}
 }
 
@@ -386,7 +386,7 @@ func fillCodebaseStageMatrixK8s(ocClient *k8s.ClientSet, cdPipeline *query.CDPip
 						var containerImage = container.Image
 						var delimeter = strings.LastIndex(containerImage, ":")
 						if delimeter > 0 {
-							value.DockerVersion = string(containerImage[(delimeter + 1):len(containerImage)])
+							value.DockerVersion = string(containerImage[(delimeter + 1):len(containerImage)]) //nolint
 						}
 					}
 				}
@@ -415,7 +415,7 @@ func (s *CDPipelineService) getCDPipelineCR(pipelineName string) (*edppipelinesv
 	edpRestClient := s.Clients.EDPRestClient
 	cdPipeline := &edppipelinesv1alpha1.CDPipeline{}
 
-	err := edpRestClient.Get().Namespace(context.Namespace).Resource("cdpipelines").Name(pipelineName).Do().Into(cdPipeline)
+	err := edpRestClient.Get().Namespace(console.Namespace).Resource("cdpipelines").Name(pipelineName).Do().Into(cdPipeline)
 	if k8serrors.IsNotFound(err) {
 		log.Debug("pipeline doesn't exist in cluster.", zap.String("name", pipelineName))
 		return nil, nil
@@ -434,7 +434,7 @@ func createCr(cdPipelineName string, stage command.CDStageCommand) edppipelinesv
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-%s", cdPipelineName, stage.Name),
-			Namespace: context.Namespace,
+			Namespace: console.Namespace,
 		},
 		Spec: edppipelinesv1alpha1.StageSpec{
 			Name:            stage.Name,
@@ -465,7 +465,7 @@ func saveStagesIntoK8s(edpRestClient *rest.RESTClient, cdPipelineName string, st
 		crd := createCr(cdPipelineName, stage)
 		stageCr := edppipelinesv1alpha1.Stage{}
 		err := edpRestClient.Post().
-			Namespace(context.Namespace).
+			Namespace(console.Namespace).
 			Resource("stages").
 			Body(&crd).
 			Do().Into(&stageCr)
@@ -482,7 +482,7 @@ func checkStagesInK8s(edpRestClient *rest.RESTClient, cdPipelineName string, sta
 	for _, stage := range stages {
 		stagesCr := &edppipelinesv1alpha1.Stage{}
 		stageName := fmt.Sprintf("%s-%s", cdPipelineName, stage.Name)
-		err := edpRestClient.Get().Namespace(context.Namespace).Resource("stages").Name(stageName).Do().Into(stagesCr)
+		err := edpRestClient.Get().Namespace(console.Namespace).Resource("stages").Name(stageName).Do().Into(stagesCr)
 
 		if k8serrors.IsNotFound(err) {
 			log.Debug("stage doesn't exist", zap.String("name", stage.Name))
@@ -556,7 +556,7 @@ func (s CDPipelineService) deleteStage(name string) error {
 	log.Debug("start executing stage delete request", zap.String("stage", name))
 	i := &edppipelinesv1alpha1.Stage{}
 	err := s.Clients.EDPRestClient.Delete().
-		Namespace(context.Namespace).
+		Namespace(console.Namespace).
 		Resource(consts.StagePlural).
 		Name(name).
 		Do().Into(i)
@@ -602,7 +602,7 @@ func (s CDPipelineService) checkStagesDeletionRestrictions(pipeName string, stag
 
 func checkStageErr(err error) error {
 	if dberror.StageErrorOccurred(err) {
-		serr := err.(dberror.RemoveStageRestriction)
+		serr, _ := err.(dberror.RemoveStageRestriction)
 		if serr.Status == dberror.StatusCDStageIsNotTheLast {
 			return nil
 		}
@@ -618,7 +618,7 @@ func (s CDPipelineService) deleteCDPipeline(name string) error {
 	log.Debug("start executing cd pipeline delete request", zap.String("name", name))
 	cp := &edppipelinesv1alpha1.CDPipeline{}
 	err := s.Clients.EDPRestClient.Delete().
-		Namespace(context.Namespace).
+		Namespace(console.Namespace).
 		Resource(consts.CDPipelinePlural).
 		Name(name).
 		Do().Into(cp)

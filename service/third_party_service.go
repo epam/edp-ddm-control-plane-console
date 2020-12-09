@@ -1,8 +1,8 @@
 package service
 
 import (
-	"edp-admin-console/models/query"
-	"edp-admin-console/repository"
+	"ddm-admin-console/models/query"
+	"ddm-admin-console/repository"
 	"go.uber.org/zap"
 )
 

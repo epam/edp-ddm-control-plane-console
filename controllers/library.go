@@ -1,17 +1,16 @@
 package controllers
 
 import (
-	"edp-admin-console/context"
-	validation2 "edp-admin-console/controllers/validation"
-	"edp-admin-console/models/command"
-	edperror "edp-admin-console/models/error"
-	"edp-admin-console/models/query"
-	"edp-admin-console/service"
-	cbs "edp-admin-console/service/codebasebranch"
-	jiraservice "edp-admin-console/service/jira-server"
-	"edp-admin-console/util"
-	"edp-admin-console/util/auth"
-	"edp-admin-console/util/consts"
+	"ddm-admin-console/console"
+	validation2 "ddm-admin-console/controllers/validation"
+	"ddm-admin-console/models/command"
+	edperror "ddm-admin-console/models/error"
+	"ddm-admin-console/models/query"
+	"ddm-admin-console/service"
+	cbs "ddm-admin-console/service/codebasebranch"
+	"ddm-admin-console/util"
+	"ddm-admin-console/util/auth"
+	"ddm-admin-console/util/consts"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -29,11 +28,10 @@ type LibraryController struct {
 	beego.Controller
 	EDPTenantService service.EDPTenantService
 	CodebaseService  service.CodebaseService
-	BranchService    cbs.CodebaseBranchService
+	BranchService    cbs.Service
 	GitServerService service.GitServerService
 	SlaveService     service.SlaveService
 	JobProvisioning  service.JobProvisioning
-	JiraServer       jiraservice.JiraServer
 
 	IntegrationStrategies []string
 	BuildTools            []string
@@ -60,14 +58,14 @@ func (c *LibraryController) GetLibraryListPage() {
 		c.Data["DeletionError"] = flash.Data["error"]
 	}
 	c.Data["Codebases"] = codebases
-	c.Data["EDPVersion"] = context.EDPVersion
+	c.Data["EDPVersion"] = console.EDPVersion
 	c.Data["Username"] = c.Ctx.Input.Session("username")
 	c.Data["HasRights"] = auth.IsAdmin(c.GetSession("realm_roles").([]string))
 	c.Data["Type"] = query.Library
-	c.Data["xsrfdata"] = template.HTML(c.XSRFFormHTML())
-	c.Data["BasePath"] = context.BasePath
-	c.Data["DiagramPageEnabled"] = context.DiagramPageEnabled
-	c.TplName = "codebase.html"
+	c.Data["xsrfdata"] = template.HTML(c.XSRFFormHTML()) //nolint
+	c.Data["BasePath"] = console.BasePath
+	c.Data["DiagramPageEnabled"] = console.DiagramPageEnabled
+	c.TplName = tplCodebase
 }
 
 func (c *LibraryController) GetCreatePage() {
@@ -108,14 +106,7 @@ func (c *LibraryController) GetCreatePage() {
 		return
 	}
 
-	servers, err := c.JiraServer.GetJiraServers()
-	if err != nil {
-		log.Error(err.Error())
-		c.Abort("500")
-		return
-	}
-
-	c.Data["EDPVersion"] = context.EDPVersion
+	c.Data["EDPVersion"] = console.EDPVersion
 	c.Data["Username"] = c.Ctx.Input.Session("username")
 	c.Data["HasRights"] = auth.IsAdmin(c.GetSession("realm_roles").([]string))
 	c.Data["IsVcsEnabled"] = isVcsEnabled
@@ -126,10 +117,9 @@ func (c *LibraryController) GetCreatePage() {
 	c.Data["BuildTools"] = c.BuildTools
 	c.Data["JobProvisioners"] = p
 	c.Data["VersioningTypes"] = c.VersioningTypes
-	c.Data["xsrfdata"] = template.HTML(c.XSRFFormHTML())
-	c.Data["BasePath"] = context.BasePath
-	c.Data["JiraServer"] = servers
-	c.Data["DiagramPageEnabled"] = context.DiagramPageEnabled
+	c.Data["xsrfdata"] = template.HTML(c.XSRFFormHTML()) //nolint
+	c.Data["BasePath"] = console.BasePath
+	c.Data["DiagramPageEnabled"] = console.DiagramPageEnabled
 	c.Data["CiTools"] = c.CiTools
 	c.TplName = "create_library.html"
 }
@@ -142,21 +132,21 @@ func (c *LibraryController) Create() {
 		log.Error("Failed to validate library request data", zap.String("err", errMsg.Message))
 		flash.Error(errMsg.Message)
 		flash.Store(&c.Controller)
-		c.Redirect(fmt.Sprintf("%s/admin/edp/library/create", context.BasePath), 302)
+		c.Redirect(fmt.Sprintf("%s/admin/edp/library/create", console.BasePath), 302)
 		return
 	}
 	logLibraryRequestData(codebase)
 
 	createdObject, err := c.CodebaseService.CreateCodebase(codebase)
 	if err != nil {
-		c.checkError(err, flash, codebase.Name, codebase.GitUrlPath)
+		c.checkError(err, flash, codebase.Name, codebase.GitURLPath)
 		return
 	}
 
 	log.Info("Library object is saved into cluster", zap.String("library", createdObject.Name))
 	flash.Success("Library object is created.")
 	flash.Store(&c.Controller)
-	c.Redirect(fmt.Sprintf("%s/admin/edp/library/overview?%s=%s#codebaseSuccessModal", context.BasePath, paramWaitingForCodebase, codebase.Name), 302)
+	c.Redirect(fmt.Sprintf("%s/admin/edp/library/overview?%s=%s#codebaseSuccessModal", console.BasePath, paramWaitingForCodebase, codebase.Name), 302)
 }
 
 func (c *LibraryController) checkError(err error, flash *beego.FlashData, name string, url *string) {
@@ -164,11 +154,11 @@ func (c *LibraryController) checkError(err error, flash *beego.FlashData, name s
 	case *edperror.CodebaseAlreadyExistsError:
 		flash.Error("Library %v already exists.", name)
 		flash.Store(&c.Controller)
-		c.Redirect(fmt.Sprintf("%s/admin/edp/library/create", context.BasePath), 302)
-	case *edperror.CodebaseWithGitUrlPathAlreadyExistsError:
+		c.Redirect(fmt.Sprintf("%s/admin/edp/library/create", console.BasePath), 302)
+	case *edperror.CodebaseWithGitURLPathAlreadyExistsError:
 		flash.Error("Library %v with %v project path already exists.", name, *url)
 		flash.Store(&c.Controller)
-		c.Redirect(fmt.Sprintf("%s/admin/edp/library/create", context.BasePath), 302)
+		c.Redirect(fmt.Sprintf("%s/admin/edp/library/create", console.BasePath), 302)
 	default:
 		log.Error("couldn't create codebase", zap.Error(err))
 		c.Abort("500")
@@ -220,15 +210,15 @@ func (c *LibraryController) extractLibraryRequestData() command.CreateCodebase {
 	if library.Strategy == consts.ImportStrategy {
 		library.GitServer = c.GetString("gitServer")
 		gitRepoPath := c.GetString("gitRelativePath")
-		library.GitUrlPath = &gitRepoPath
+		library.GitURLPath = &gitRepoPath
 	} else {
-		library.GitServer = "gerrit"
+		library.GitServer = defaultGitServer
 	}
 
-	repoUrl := c.GetString("gitRepoUrl")
-	if repoUrl != "" {
+	repoURL := c.GetString("gitRepoUrl")
+	if repoURL != "" {
 		library.Repository = &command.Repository{
-			Url: repoUrl,
+			URL: repoURL,
 		}
 
 		isRepoPrivate, _ := c.GetBool("isRepoPrivate", false)
@@ -246,7 +236,7 @@ func (c *LibraryController) extractLibraryRequestData() command.CreateCodebase {
 			Password: vcsPassword,
 		}
 	}
-	library.Username = c.Ctx.Input.Session("username").(string)
+	library.Username, _ = c.Ctx.Input.Session("username").(string)
 	return library
 }
 
@@ -256,13 +246,13 @@ func validateLibraryRequestData(library command.CreateCodebase) *validation2.Err
 	_, err := valid.Valid(library)
 
 	if library.Strategy == consts.ImportStrategy {
-		valid.Match(library.GitUrlPath, regexp.MustCompile("^\\/.*$"), "Spec.GitUrlPath")
+		valid.Match(library.GitURLPath, regexp.MustCompile("^\\/.*$"), "Spec.GitURLPath") //nolint
 	}
 
 	if library.Strategy == "clone" && library.Repository != nil {
 		_, err = valid.Valid(library.Repository)
 
-		isAvailable := util.IsGitRepoAvailable(library.Repository.Url, library.Repository.Login, library.Repository.Password)
+		isAvailable := util.IsGitRepoAvailable(library.Repository.URL, library.Repository.Login, library.Repository.Password)
 
 		if !isAvailable {
 			err := &validation.Error{Key: "repository", Message: "Repository doesn't exist or invalid login and password."}
@@ -291,7 +281,7 @@ func logLibraryRequestData(library command.CreateCodebase) {
 		library.Name, library.Strategy, library.Lang, library.BuildTool))
 
 	if library.Repository != nil {
-		result.WriteString(fmt.Sprintf(", repositoryUrl=%s, repositoryLogin=%s", library.Repository.Url, library.Repository.Login))
+		result.WriteString(fmt.Sprintf(", repositoryUrl=%s, repositoryLogin=%s", library.Repository.URL, library.Repository.Login))
 	}
 
 	if library.Vcs != nil {

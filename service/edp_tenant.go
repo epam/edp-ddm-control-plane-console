@@ -17,7 +17,7 @@
 package service
 
 import (
-	"edp-admin-console/k8s"
+	"ddm-admin-console/k8s"
 	"github.com/astaxie/beego"
 	"go.uber.org/zap"
 	"strconv"
@@ -27,7 +27,7 @@ type EDPTenantService struct {
 	Clients k8s.ClientSet
 }
 
-func (this EDPTenantService) GetVcsIntegrationValue() (bool, error) {
+func (s EDPTenantService) GetVcsIntegrationValue() (bool, error) {
 	res, err := strconv.ParseBool(beego.AppConfig.String("vcsIntegrationEnabled"))
 	if err != nil {
 		log.Error("failed to read VCS_INTEGRATION_ENABLED value", zap.Error(err))

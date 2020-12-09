@@ -340,7 +340,7 @@
       return true;
     },
 
-    // Evaluates a script in a global context
+    // Evaluates a script in a global console
     globalEval: function( code ) {
       DOMEval( code );
     },
@@ -716,12 +716,12 @@
         var m, i, elem, nid, match, groups, newSelector,
           newContext = context && context.ownerDocument,
 
-          // nodeType defaults to 9, since context defaults to document
+          // nodeType defaults to 9, since console defaults to document
           nodeType = context ? context.nodeType : 9;
 
         results = results || [];
 
-        // Return early from calls with invalid selector or context
+        // Return early from calls with invalid selector or console
         if ( typeof selector !== "string" || !selector ||
           nodeType !== 1 && nodeType !== 9 && nodeType !== 11 ) {
 
@@ -739,13 +739,13 @@
           if ( documentIsHTML ) {
 
             // If the selector is sufficiently simple, try using a "get*By*" DOM method
-            // (excepting DocumentFragment context, where the methods don't exist)
+            // (excepting DocumentFragment console, where the methods don't exist)
             if ( nodeType !== 11 && (match = rquickExpr.exec( selector )) ) {
 
               // ID selector
               if ( (m = match[1]) ) {
 
-                // Document context
+                // Document console
                 if ( nodeType === 9 ) {
                   if ( (elem = context.getElementById( m )) ) {
 
@@ -760,7 +760,7 @@
                     return results;
                   }
 
-                  // Element context
+                  // Element console
                 } else {
 
                   // Support: IE, Opera, Webkit
@@ -798,13 +798,13 @@
                 newContext = context;
                 newSelector = selector;
 
-                // qSA looks outside Element context, which is not what we want
+                // qSA looks outside Element console, which is not what we want
                 // Thanks to Andrew Dupont for this workaround technique
                 // Support: IE <=8
                 // Exclude object elements
               } else if ( context.nodeName.toLowerCase() !== "object" ) {
 
-                // Capture the context ID, setting it first if necessary
+                // Capture the console ID, setting it first if necessary
                 if ( (nid = context.getAttribute( "id" )) ) {
                   nid = nid.replace( rcssescape, fcssescape );
                 } else {
@@ -819,7 +819,7 @@
                 }
                 newSelector = groups.join( "," );
 
-                // Expand context for sibling selectors
+                // Expand console for sibling selectors
                 newContext = rsibling.test( selector ) && testContext( context.parentNode ) ||
                   context;
               }
@@ -1038,7 +1038,7 @@
       }
 
       /**
-       * Checks a node for validity as a Sizzle context
+       * Checks a node for validity as a Sizzle console
        * @param {Element|Object=} context
        * @returns {Element|Object|Boolean} The input node if acceptable, otherwise a falsy value
        */
@@ -2326,7 +2326,7 @@
             postMap = [],
             preexisting = results.length,
 
-            // Get initial elements from seed or context
+            // Get initial elements from seed or console
             elems = seed || multipleContexts( selector || "*", context.nodeType ? [ context ] : context, [] ),
 
             // Prefilter to get matcher input, preserving a map for seed-results synchronization
@@ -2413,7 +2413,7 @@
           implicitRelative = leadingRelative || Expr.relative[" "],
           i = leadingRelative ? 1 : 0,
 
-          // The foundational matcher ensures that elements are reachable from top-level context(s)
+          // The foundational matcher ensures that elements are reachable from top-level console(s)
           matchContext = addCombinator( function( elem ) {
             return elem === checkContext;
           }, implicitRelative, true ),
@@ -2474,7 +2474,7 @@
               unmatched = seed && [],
               setMatched = [],
               contextBackup = outermostContext,
-              // We must always have either seed elements or outermost context
+              // We must always have either seed elements or outermost console
               elems = seed || byElement && Expr.find["TAG"]( "*", outermost ),
               // Use integer dirruns iff this is the outermost matcher
               dirrunsUnique = (dirruns += contextBackup == null ? 1 : Math.random() || 0.1),
@@ -2622,10 +2622,10 @@
         results = results || [];
 
         // Try to minimize operations if there is only one selector in the list and no seed
-        // (the latter of which guarantees us context)
+        // (the latter of which guarantees us console)
         if ( match.length === 1 ) {
 
-          // Reduce context if the leading compound selector is an ID
+          // Reduce console if the leading compound selector is an ID
           tokens = match[0] = match[0].slice( 0 );
           if ( tokens.length > 2 && (token = tokens[0]).type === "ID" &&
             context.nodeType === 9 && documentIsHTML && Expr.relative[ tokens[1].type ] ) {
@@ -2652,7 +2652,7 @@
               break;
             }
             if ( (find = Expr.find[ type ]) ) {
-              // Search, expanding context for leading sibling combinators
+              // Search, expanding console for leading sibling combinators
               if ( (seed = find(
                 token.matches[0].replace( runescape, funescape ),
                 rsibling.test( tokens[0].type ) && testContext( context.parentNode ) || context
@@ -2933,7 +2933,7 @@
           match = rquickExpr.exec( selector );
         }
 
-        // Match html or make sure no context is specified for #id
+        // Match html or make sure no console is specified for #id
         if ( match && ( match[ 1 ] || !context ) ) {
 
           // HANDLE: $(html) -> $(array)
@@ -2952,7 +2952,7 @@
             if ( rsingleTag.test( match[ 1 ] ) && jQuery.isPlainObject( context ) ) {
               for ( match in context ) {
 
-                // Properties of context are called as methods if possible
+                // Properties of console are called as methods if possible
                 if ( isFunction( this[ match ] ) ) {
                   this[ match ]( context[ match ] );
 
@@ -2982,8 +2982,8 @@
         } else if ( !context || context.jquery ) {
           return ( context || root ).find( selector );
 
-          // HANDLE: $(expr, context)
-          // (which is just equivalent to: $(context).find(expr)
+          // HANDLE: $(expr, console)
+          // (which is just equivalent to: $(console).find(expr)
         } else {
           return this.constructor( context ).find( selector );
         }
@@ -3046,7 +3046,7 @@
         matched = [],
         targets = typeof selectors !== "string" && jQuery( selectors );
 
-      // Positional selectors never match, since there's no _selection_ context
+      // Positional selectors never match, since there's no _selection_ console
       if ( !rneedsContext.test( selectors ) ) {
         for ( ; i < l; i++ ) {
           for ( cur = this[ i ]; cur && cur !== context; cur = cur.parentNode ) {
@@ -3388,7 +3388,7 @@
           return !!locked;
         },
 
-        // Call all callbacks with the given context and arguments
+        // Call all callbacks with the given console and arguments
         fireWith: function( context, args ) {
           if ( !locked ) {
             args = args || [];
@@ -3452,7 +3452,7 @@
     } catch ( value ) {
 
       // Support: Android 4.0 only
-      // Strict mode functions invoked without .call/.apply get global-object context
+      // Strict mode functions invoked without .call/.apply get global-object console
       reject.apply( undefined, [ value ] );
     }
   }
@@ -3581,7 +3581,7 @@
                       // Handle all other returned values
                     } else {
 
-                      // Only substitute handlers pass on context
+                      // Only substitute handlers pass on console
                       // and multiple values (non-spec behavior)
                       if ( handler !== Identity ) {
                         that = undefined;
@@ -3612,7 +3612,7 @@
                         // Ignore post-resolution exceptions
                         if ( depth + 1 >= maxDepth ) {
 
-                          // Only substitute handlers pass on context
+                          // Only substitute handlers pass on console
                           // and multiple values (non-spec behavior)
                           if ( handler !== Thrower ) {
                             that = undefined;
@@ -4797,7 +4797,7 @@
     i = 0;
     while ( ( elem = nodes[ i++ ] ) ) {
 
-      // Skip elements already in the context collection (trac-4087)
+      // Skip elements already in the console collection (trac-4087)
       if ( selection && jQuery.inArray( elem, selection ) > -1 ) {
         if ( ignored ) {
           ignored.push( elem );
@@ -5997,7 +5997,7 @@
     replaceWith: function() {
       var ignored = [];
 
-      // Make the changes, replacing each non-ignored context element with the new content
+      // Make the changes, replacing each non-ignored console element with the new content
       return domManip( this, arguments, function( elem ) {
         var parent = this.parentNode;
 
@@ -8935,7 +8935,7 @@
         // Create the final options object
         s = jQuery.ajaxSetup( {}, options ),
 
-        // Callbacks context
+        // Callbacks console
         callbackContext = s.context || s,
 
         // Context for global events is callbackContext if it is a DOM node or jQuery collection
@@ -9798,7 +9798,7 @@
 
 
 // Argument "data" should be string of html
-// context (optional): If specified, the fragment will be created in this context,
+// console (optional): If specified, the fragment will be created in this console,
 // defaults to document
 // keepScripts (optional): If true, will include scripts passed in the html string
   jQuery.parseHTML = function( data, context, keepScripts ) {
@@ -10243,7 +10243,7 @@
     }
   } );
 
-// Bind a function to a context, optionally partially applying any
+// Bind a function to a console, optionally partially applying any
 // arguments.
 // jQuery.proxy is deprecated to promote standards (specifically Function#bind)
 // However, it is not slated for removal any time soon

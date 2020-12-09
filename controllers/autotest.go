@@ -1,17 +1,16 @@
 package controllers
 
 import (
-	"edp-admin-console/context"
-	validation2 "edp-admin-console/controllers/validation"
-	"edp-admin-console/models/command"
-	edperror "edp-admin-console/models/error"
-	"edp-admin-console/models/query"
-	"edp-admin-console/service"
-	cbs "edp-admin-console/service/codebasebranch"
-	jiraservice "edp-admin-console/service/jira-server"
-	"edp-admin-console/util"
-	"edp-admin-console/util/auth"
-	"edp-admin-console/util/consts"
+	"ddm-admin-console/console"
+	validation2 "ddm-admin-console/controllers/validation"
+	"ddm-admin-console/models/command"
+	edperror "ddm-admin-console/models/error"
+	"ddm-admin-console/models/query"
+	"ddm-admin-console/service"
+	cbs "ddm-admin-console/service/codebasebranch"
+	"ddm-admin-console/util"
+	"ddm-admin-console/util/auth"
+	"ddm-admin-console/util/consts"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -27,11 +26,10 @@ type AutotestsController struct {
 	beego.Controller
 	CodebaseService  service.CodebaseService
 	EDPTenantService service.EDPTenantService
-	BranchService    cbs.CodebaseBranchService
+	BranchService    cbs.Service
 	GitServerService service.GitServerService
 	SlaveService     service.SlaveService
 	JobProvisioning  service.JobProvisioning
-	JiraServer       jiraservice.JiraServer
 
 	IntegrationStrategies []string
 	BuildTools            []string
@@ -50,21 +48,21 @@ func (c *AutotestsController) CreateAutotests() {
 		flash := beego.NewFlash()
 		flash.Error(errMsg.Message)
 		flash.Store(&c.Controller)
-		c.Redirect(fmt.Sprintf("%s/admin/edp/autotest/create", context.BasePath), 302)
+		c.Redirect(fmt.Sprintf("%s/admin/autotest/create", console.BasePath), 302)
 		return
 	}
 	logAutotestsRequestData(codebase)
 
 	createdObject, err := c.CodebaseService.CreateCodebase(codebase)
 	if err != nil {
-		c.checkError(err, flash, codebase.Name, codebase.GitUrlPath)
+		c.checkError(err, flash, codebase.Name, codebase.GitURLPath)
 		return
 	}
 
 	log.Info("Autotests object is saved into cluster", zap.String("name", createdObject.Name))
 	flash.Success("Autotests object is created.")
 	flash.Store(&c.Controller)
-	c.Redirect(fmt.Sprintf("%s/admin/edp/autotest/overview?%s=%s#codebaseSuccessModal", context.BasePath, paramWaitingForCodebase, codebase.Name), 302)
+	c.Redirect(fmt.Sprintf("%s/admin/autotest/overview?%s=%s#codebaseSuccessModal", console.BasePath, paramWaitingForCodebase, codebase.Name), 302)
 }
 
 func (c *AutotestsController) checkError(err error, flash *beego.FlashData, name string, url *string) {
@@ -72,11 +70,11 @@ func (c *AutotestsController) checkError(err error, flash *beego.FlashData, name
 	case *edperror.CodebaseAlreadyExistsError:
 		flash.Error("Autotest %v already exists.", name)
 		flash.Store(&c.Controller)
-		c.Redirect(fmt.Sprintf("%s/admin/edp/autotest/create", context.BasePath), 302)
-	case *edperror.CodebaseWithGitUrlPathAlreadyExistsError:
+		c.Redirect(fmt.Sprintf("%s/admin/autotest/create", console.BasePath), 302)
+	case *edperror.CodebaseWithGitURLPathAlreadyExistsError:
 		flash.Error("Autotest %v with %v project path already exists.", name, *url)
 		flash.Store(&c.Controller)
-		c.Redirect(fmt.Sprintf("%s/admin/edp/autotest/create", context.BasePath), 302)
+		c.Redirect(fmt.Sprintf("%s/admin/edp/autotest/create", console.BasePath), 302)
 	default:
 		log.Error("couldn't create codebase", zap.Error(err))
 		c.Abort("500")
@@ -89,7 +87,7 @@ func logAutotestsRequestData(autotests command.CreateCodebase) {
 		autotests.Name, autotests.Strategy, autotests.Lang, autotests.BuildTool, *autotests.TestReportFramework))
 
 	if autotests.Repository != nil {
-		result.WriteString(fmt.Sprintf(", repositoryUrl=%s, repositoryLogin=%s", autotests.Repository.Url, autotests.Repository.Login))
+		result.WriteString(fmt.Sprintf(", repositoryUrl=%s, repositoryLogin=%s", autotests.Repository.URL, autotests.Repository.Login))
 	}
 
 	if autotests.Vcs != nil {
@@ -142,9 +140,9 @@ func (c *AutotestsController) extractAutotestsRequestData() command.CreateCodeba
 	if codebase.Strategy == consts.ImportStrategy {
 		codebase.GitServer = c.GetString("gitServer")
 		gitRepoPath := c.GetString("gitRelativePath")
-		codebase.GitUrlPath = &gitRepoPath
+		codebase.GitURLPath = &gitRepoPath
 	} else {
-		codebase.GitServer = "gerrit"
+		codebase.GitServer = defaultGitServer
 	}
 
 	testReportFramework := c.GetString("testReportFramework")
@@ -152,10 +150,10 @@ func (c *AutotestsController) extractAutotestsRequestData() command.CreateCodeba
 		codebase.TestReportFramework = &testReportFramework
 	}
 
-	repoUrl := c.GetString("gitRepoUrl")
-	if repoUrl != "" {
+	repoURL := c.GetString("gitRepoUrl")
+	if repoURL != "" {
 		codebase.Repository = &command.Repository{
-			Url: repoUrl,
+			URL: repoURL,
 		}
 
 		isRepoPrivate, _ := c.GetBool("isRepoPrivate", false)
@@ -178,7 +176,7 @@ func (c *AutotestsController) extractAutotestsRequestData() command.CreateCodeba
 			Password: vcsPassword,
 		}
 	}
-	codebase.Username = c.Ctx.Input.Session("username").(string)
+	codebase.Username, _ = c.Ctx.Input.Session("username").(string)
 	return codebase
 }
 
@@ -188,13 +186,13 @@ func validateAutotestsRequestData(autotests command.CreateCodebase) *validation2
 	_, err := valid.Valid(autotests)
 
 	if autotests.Strategy == consts.ImportStrategy {
-		valid.Match(autotests.GitUrlPath, regexp.MustCompile("^\\/.*$"), "Spec.GitUrlPath")
+		valid.Match(autotests.GitURLPath, regexp.MustCompile("^\\/.*$"), "Spec.GitURLPath") //nolint
 	}
 
 	if autotests.Repository != nil {
 		_, err = valid.Valid(autotests.Repository)
 
-		isAvailable := util.IsGitRepoAvailable(autotests.Repository.Url, autotests.Repository.Login, autotests.Repository.Password)
+		isAvailable := util.IsGitRepoAvailable(autotests.Repository.URL, autotests.Repository.Login, autotests.Repository.Password)
 
 		if !isAvailable {
 			err := &validation.Error{Key: "repository", Message: "Repository doesn't exist or invalid login and password."}
@@ -260,16 +258,9 @@ func (c *AutotestsController) GetCreateAutotestsPage() {
 		return
 	}
 
-	servers, err := c.JiraServer.GetJiraServers()
-	if err != nil {
-		log.Error(err.Error())
-		c.Abort("500")
-		return
-	}
-
 	log.Info("Create strategy is removed from list due to Autotest")
 
-	c.Data["EDPVersion"] = context.EDPVersion
+	c.Data["EDPVersion"] = console.EDPVersion
 	c.Data["Username"] = c.Ctx.Input.Session("username")
 	c.Data["HasRights"] = auth.IsAdmin(c.GetSession("realm_roles").([]string))
 	c.Data["IsVcsEnabled"] = isVcsEnabled
@@ -281,10 +272,9 @@ func (c *AutotestsController) GetCreateAutotestsPage() {
 	c.Data["TestReportTools"] = c.TestReportTools
 	c.Data["JobProvisioners"] = p
 	c.Data["VersioningTypes"] = c.VersioningTypes
-	c.Data["xsrfdata"] = template.HTML(c.XSRFFormHTML())
-	c.Data["BasePath"] = context.BasePath
-	c.Data["JiraServer"] = servers
-	c.Data["DiagramPageEnabled"] = context.DiagramPageEnabled
+	c.Data["xsrfdata"] = template.HTML(c.XSRFFormHTML()) //nolint
+	c.Data["BasePath"] = console.BasePath
+	c.Data["DiagramPageEnabled"] = console.DiagramPageEnabled
 	c.Data["CiTools"] = c.CiTools
 	c.TplName = "create_autotest.html"
 }
@@ -307,13 +297,13 @@ func (c *AutotestsController) GetAutotestsOverviewPage() {
 		c.Data["DeletionError"] = flash.Data["error"]
 	}
 	c.Data["Codebases"] = codebases
-	c.Data["EDPVersion"] = context.EDPVersion
+	c.Data["EDPVersion"] = console.EDPVersion
 	c.Data["Username"] = c.Ctx.Input.Session("username")
 	c.Data["HasRights"] = auth.IsAdmin(c.GetSession("realm_roles").([]string))
 	c.Data["Type"] = query.Autotests
-	c.Data["BasePath"] = context.BasePath
+	c.Data["BasePath"] = console.BasePath
 	c.Data["VersioningTypes"] = c.VersioningTypes
-	c.Data["xsrfdata"] = template.HTML(c.XSRFFormHTML())
-	c.Data["DiagramPageEnabled"] = context.DiagramPageEnabled
-	c.TplName = "codebase.html"
+	c.Data["xsrfdata"] = template.HTML(c.XSRFFormHTML()) //nolint
+	c.Data["DiagramPageEnabled"] = console.DiagramPageEnabled
+	c.TplName = tplCodebase
 }

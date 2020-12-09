@@ -1,11 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>EDP Admin Console</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" href="{{ .BasePath }}/static/css/index.css">
+    {{template "template/head.html" .}}
+
 </head>
 <body>
 <main>
@@ -19,13 +16,13 @@
 
             <div class="edp-form wide nosidepadding cd-pipeline-overview-table">
                 <h1 class="edp-form-header">
-                    <a href="{{ .BasePath }}/admin/edp/cd-pipeline/overview" class="edp-back-link"></a>
+                    <a href="{{ .BasePath }}/admin/cd-pipeline/overview" class="edp-back-link"></a>
                     CD Pipeline:
                     <a href="{{.CDPipeline.JenkinsLink}}" target="_blank" class="edp-link" rel="noopener noreferrer">
                         {{.CDPipeline.Name}}
                     </a>
 
-                    <a href="{{ .BasePath }}/admin/edp/cd-pipeline/{{.CDPipeline.Name}}/update">
+                    <a href="{{ .BasePath }}/admin/cd-pipeline/{{.CDPipeline.Name}}/update">
                         <button class="delete">
                             <i class="icon-pencil"></i>
                         </button>
@@ -192,7 +189,7 @@
 
                                                                             {{if eq "autotests" .QualityGateType}}
                                                                                 <th>
-                                                                                    <a href="{{ $.BasePath }}/admin/edp/codebase/{{.Autotest.Name}}/overview" class="edp-link">{{.Autotest.Name}}</a>
+                                                                                    <a href="{{ $.BasePath }}/admin/codebase/{{.Autotest.Name}}/overview" class="edp-link">{{.Autotest.Name}}</a>
                                                                                 </th>
                                                                                 <th>
                                                                                     {{.Branch.Name}}
@@ -360,7 +357,7 @@
     </div>
 
 </main>
-{{template "template/delete_confirmation_template.html" params "action" (print .BasePath "/admin/edp/stage") "kind" "stage" "pipeline" .CDPipeline.Name "xsrfdata" .xsrfdata "error" .Error}}
+{{template "template/delete_confirmation_template.html" params "action" (print .BasePath "/admin/stage") "kind" "stage" "pipeline" .CDPipeline.Name "xsrfdata" .xsrfdata "error" .Error}}
 <script src="{{ .BasePath }}/static/js/jquery-3.3.1.js"></script>
 <script src="{{ .BasePath }}/static/js/popper.js"></script>
 <script src="{{ .BasePath }}/static/js/bootstrap.js"></script>

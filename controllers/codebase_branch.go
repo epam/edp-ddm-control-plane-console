@@ -1,14 +1,14 @@
 package controllers
 
 import (
-	"edp-admin-console/context"
-	validation2 "edp-admin-console/controllers/validation"
-	"edp-admin-console/models/command"
-	"edp-admin-console/service"
-	cbs "edp-admin-console/service/codebasebranch"
-	"edp-admin-console/util"
-	"edp-admin-console/util/consts"
-	dberror "edp-admin-console/util/error/db-errors"
+	"ddm-admin-console/console"
+	validation2 "ddm-admin-console/controllers/validation"
+	"ddm-admin-console/models/command"
+	"ddm-admin-console/service"
+	cbs "ddm-admin-console/service/codebasebranch"
+	"ddm-admin-console/util"
+	"ddm-admin-console/util/consts"
+	dberror "ddm-admin-console/util/error/db-errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -22,7 +22,7 @@ import (
 type BranchController struct {
 	beego.Controller
 	CodebaseService service.CodebaseService
-	BranchService   cbs.CodebaseBranchService
+	BranchService   cbs.Service
 }
 
 func (c *BranchController) CreateCodebaseBranch() {
@@ -31,7 +31,7 @@ func (c *BranchController) CreateCodebaseBranch() {
 	errMsg := validCodebaseBranchRequestData(branchInfo)
 	if errMsg != nil {
 		log.Error("Failed to validate request data", zap.String("err", errMsg.Message))
-		c.Redirect(fmt.Sprintf("%s/admin/edp/codebase/%s/overview", context.BasePath, appName), 302)
+		c.Redirect(fmt.Sprintf("%s/admin/codebase/%s/overview", console.BasePath, appName), 302)
 		return
 	}
 
@@ -53,7 +53,7 @@ func (c *BranchController) CreateCodebaseBranch() {
 	exist := c.CodebaseService.ExistCodebaseAndBranch(appName, branchInfo.Name)
 
 	if exist {
-		c.Redirect(fmt.Sprintf("%s/admin/edp/codebase/%s/overview?errorExistingBranch=%s#branchExistsModal", context.BasePath,
+		c.Redirect(fmt.Sprintf("%s/admin/codebase/%s/overview?errorExistingBranch=%s#branchExistsModal", console.BasePath,
 			appName, url.PathEscape(branchInfo.Name)), 302)
 		return
 	}
@@ -65,7 +65,7 @@ func (c *BranchController) CreateCodebaseBranch() {
 	}
 
 	log.Info("BranchRelease resource is saved into cluster", zap.String("name", cb.Name))
-	c.Redirect(fmt.Sprintf("%s/admin/edp/codebase/%s/overview?%s=%s#branchSuccessModal", context.BasePath, appName,
+	c.Redirect(fmt.Sprintf("%s/admin/codebase/%s/overview?%s=%s#branchSuccessModal", console.BasePath, appName,
 		paramWaitingForBranch, url.PathEscape(branchInfo.Name)), 302)
 }
 
@@ -93,7 +93,7 @@ func validCodebaseBranchRequestData(requestData command.CreateCodebaseBranch) *v
 	_, err := valid.Valid(requestData)
 
 	if len(requestData.Commit) != 0 {
-		valid.Match(requestData.Commit, regexp.MustCompile("\\b([a-f0-9]{40})\\b"), "Commit.Match")
+		valid.Match(requestData.Commit, regexp.MustCompile("\\b([a-f0-9]{40})\\b"), "Commit.Match") //nolint
 	}
 
 	if err != nil {
@@ -116,12 +116,12 @@ func (c *BranchController) Delete() {
 		zap.String("branch name", bn))
 	if err := c.BranchService.Delete(cn, bn); err != nil {
 		if dberror.CodebaseBranchErrorOccurred(err) {
-			cberr := err.(dberror.RemoveCodebaseBranchRestriction)
+			cberr, _ := err.(dberror.RemoveCodebaseBranchRestriction)
 			f := beego.NewFlash()
 			f.Error(cberr.Message)
 			f.Store(&c.Controller)
 			log.Error(cberr.Message, zap.Error(err))
-			c.Redirect(fmt.Sprintf("%s/admin/edp/codebase/%v/overview?name=%v#branchIsUsedSuccessModal", context.BasePath, cn, bn), 302)
+			c.Redirect(fmt.Sprintf("%s/admin/codebase/%v/overview?name=%v#branchIsUsedSuccessModal", console.BasePath, cn, bn), 302)
 			return
 		}
 		log.Error("delete process is failed", zap.Error(err))
@@ -131,5 +131,5 @@ func (c *BranchController) Delete() {
 	log.Info("delete codebase branch method is finished",
 		zap.String("codebase name", cn),
 		zap.String("branch name", bn))
-	c.Redirect(fmt.Sprintf("%s/admin/edp/codebase/%v/overview?name=%v#branchDeletedSuccessModal", context.BasePath, cn, bn), 302)
+	c.Redirect(fmt.Sprintf("%s/admin/codebase/%v/overview?name=%v#branchDeletedSuccessModal", console.BasePath, cn, bn), 302)
 }

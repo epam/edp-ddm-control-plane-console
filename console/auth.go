@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package context
+package console
 
 import (
 	"context"
@@ -26,7 +26,7 @@ import (
 
 type KeycloakParameters struct {
 	KeycloakURL      string
-	ClientId         string
+	ClientID         string
 	ClientSecret     string
 	Host             string
 	CallBackEndpoint string
@@ -45,7 +45,7 @@ func InitAuth() {
 	parameters := getParameters()
 	log.Info("Keycloak has been retrieved",
 		zap.String("url", parameters.KeycloakURL),
-		zap.String("client id", parameters.ClientId),
+		zap.String("client id", parameters.ClientID),
 		zap.String("host", parameters.Host),
 		zap.String("call back endpoint", parameters.CallBackEndpoint),
 		zap.String("state auth key", parameters.StateAuthKey))
@@ -57,14 +57,14 @@ func InitAuth() {
 	}
 
 	oauth2Config := oauth2.Config{
-		ClientID:     parameters.ClientId,
+		ClientID:     parameters.ClientID,
 		ClientSecret: parameters.ClientSecret,
 		RedirectURL:  parameters.Host + parameters.CallBackEndpoint,
 		Endpoint:     provider.Endpoint(),
 	}
 
 	oidcConfig := &oidc.Config{
-		ClientID: parameters.ClientId,
+		ClientID: parameters.ClientID,
 	}
 
 	verifier := provider.Verifier(oidcConfig)
@@ -73,7 +73,7 @@ func InitAuth() {
 }
 
 func getParameters() KeycloakParameters {
-	//todo add checking all variables
+	// todo add checking all variables
 	return KeycloakParameters{
 		beego.AppConfig.String("keycloakURL"),
 		beego.AppConfig.String("clientId"),

@@ -1,11 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>EDP Admin Console</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" href="{{ .BasePath }}/static/css/index.css">
+    {{template "template/head.html" .}}
 </head>
 <body>
 <main>
@@ -51,15 +47,15 @@
                     <div class="flex-fill">
                         <div class="float-right">
                             {{if eq .Type "application"}}
-                                <a href="{{ .BasePath }}/admin/edp/application/create">
+                                <a href="{{ .BasePath }}/admin/application/create">
                                     <button class="btn btn-primary">Create</button>
                                 </a>
                             {{else if eq .Type "autotests"}}
-                                <a href="{{ .BasePath }}/admin/edp/autotest/create">
+                                <a href="{{ .BasePath }}/admin/autotest/create">
                                     <button class="btn btn-primary">Create</button>
                                 </a>
                             {{else}}
-                                <a href="{{ .BasePath }}/admin/edp/library/create">
+                                <a href="{{ .BasePath }}/admin/library/create">
                                     <button class="btn btn-primary">Create</button>
                                 </a>
                             {{end}}
@@ -89,7 +85,7 @@
                                          alt="" style="width:25px; height:25px;">
                                 </td>
                                 <td class="codebase-name">
-                                    <a href="{{ $.BasePath }}/admin/edp/codebase/{{.Name}}/overview">
+                                    <a href="{{ $.BasePath }}/admin/codebase/{{.Name}}/overview">
                                         {{.Name}}
                                     </a>
                                 </td>
@@ -97,7 +93,7 @@
                                 <td>{{.BuildTool}}</td>
                                 <td>
                                     {{if .JiraServer}}
-                                        <a href="{{ $.BasePath }}/admin/edp/codebase/{{.Name}}/update"
+                                        <a href="{{ $.BasePath }}/admin/codebase/{{.Name}}/update"
                                            class="{{if ne .Status "active"}}disabled{{end}}">
                                             <button class="delete">
                                                 <i class="icon-pencil"></i>
@@ -124,7 +120,7 @@
     {{template "template/footer_template.html" .}}
     {{template "template/modal_success_template.html" .}}
 </main>
-{{template "template/delete_confirmation_template.html" params "action" (print .BasePath "/admin/edp/codebase") "kind" "codebase" "xsrfdata" .xsrfdata "type" .Type "error" .DeletionError}}
+{{template "template/delete_confirmation_template.html" params "action" (print .BasePath "/admin/codebase") "kind" "codebase" "xsrfdata" .xsrfdata "type" .Type "error" .DeletionError}}
 <script src="{{ .BasePath }}/static/js/jquery-3.3.1.js"></script>
 <script src="{{ .BasePath }}/static/js/popper.js"></script>
 <script src="{{ .BasePath }}/static/js/bootstrap.js"></script>

@@ -17,22 +17,22 @@
 package pipeline
 
 import (
-	"edp-admin-console/context"
-	"edp-admin-console/controllers/validation"
-	"edp-admin-console/models"
-	"edp-admin-console/models/command"
-	edperror "edp-admin-console/models/error"
-	"edp-admin-console/models/query"
-	"edp-admin-console/service"
-	"edp-admin-console/service/cd_pipeline"
-	cbs "edp-admin-console/service/codebasebranch"
-	ec "edp-admin-console/service/edp-component"
-	"edp-admin-console/service/logger"
-	"edp-admin-console/service/platform"
-	"edp-admin-console/util"
-	"edp-admin-console/util/auth"
-	"edp-admin-console/util/consts"
-	dberror "edp-admin-console/util/error/db-errors"
+	"ddm-admin-console/console"
+	"ddm-admin-console/controllers/validation"
+	"ddm-admin-console/models"
+	"ddm-admin-console/models/command"
+	ddmerror "ddm-admin-console/models/error"
+	"ddm-admin-console/models/query"
+	"ddm-admin-console/service"
+	"ddm-admin-console/service/cd_pipeline"
+	cbs "ddm-admin-console/service/codebasebranch"
+	ec "ddm-admin-console/service/edp-component"
+	"ddm-admin-console/service/logger"
+	"ddm-admin-console/service/platform"
+	"ddm-admin-console/util"
+	"ddm-admin-console/util/auth"
+	"ddm-admin-console/util/consts"
+	dberror "ddm-admin-console/util/error/db-errors"
 	"errors"
 	"fmt"
 	"html/template"
@@ -52,7 +52,7 @@ type CDPipelineController struct {
 	CodebaseService   service.CodebaseService
 	PipelineService   cd_pipeline.CDPipelineService
 	EDPTenantService  service.EDPTenantService
-	BranchService     cbs.CodebaseBranchService
+	BranchService     cbs.Service
 	ThirdPartyService service.ThirdPartyService
 	EDPComponent      ec.EDPComponentService
 	JobProvisioning   service.JobProvisioning
@@ -61,6 +61,7 @@ type CDPipelineController struct {
 const (
 	paramWaitingForCdPipeline = "waitingforcdpipeline"
 	scope                     = "cd"
+	deliveryType              = "delivery"
 )
 
 func (c *CDPipelineController) GetContinuousDeliveryPage() {
@@ -99,17 +100,17 @@ func (c *CDPipelineController) GetContinuousDeliveryPage() {
 	if flash.Data["error"] != "" {
 		c.Data["Error"] = flash.Data["error"]
 	}
-	contextRoles := c.GetSession("realm_roles").([]string)
+	contextRoles, _ := c.GetSession("realm_roles").([]string)
 	c.Data["ActiveApplicationsAndBranches"] = len(applications) > 0 && len(branches) > 0
 	c.Data["CDPipelines"] = cdPipelines
 	c.Data["Applications"] = applications
-	c.Data["EDPVersion"] = context.EDPVersion
+	c.Data["EDPVersion"] = console.EDPVersion
 	c.Data["Username"] = c.Ctx.Input.Session("username")
 	c.Data["HasRights"] = auth.IsAdmin(contextRoles)
-	c.Data["Type"] = "delivery"
-	c.Data["BasePath"] = context.BasePath
-	c.Data["xsrfdata"] = template.HTML(c.XSRFFormHTML())
-	c.Data["DiagramPageEnabled"] = context.DiagramPageEnabled
+	c.Data["Type"] = deliveryType
+	c.Data["BasePath"] = console.BasePath
+	c.Data["xsrfdata"] = template.HTML(c.XSRFFormHTML()) //nolint
+	c.Data["DiagramPageEnabled"] = console.DiagramPageEnabled
 	c.TplName = "continuous_delivery.html"
 }
 
@@ -167,14 +168,14 @@ func (c *CDPipelineController) GetCreateCDPipelinePage() {
 	c.Data["Services"] = services
 	c.Data["Apps"] = apps
 	c.Data["GroovyLibs"] = groovyLibs
-	c.Data["EDPVersion"] = context.EDPVersion
+	c.Data["EDPVersion"] = console.EDPVersion
 	c.Data["Username"] = c.Ctx.Input.Session("username")
-	c.Data["Type"] = "delivery"
+	c.Data["Type"] = deliveryType
 	c.Data["Autotests"] = autotests
-	c.Data["xsrfdata"] = template.HTML(c.XSRFFormHTML())
-	c.Data["BasePath"] = context.BasePath
+	c.Data["xsrfdata"] = template.HTML(c.XSRFFormHTML()) //nolint
+	c.Data["BasePath"] = console.BasePath
 	c.Data["JobProvisioners"] = jp
-	c.Data["DiagramPageEnabled"] = context.DiagramPageEnabled
+	c.Data["DiagramPageEnabled"] = console.DiagramPageEnabled
 	c.TplName = "create_cd_pipeline.html"
 }
 
@@ -218,10 +219,10 @@ func (c *CDPipelineController) GetEditCDPipelinePage() {
 
 	c.Data["CDPipeline"] = cdPipeline
 	c.Data["Apps"] = applications
-	c.Data["Type"] = "delivery"
-	c.Data["xsrfdata"] = template.HTML(c.XSRFFormHTML())
-	c.Data["BasePath"] = context.BasePath
-	c.Data["DiagramPageEnabled"] = context.DiagramPageEnabled
+	c.Data["Type"] = deliveryType
+	c.Data["xsrfdata"] = template.HTML(c.XSRFFormHTML()) //nolint
+	c.Data["BasePath"] = console.BasePath
+	c.Data["DiagramPageEnabled"] = console.DiagramPageEnabled
 	c.TplName = "edit_cd_pipeline.html"
 }
 
@@ -241,7 +242,7 @@ func (c *CDPipelineController) UpdateCDPipeline() {
 		log.Info("Request data is not valid", zap.String("err", errMsg.Message))
 		flash.Error(errMsg.Message)
 		flash.Store(&c.Controller)
-		c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/%s/update", context.BasePath, pipelineName), 302)
+		c.Redirect(fmt.Sprintf("%s/admin/cd-pipeline/%s/update", console.BasePath, pipelineName), 302)
 		return
 	}
 	log.Debug("Request data is received to update CD pipeline",
@@ -254,15 +255,15 @@ func (c *CDPipelineController) UpdateCDPipeline() {
 	if err != nil {
 
 		switch err.(type) {
-		case *edperror.CDPipelineDoesNotExistError:
+		case *ddmerror.CDPipelineDoesNotExistError:
 			flash.Error(fmt.Sprintf("cd pipeline %v doesn't exist", pipelineName))
 			flash.Store(&c.Controller)
-			c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/%s/update", context.BasePath, pipelineName), http.StatusFound)
+			c.Redirect(fmt.Sprintf("%s/admin/cd-pipeline/%s/update", console.BasePath, pipelineName), http.StatusFound)
 			return
-		case *edperror.NonValidRelatedBranchError:
+		case *ddmerror.NonValidRelatedBranchError:
 			flash.Error(fmt.Sprintf("one or more applications have non valid branches: %v", pipelineUpdateCommand.Applications))
 			flash.Store(&c.Controller)
-			c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/%s/update", context.BasePath, pipelineName), http.StatusBadRequest)
+			c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/%s/update", console.BasePath, pipelineName), http.StatusBadRequest)
 			return
 		default:
 			c.Abort("500")
@@ -270,9 +271,9 @@ func (c *CDPipelineController) UpdateCDPipeline() {
 		}
 	}
 
-	c.Data["EDPVersion"] = context.EDPVersion
+	c.Data["EDPVersion"] = console.EDPVersion
 	c.Data["Username"] = c.Ctx.Input.Session("username")
-	c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/overview#cdPipelineEditSuccessModal", context.BasePath), 302)
+	c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/overview#cdPipelineEditSuccessModal", console.BasePath), 302)
 }
 
 func (c *CDPipelineController) CreateCDPipeline() {
@@ -296,7 +297,7 @@ func (c *CDPipelineController) CreateCDPipeline() {
 		log.Error("Request data is not valid", zap.String("err", errMsg.Message))
 		flash.Error(errMsg.Message)
 		flash.Store(&c.Controller)
-		c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/create", context.BasePath), 302)
+		c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/create", console.BasePath), 302)
 		return
 	}
 	log.Debug("Request data is received to create CD pipeline",
@@ -309,15 +310,15 @@ func (c *CDPipelineController) CreateCDPipeline() {
 	if pipelineErr != nil {
 
 		switch pipelineErr.(type) {
-		case *edperror.CDPipelineExistsError:
+		case *ddmerror.CDPipelineExistsError:
 			flash.Error(fmt.Sprintf("cd pipeline %v is already exists", cdPipelineCreateCommand.Name))
 			flash.Store(&c.Controller)
-			c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/create", context.BasePath), http.StatusFound)
+			c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/create", console.BasePath), http.StatusFound)
 			return
-		case *edperror.NonValidRelatedBranchError:
+		case *ddmerror.NonValidRelatedBranchError:
 			flash.Error(fmt.Sprintf("one or more applications have non valid branches: %v", cdPipelineCreateCommand.Applications))
 			flash.Store(&c.Controller)
-			c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/create", context.BasePath), http.StatusBadRequest)
+			c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/create", console.BasePath), http.StatusBadRequest)
 			return
 		default:
 			c.Abort("500")
@@ -326,9 +327,9 @@ func (c *CDPipelineController) CreateCDPipeline() {
 
 	}
 
-	c.Data["EDPVersion"] = context.EDPVersion
+	c.Data["EDPVersion"] = console.EDPVersion
 	c.Data["Username"] = c.Ctx.Input.Session("username")
-	c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/overview?%s=%s#cdPipelineSuccessModal", context.BasePath, paramWaitingForCdPipeline, pipelineName), 302)
+	c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/overview?%s=%s#cdPipelineSuccessModal", console.BasePath, paramWaitingForCdPipeline, pipelineName), 302)
 }
 
 func (c *CDPipelineController) GetCDPipelineOverviewPage() {
@@ -368,16 +369,16 @@ func (c *CDPipelineController) GetCDPipelineOverviewPage() {
 	if flash.Data["error"] != "" {
 		c.Data["Error"] = flash.Data["error"]
 	}
-	contextRoles := c.GetSession("realm_roles").([]string)
+	contextRoles, _ := c.GetSession("realm_roles").([]string)
 	c.Data["CDPipeline"] = cdPipeline
-	c.Data["EDPVersion"] = context.EDPVersion
+	c.Data["EDPVersion"] = console.EDPVersion
 	c.Data["Username"] = c.Ctx.Input.Session("username")
-	c.Data["Type"] = "delivery"
+	c.Data["Type"] = deliveryType
 	c.Data["IsOpenshift"] = platform.IsOpenshift()
-	c.Data["BasePath"] = context.BasePath
+	c.Data["BasePath"] = console.BasePath
 	c.Data["HasRights"] = auth.IsAdmin(contextRoles)
-	c.Data["xsrfdata"] = template.HTML(c.XSRFFormHTML())
-	c.Data["DiagramPageEnabled"] = context.DiagramPageEnabled
+	c.Data["xsrfdata"] = template.HTML(c.XSRFFormHTML()) //nolint
+	c.Data["DiagramPageEnabled"] = console.DiagramPageEnabled
 	c.TplName = "cd_pipeline_overview.html"
 }
 
@@ -484,7 +485,7 @@ func (c *CDPipelineController) createOneJenkinsLink(cdPipeline *query.CDPipeline
 			cdPipeline.Name, consts.Jenkins)
 	}
 
-	cdPipeline.JenkinsLink = util.CreateCICDPipelineLink(edc.Url, cdPipeline.Name)
+	cdPipeline.JenkinsLink = util.CreateCICDPipelineLink(edc.URL, cdPipeline.Name)
 	log.Info("Created CD Pipeline Jenkins link", zap.String("jenkins link", cdPipeline.JenkinsLink))
 	return nil
 }
@@ -516,9 +517,9 @@ func (c *CDPipelineController) createNativeDockerImageLinks(s []*query.CodebaseD
 	}
 
 	for i, v := range s {
-		s[i].CICDLink = util.CreateCICDApplicationLink(cj.Url, v.CodebaseBranch.Codebase.Name,
+		s[i].CICDLink = util.CreateCICDApplicationLink(cj.URL, v.CodebaseBranch.Codebase.Name,
 			util.ProcessNameToKubernetesConvention(v.CodebaseBranch.Name))
-		s[i].ImageLink = util.CreateNativeDockerStreamLink(co.Url, context.Namespace,
+		s[i].ImageLink = util.CreateNativeDockerStreamLink(co.URL, console.Namespace,
 			getImageStreamName(v.CodebaseBranch.Release, v.OcImageStreamName))
 	}
 
@@ -553,9 +554,9 @@ func (c *CDPipelineController) createNonNativeDockerImageLinks(s []*query.Codeba
 	}
 
 	for i, v := range s {
-		s[i].ImageLink = util.CreateNonNativeDockerStreamLink(cd.Url,
+		s[i].ImageLink = util.CreateNonNativeDockerStreamLink(cd.URL,
 			getImageStreamName(v.CodebaseBranch.Release, v.OcImageStreamName))
-		s[i].CICDLink = util.CreateCICDApplicationLink(cj.Url, v.CodebaseBranch.Codebase.Name,
+		s[i].CICDLink = util.CreateCICDApplicationLink(cj.URL, v.CodebaseBranch.Codebase.Name,
 			util.ProcessNameToKubernetesConvention(v.CodebaseBranch.Name))
 	}
 
@@ -588,7 +589,7 @@ func (c *CDPipelineController) createNativePlatformLinks(stages []*query.Stage, 
 	}
 
 	for i, v := range stages {
-		stages[i].PlatformProjectLink = util.CreateNativeProjectLink(edc.Url, v.PlatformProjectName)
+		stages[i].PlatformProjectLink = util.CreateNativeProjectLink(edc.URL, v.PlatformProjectName)
 	}
 
 	return nil
@@ -609,7 +610,7 @@ func (c *CDPipelineController) createNonNativePlatformLinks(stages []*query.Stag
 	}
 
 	for i, v := range stages {
-		stages[i].PlatformProjectLink = util.CreateNativeProjectLink(edc.Url, v.PlatformProjectName)
+		stages[i].PlatformProjectLink = util.CreateNativeProjectLink(edc.URL, v.PlatformProjectName)
 	}
 
 	return nil
@@ -631,7 +632,7 @@ func (c *CDPipelineController) createJenkinsLinks(cdPipelines []*query.CDPipelin
 	}
 
 	for index, pipeline := range cdPipelines {
-		cdPipelines[index].JenkinsLink = util.CreateCICDPipelineLink(edc.Url, pipeline.Name)
+		cdPipelines[index].JenkinsLink = util.CreateCICDPipelineLink(edc.URL, pipeline.Name)
 		log.Debug("Created Jenkins link", zap.String("link", pipeline.JenkinsLink))
 	}
 	return nil
@@ -654,11 +655,11 @@ func (c CDPipelineController) DeleteCDStage() {
 	if o == 0 {
 		if err := c.PipelineService.DeleteCDPipeline(pn); err != nil {
 			if dberror.CDPipelineErrorOccurred(err) {
-				perr := err.(dberror.RemoveCDPipelineRestriction)
+				perr, _ := err.(dberror.RemoveCDPipelineRestriction)
 				flash.Error(perr.Message)
 				flash.Store(&c.Controller)
 				log.Error(perr.Message, zap.Error(err))
-				c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/overview?name=%v#cdPipelineIsUsedAsSource", context.BasePath, pn), 302)
+				c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/overview?name=%v#cdPipelineIsUsedAsSource", console.BasePath, pn), 302)
 				return
 			}
 			log.Error("cd pipeline delete process is failed", zap.Error(err))
@@ -668,16 +669,16 @@ func (c CDPipelineController) DeleteCDStage() {
 		log.Debug("delete cd stage method is finished",
 			zap.String("pipeline", pn),
 			zap.String("stage", sn))
-		c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/overview?name=%v#cdPipelineDeletedSuccessModal", context.BasePath, pn), 302)
+		c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/overview?name=%v#cdPipelineDeletedSuccessModal", console.BasePath, pn), 302)
 	}
 
 	if err := c.PipelineService.DeleteCDStage(pn, sn); err != nil {
 		if dberror.StageErrorOccurred(err) {
-			serr := err.(dberror.RemoveStageRestriction)
+			serr, _ := err.(dberror.RemoveStageRestriction)
 			flash.Error(serr.Message)
 			flash.Store(&c.Controller)
 			log.Error(serr.Message, zap.Error(err))
-			c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/%v/overview?stage=%v#stageIsUsedAsSource", context.BasePath, pn, sn), 302)
+			c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/%v/overview?stage=%v#stageIsUsedAsSource", console.BasePath, pn, sn), 302)
 			return
 		}
 		log.Error("cd stage delete process is failed", zap.Error(err))
@@ -687,7 +688,7 @@ func (c CDPipelineController) DeleteCDStage() {
 	log.Debug("delete cd stage method is finished",
 		zap.String("pipeline", pn),
 		zap.String("stage", sn))
-	c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/%v/overview?stage=%v#stageSuccessModal", context.BasePath, pn, sn), 302)
+	c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/%v/overview?stage=%v#stageSuccessModal", console.BasePath, pn, sn), 302)
 }
 
 func (c CDPipelineController) DeleteCDPipeline() {
@@ -696,11 +697,11 @@ func (c CDPipelineController) DeleteCDPipeline() {
 	if err := c.PipelineService.DeleteCDPipeline(n); err != nil {
 		flash := beego.NewFlash()
 		if dberror.CDPipelineErrorOccurred(err) {
-			perr := err.(dberror.RemoveCDPipelineRestriction)
+			perr, _ := err.(dberror.RemoveCDPipelineRestriction)
 			flash.Error(perr.Message)
 			flash.Store(&c.Controller)
 			log.Error(perr.Message, zap.Error(err))
-			c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/overview?name=%v#cdPipelineIsUsedAsSource", context.BasePath, n), 302)
+			c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/overview?name=%v#cdPipelineIsUsedAsSource", console.BasePath, n), 302)
 			return
 		}
 		log.Error("cd pipeline delete process is failed", zap.Error(err))
@@ -708,5 +709,5 @@ func (c CDPipelineController) DeleteCDPipeline() {
 		return
 	}
 	log.Debug("delete cd pipeline method is finished", zap.String("name", n))
-	c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/overview?name=%v#cdPipelineDeletedSuccessModal", context.BasePath, n), 302)
+	c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/overview?name=%v#cdPipelineDeletedSuccessModal", console.BasePath, n), 302)
 }

@@ -1,8 +1,8 @@
 package service
 
 import (
-	"edp-admin-console/models/query"
-	"edp-admin-console/repository/mock"
+	"ddm-admin-console/models/query"
+	"ddm-admin-console/repository/mock"
 	"errors"
 	"github.com/stretchr/testify/assert"
 	"testing"

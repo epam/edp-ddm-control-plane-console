@@ -17,20 +17,22 @@
 package repository
 
 import (
-	"edp-admin-console/models"
-	"edp-admin-console/models/dto"
-	"edp-admin-console/models/query"
+	"ddm-admin-console/models"
+	"ddm-admin-console/models/dto"
+	"ddm-admin-console/models/query"
 	"strconv"
 
 	"github.com/astaxie/beego/orm"
 )
 
+const defaultQualityGateType = "autotests"
+
 type ICDPipelineRepository interface {
 	GetCDPipelineByName(pipelineName string) (*query.CDPipeline, error)
 	GetCDPipelines(criteria query.CDPipelineCriteria) ([]*query.CDPipeline, error)
 	GetStage(cdPipelineName, stageName string) (*models.StageView, error)
-	GetCodebaseAndBranchName(codebaseId, branchId int) (*dto.CodebaseBranchDTO, error)
-	GetQualityGates(stageId int64) ([]query.QualityGate, error)
+	GetCodebaseAndBranchName(codebaseID, branchID int) (*dto.CodebaseBranchDTO, error)
+	GetQualityGates(stageID int64) ([]query.QualityGate, error)
 	GetCDPipelinesUsingApplication(codebaseName string) ([]string, error)
 	GetCDPipelinesUsingAutotest(codebaseName string) ([]string, error)
 	GetCDPipelinesUsingLibrary(codebaseName string) ([]string, error)
@@ -175,7 +177,7 @@ func (r CDPipelineRepository) GetCDPipelineByName(pipelineName string) (*query.C
 		return nil, err
 	}
 
-	_, err = o.LoadRelated(&cdPipeline, "CodebaseDockerStream", false, 100, 0, "Id")
+	_, err = o.LoadRelated(&cdPipeline, "CodebaseDockerStream", false, 100, 0, "ID")
 	if err != nil {
 		return nil, err
 	}
@@ -235,7 +237,7 @@ func (r CDPipelineRepository) GetCDPipelineByName(pipelineName string) (*query.C
 }
 
 func loadRelatedSource(s *query.Stage) error {
-	if s.SourceCodebaseBranchId == nil {
+	if s.SourceCodebaseBranchID == nil {
 		s.Source = query.Source{
 			Type:    "default",
 			Library: nil,
@@ -255,7 +257,7 @@ func loadRelatedSourceLibrary(s *query.Stage) error {
 	b := query.CodebaseBranch{}
 	err := o.QueryTable(new(query.CodebaseBranch)).
 		RelatedSel().
-		Filter("id", *s.SourceCodebaseBranchId).
+		Filter("id", *s.SourceCodebaseBranchID).
 		One(&b)
 	if err != nil {
 		return err
@@ -277,7 +279,7 @@ func loadRelatedCodebaseDockerStreams(dockerStreams []*query.CodebaseDockerStrea
 	o := orm.NewOrm()
 
 	for _, dockerStream := range dockerStreams {
-		_, err := o.LoadRelated(dockerStream, "CodebaseBranch", false, 100, 0, "Id")
+		_, err := o.LoadRelated(dockerStream, "CodebaseBranch", false, 100, 0, "ID")
 		if err != nil {
 			return nil, err
 		}
@@ -304,7 +306,7 @@ func loadRelatedDockerStreams(pipelineName string, branches []*query.CodebaseBra
 	o := orm.NewOrm()
 	for _, branch := range branches {
 		var dockerStream query.CodebaseDockerStream
-		err := o.Raw(SelectDockerStreamName, pipelineName, branch.Id).QueryRow(&dockerStream)
+		err := o.Raw(SelectDockerStreamName, pipelineName, branch.ID).QueryRow(&dockerStream)
 		if err != nil {
 			return err
 		}
@@ -320,7 +322,7 @@ func loadRelatedQualityGates(stages []*query.Stage) error {
 		o := orm.NewOrm()
 
 		_, err := o.QueryTable(new(query.QualityGate)).
-			Filter("cd_stage_id", stage.Id).
+			Filter("cd_stage_id", stage.ID).
 			All(&stage.QualityGates)
 		if err != nil {
 			return err
@@ -334,12 +336,12 @@ func loadRelatedQualityGates(stages []*query.Stage) error {
 
 func loadRelatedAutotest(gates []query.QualityGate) error {
 	for i, gate := range gates {
-		if gate.QualityGateType == "autotests" {
+		if gate.QualityGateType == defaultQualityGateType {
 			o := orm.NewOrm()
 
 			codebase := query.Codebase{}
 			err := o.QueryTable(new(query.Codebase)).
-				Filter("id", gate.CodebaseId).
+				Filter("id", gate.CodebaseID).
 				One(&codebase)
 			if err != nil {
 				return err
@@ -354,12 +356,12 @@ func loadRelatedAutotest(gates []query.QualityGate) error {
 
 func loadRelatedBranch(gates []query.QualityGate) error {
 	for i, gate := range gates {
-		if gate.QualityGateType == "autotests" {
+		if gate.QualityGateType == defaultQualityGateType {
 			o := orm.NewOrm()
 
 			branch := query.CodebaseBranch{}
 			err := o.QueryTable(new(query.CodebaseBranch)).
-				Filter("id", gate.CodebaseBranchId).
+				Filter("id", gate.CodebaseBranchID).
 				One(&branch)
 			if err != nil {
 				return err
@@ -400,7 +402,7 @@ func (r CDPipelineRepository) GetCDPipelines(criteria query.CDPipelineCriteria) 
 		}
 
 		for _, s := range p.Stage {
-			ds, err := r.getStageCodebaseDockerStream(s.Id)
+			ds, err := r.getStageCodebaseDockerStream(s.ID)
 			if err != nil {
 				return nil, err
 			}
@@ -418,7 +420,7 @@ func (r CDPipelineRepository) GetCDPipelines(criteria query.CDPipelineCriteria) 
 func loadRelatedStage(pipeline *query.CDPipeline) error {
 	o := orm.NewOrm()
 	qs := o.QueryTable(new(query.Stage))
-	_, err := qs.Filter("cd_pipeline_id", pipeline.Id).
+	_, err := qs.Filter("cd_pipeline_id", pipeline.ID).
 		OrderBy("Name").
 		All(&pipeline.Stage)
 	return err
@@ -428,7 +430,7 @@ func loadRelatedActionLogForCDPipeline(cdPipeline *query.CDPipeline) error {
 	o := orm.NewOrm()
 
 	_, err := o.QueryTable(new(query.ActionLog)).
-		Filter("cdPipeline__cd_pipeline_id", cdPipeline.Id).
+		Filter("cdPipeline__cd_pipeline_id", cdPipeline.ID).
 		OrderBy("LastTimeUpdate").
 		Distinct().
 		All(&cdPipeline.ActionLog, "LastTimeUpdate", "UserName",
@@ -454,18 +456,18 @@ func (r CDPipelineRepository) GetStage(cdPipelineName, stageName string) (*model
 
 	for index, row := range maps {
 		if index == 0 {
-			stage.Name = row["stage_name"].(string)
-			stage.CDPipeline = row["pipeline_name"].(string)
-			stage.Description = row["description"].(string)
-			stage.TriggerType = row["trigger_type"].(string)
-			stage.Order = row["order"].(string)
+			stage.Name, _ = row["stage_name"].(string)
+			stage.CDPipeline, _ = row["pipeline_name"].(string)
+			stage.Description, _ = row["description"].(string)
+			stage.TriggerType, _ = row["trigger_type"].(string)
+			stage.Order, _ = row["order"].(string)
 
 			id, err := strconv.ParseInt(row["id"].(string), 10, 64)
 			if err != nil {
 				return nil, err
 			}
 
-			stage.Id = id
+			stage.ID = id
 		}
 		stage.Applications = append(stage.Applications, models.ApplicationStage{
 			Name:       row["app_name"].(string),
@@ -478,31 +480,31 @@ func (r CDPipelineRepository) GetStage(cdPipelineName, stageName string) (*model
 	return &stage, nil
 }
 
-func (CDPipelineRepository) GetCodebaseAndBranchName(codebaseId, branchId int) (*dto.CodebaseBranchDTO, error) {
+func (CDPipelineRepository) GetCodebaseAndBranchName(codebaseID, branchID int) (*dto.CodebaseBranchDTO, error) {
 	o := orm.NewOrm()
 
 	result := dto.CodebaseBranchDTO{}
 	var maps []orm.Params
 
-	_, err := o.Raw(SelectCodebaseAndBranchName, codebaseId, branchId).Values(&maps)
+	_, err := o.Raw(SelectCodebaseAndBranchName, codebaseID, branchID).Values(&maps)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, row := range maps {
-		result.AppName = row["codebase_name"].(string)
-		result.BranchName = row["codebase_branch_name"].(string)
+		result.AppName, _ = row["codebase_name"].(string)
+		result.BranchName, _ = row["codebase_branch_name"].(string)
 	}
 
 	return &result, nil
 }
 
-func (CDPipelineRepository) GetQualityGates(stageId int64) ([]query.QualityGate, error) {
+func (CDPipelineRepository) GetQualityGates(id int64) ([]query.QualityGate, error) {
 	o := orm.NewOrm()
 
 	var gates []query.QualityGate
 	_, err := o.QueryTable(new(query.QualityGate)).
-		Filter("cd_stage_id", stageId).
+		Filter("cd_stage_id", id).
 		All(&gates)
 	if err != nil {
 		return nil, err
@@ -519,7 +521,7 @@ func (CDPipelineRepository) GetQualityGates(stageId int64) ([]query.QualityGate,
 	}
 
 	for _, gate := range gates {
-		if gate.QualityGateType == "autotests" && gate.Autotest.GitServerId != nil {
+		if gate.QualityGateType == defaultQualityGateType && gate.Autotest.GitServerID != nil {
 			err := loadRelatedGitServerName(gate.Autotest)
 			if err != nil {
 				return nil, err
@@ -626,10 +628,10 @@ func (CDPipelineRepository) GetAllCodebaseDockerStreams() ([]string, error) {
 	return cds, nil
 }
 
-func (CDPipelineRepository) getStageCodebaseDockerStream(stageId int) ([]query.StageCodebaseDockerStream, error) {
+func (CDPipelineRepository) getStageCodebaseDockerStream(id int) ([]query.StageCodebaseDockerStream, error) {
 	o := orm.NewOrm()
 	var ds []query.StageCodebaseDockerStream
-	if _, err := o.Raw(selectStageCodebaseDockerStream, stageId).QueryRows(&ds); err != nil {
+	if _, err := o.Raw(selectStageCodebaseDockerStream, id).QueryRows(&ds); err != nil {
 		return nil, err
 	}
 	return ds, nil

@@ -18,56 +18,56 @@ package auth
 
 import (
 	"context"
-	ctx "edp-admin-console/context"
+	ctx "ddm-admin-console/console"
+	"ddm-admin-console/service/logger"
 	"fmt"
-	"edp-admin-console/service/logger"
 	"github.com/astaxie/beego"
 	"go.uber.org/zap"
 )
 
 var log = logger.GetLogger()
 
-type AuthController struct {
+type Controller struct {
 	beego.Controller
 }
 
-func (this *AuthController) Callback() {
+func (ac *Controller) Callback() {
 	authConfig := ctx.GetAuthConfig()
 	log.Info("Start callback flow...")
-	queryState := this.Ctx.Input.Query("state")
+	queryState := ac.Ctx.Input.Query("state")
 	log.Info("State has been retrieved from query param", zap.String("queryState", queryState))
-	sessionState := this.Ctx.Input.Session(authConfig.StateAuthKey)
+	sessionState := ac.Ctx.Input.Session(authConfig.StateAuthKey)
 	log.Info("State has been retrieved from the session", zap.Any("sessionState", sessionState))
 	if queryState != sessionState {
 		log.Info("State does not match")
-		this.Abort("400")
+		ac.Abort("400")
 		return
 	}
 
-	authCode := this.Ctx.Input.Query("code")
+	authCode := ac.Ctx.Input.Query("code")
 	log.Info("Authorization code has been retrieved from query param")
 	token, err := authConfig.Oauth2Config.Exchange(context.Background(), authCode)
 
 	if err != nil {
 		log.Info("Failed to exchange token with code", zap.String("code", authCode))
-		this.Abort("500")
+		ac.Abort("500")
 		return
 	}
 	log.Info("Authorization code has been successfully exchanged with token")
 
 	ts := authConfig.Oauth2Config.TokenSource(context.Background(), token)
 
-	this.Ctx.Output.Session("token_source", ts)
+	ac.Ctx.Output.Session("token_source", ts)
 	log.Info("Token source has been saved to the session")
-	path := this.getRedirectPath()
-	this.Redirect(path, 302)
+	path := ac.getRedirectPath()
+	ac.Redirect(path, 302)
 }
 
-func (this *AuthController) getRedirectPath() string {
-	requestPath := this.Ctx.Input.Session("request_path")
+func (ac *Controller) getRedirectPath() string {
+	requestPath := ac.Ctx.Input.Session("request_path")
 	if requestPath == nil {
 		return fmt.Sprintf("%s/admin/edp/overview", ctx.BasePath)
 	}
-	this.Ctx.Output.Session("request_path", nil)
+	ac.Ctx.Output.Session("request_path", nil)
 	return requestPath.(string)
 }

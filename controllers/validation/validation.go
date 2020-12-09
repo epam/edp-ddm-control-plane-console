@@ -1,9 +1,9 @@
 package validation
 
 import (
-	"edp-admin-console/models/command"
-	"edp-admin-console/models/query"
-	"edp-admin-console/util"
+	"ddm-admin-console/models/command"
+	"ddm-admin-console/models/query"
+	"ddm-admin-console/util"
 	"encoding/json"
 	"fmt"
 	"github.com/astaxie/beego/validation"
@@ -12,6 +12,8 @@ import (
 	"regexp"
 	"strings"
 )
+
+const codebaseAutotests = "autotests"
 
 type ErrMsg struct {
 	Message    string
@@ -26,13 +28,13 @@ func ValidCodebaseRequestData(codebase command.CreateCodebase) *ErrMsg {
 	resErr = err
 
 	if codebase.Strategy == "import" {
-		valid.Match(codebase.GitUrlPath, regexp.MustCompile("^\\/.*$"), "Spec.GitUrlPath")
+		valid.Match(codebase.GitURLPath, regexp.MustCompile("^\\/.*$"), "Spec.GitURLPath") //nolint
 	}
 
 	if codebase.Repository != nil {
 		_, err := valid.Valid(codebase.Repository)
 
-		isAvailable := util.IsGitRepoAvailable(codebase.Repository.Url, codebase.Repository.Login, codebase.Repository.Password)
+		isAvailable := util.IsGitRepoAvailable(codebase.Repository.URL, codebase.Repository.Login, codebase.Repository.Password)
 
 		if !isAvailable {
 			err := &validation.Error{Key: "repository", Message: "Repository doesn't exist or invalid login and password."}
@@ -66,12 +68,12 @@ func ValidCodebaseRequestData(codebase command.CreateCodebase) *ErrMsg {
 		valid.Errors = append(valid.Errors, err)
 	}
 
-	if codebase.Type == "autotests" && codebase.Strategy != "clone" {
+	if codebase.Type == codebaseAutotests && codebase.Strategy != "clone" {
 		err := &validation.Error{Key: "repository", Message: "strategy for autotests must be 'clone'"}
 		valid.Errors = append(valid.Errors, err)
 	}
 
-	if codebase.Type == "autotests" && codebase.Repository == nil {
+	if codebase.Type == codebaseAutotests && codebase.Repository == nil {
 		err := &validation.Error{Key: "repository", Message: "repository for autotests can't be null"}
 		valid.Errors = append(valid.Errors, err)
 	}
@@ -93,7 +95,7 @@ func CreateCodebaseLogRequestData(app command.CreateCodebase) strings.Builder {
 		app.Name, app.Strategy, app.Lang, app.BuildTool, app.MultiModule, app.Framework))
 
 	if app.Repository != nil {
-		result.WriteString(fmt.Sprintf(", repositoryUrl=%s, repositoryLogin=%s", app.Repository.Url, app.Repository.Login))
+		result.WriteString(fmt.Sprintf(", repositoryUrl=%s, repositoryLogin=%s", app.Repository.URL, app.Repository.Login))
 	}
 
 	if app.Vcs != nil {
@@ -167,7 +169,7 @@ func validateQualityGates(valid validation.Validation, qualityGates []gateV1alph
 			}
 			isQualityGatesValid = isValid
 
-			if (qualityGate.QualityGateType == "autotests" && (qualityGate.AutotestName == nil || qualityGate.BranchName == nil)) ||
+			if (qualityGate.QualityGateType == codebaseAutotests && (qualityGate.AutotestName == nil || qualityGate.BranchName == nil)) ||
 				(qualityGate.QualityGateType == "manual" && (qualityGate.AutotestName != nil || qualityGate.BranchName != nil)) {
 				isQualityGatesValid = false
 			}
@@ -182,7 +184,6 @@ func validateQualityGates(valid validation.Validation, qualityGates []gateV1alph
 
 func ValidateCDPipelineUpdateRequestData(cdPipeline command.CDPipelineCommand) *ErrMsg {
 	isApplicationsValid := true
-	isCDPipelineValid := true
 	isStagesValid := true
 	isQualityGatesValid := true
 	errMsg := &ErrMsg{"An internal error has occurred on server while validating CD Pipeline's request body.", http.StatusInternalServerError}
@@ -226,13 +227,13 @@ func ValidateCDPipelineUpdateRequestData(cdPipeline command.CDPipelineCommand) *
 }
 
 func CreateErrorResponseBody(valid validation.Validation) []byte {
-	errJson, _ := json.Marshal(extractErrors(valid))
+	errJSON, _ := json.Marshal(extractErrors(valid))
 	errResponse := struct {
 		Message string
 		Content string
 	}{
 		"Body of request are not valid.",
-		string(errJson),
+		string(errJSON),
 	}
 	response, _ := json.Marshal(errResponse)
 	return response

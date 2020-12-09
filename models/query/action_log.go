@@ -3,7 +3,7 @@ package query
 import "time"
 
 type ActionLog struct {
-	Id             int       `json:"id" orm:"column(id)"`
+	ID             int       `json:"id" orm:"column(id)"`
 	LastTimeUpdate time.Time `json:"last_time_update" orm:"column(updated_at)"`
 	UserName       string    `json:"user_name" orm:"column(username)"`
 	Message        string    `json:"message" orm:"column(action_message)"`

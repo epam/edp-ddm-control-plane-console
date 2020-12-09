@@ -1,4 +1,4 @@
-module edp-admin-console
+module ddm-admin-console
 
 go 1.14
 
