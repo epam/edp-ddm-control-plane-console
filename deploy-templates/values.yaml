@@ -1,12 +1,18 @@
 name: ddm-admin-console
 namespace: ""
-platform: ""
 cdPipelineName: ""
-dnsWildcard: ""
+cdPipelineStageName: ""
+dnsWildcard: apps.cicd.mdtu-ddm.projects.epam.com
+
 database:
   required: false
+
+
 ingress:
-  required: false
+  required: true
+  site: ddm-admin-console
+  path: /
+
 image:
-  name: ""
-  version: ""
+  name: ddm-admin-console
+  version: latest
