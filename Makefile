@@ -1,13 +1,16 @@
 export GO111MODULE=on
 
 .PHONY: all
-all: deps gen lint unit-test build
+all:
+	deps gen lint unit-test build
 
 .PHONY: ci
-ci: lint unit-test build
+ci:
+	lint unit-test build
 
 .PHONY: build
-build: go build -mod=vendor -a -o ./artifacts/svc .
+build:
+	go build -mod=vendor
 
 .PHONY: deps
 deps:
