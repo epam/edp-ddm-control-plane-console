@@ -7,6 +7,8 @@ ENV USER_UID=1001 \
 RUN addgroup --gid ${USER_UID} ${USER_NAME} \
     && adduser --disabled-password --uid ${USER_UID} --ingroup ${USER_NAME} --home ${HOME} ${USER_NAME}
 
+RUN go build -mod=vendor
+
 WORKDIR /go/bin
 
 COPY admin-console .
