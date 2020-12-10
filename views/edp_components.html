@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {{template "template/head.html" .}}
+    <link rel="stylesheet" href="{{ .BasePath }}/static/css/edp-instance.css">
+</head>
+<body>
+<main>
+    {{template "template/header_template.html" .}}
+    <section class="content d-flex">
+        <aside class="p-0 bg-dark active js-aside-menu aside-menu active">
+            {{template "template/navbar_template.html" .}}
+        </aside>
+        <div class="flex-fill pl-4 pr-4 wrapper">
+
+            <div style="margin-top: 10px">
+                <table class="table">
+                    <tbody>
+                        {{ range $i, $val := .EDPComponents }}
+                            {{if $val.Visible}}
+                                <tr>
+                                    <td width="25px">
+                                        <a href="{{ $val.Url }}" target="_blank" rel="noopener noreferrer">
+                                            <img src="data:image/svg+xml;base64,{{ $val.Icon }}" alt="{{ $val.Type }}" height="45" width="42"/>
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <a href="{{ $val.Url }}" target="_blank" rel="noopener noreferrer" class="component-name">{{ $val.Type }}</a>
+                                    </td>
+                                </tr>
+                            {{end}}
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+    {{template "template/footer_template.html" .}}
+</main>
+<script src="{{ .BasePath }}/static/js/jquery-3.3.1.js"></script>
+<script src="{{ .BasePath }}/static/js/popper.js"></script>
+<script src="{{ .BasePath }}/static/js/bootstrap.js"></script>
+</body>
+</html>
