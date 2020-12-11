@@ -131,7 +131,7 @@ spec:
               protocol: TCP
           imagePullPolicy: IfNotPresent
           terminationMessagePolicy: File
-          image: 'epamedp/ddm-admin-console:0.0.1'
+          image: 'image-registry.openshift-image-registry.svc:5000/mdtu-ddm-edp-cicd/ddm-admin-console-master:0.0.0-SNAPSHOT.10'
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       dnsPolicy: ClusterFirst
