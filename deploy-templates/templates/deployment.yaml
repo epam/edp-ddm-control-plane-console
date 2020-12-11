@@ -1,67 +1,146 @@
-apiVersion: apps/v1
-kind: Deployment
+kind: DeploymentConfig
+apiVersion: apps.openshift.io/v1
 metadata:
-    name: {{ .Values.name }}
-    labels:
-        app: {{ .Values.name }}
+  annotations:
+    meta.helm.sh/release-name: edp-install
+    meta.helm.sh/release-namespace: mdtu-ddm-edp-cicd
+  selfLink: >-
+    /apis/apps.openshift.io/v1/namespaces/mdtu-ddm-edp-cicd/deploymentconfigs/edp-admin-console
+  name: edp-admin-console
+  namespace: mdtu-ddm-edp-cicd
+  labels:
+    app: ddm-admin-console
+    app.kubernetes.io/managed-by: Helm
 spec:
-    replicas: 1
-    selector:
-      matchLabels:
-        app: {{ .Values.name }}
-    strategy:
-        type: RollingUpdate
-    template:
-        metadata:
-            labels:
-                app: {{ .Values.name }}
-        spec:
-{{- if .Values.database.required }}
-            initContainers:
-                - name: init-{{ .Values.name }}-db
-                  image: busybox
-                  command: ["sh", "-c", "while ! nc -w 1 {{ .Values.name }}-db 5432 </dev/null; do echo waiting for {{ .Values.name }}-db; sleep 10; done;"]
-{{- end }}
-            serviceAccountName: {{ .Values.name }}
-            containers:
-                - name: {{ .Values.name }}
-                  image: "{{ .Values.image.name }}:{{ .Values.image.version }}"
-                  imagePullPolicy: Always
-                  ports:
-                      - containerPort: 8080
-                        protocol: TCP
-                  livenessProbe:
-                      failureThreshold: 5
-                      initialDelaySeconds: 180
-                      periodSeconds: 20
-                      successThreshold: 1
-                      tcpSocket:
-                          port: 8080
-                      timeoutSeconds: 5
-                  readinessProbe:
-                      failureThreshold: 5
-                      initialDelaySeconds: 60
-                      periodSeconds: 20
-                      successThreshold: 1
-                      tcpSocket:
-                          port: 8080
-                      timeoutSeconds: 5
-                  resources:
-                      requests:
-                          memory: 500Mi
-{{- if .Values.database.required }}
-                  env:
-                      - name: POSTGRES_DATABASE
-                        value: {{ .Values.name }}-db
-                      - name: POSTGRES_USER
-                        value: "admin"
-                      - name: POSTGRES_PASSWORD
-                        value: "admin"
-{{- end }}
-                  terminationMessagePath: /dev/termination-log
-                  terminationMessagePolicy: File
-            dnsPolicy: ClusterFirst
-            restartPolicy: Always
-            schedulerName: default-scheduler
-            securityContext: {}
-            terminationGracePeriodSeconds: 30
+  strategy:
+    type: Rolling
+    rollingParams:
+      updatePeriodSeconds: 1
+      intervalSeconds: 1
+      timeoutSeconds: 600
+      maxUnavailable: 25%
+      maxSurge: 25%
+    resources: {}
+    activeDeadlineSeconds: 21600
+  triggers:
+    - type: ConfigChange
+  replicas: 1
+  revisionHistoryLimit: 10
+  test: false
+  selector:
+    app: edp-admin-console
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: edp-admin-console
+    spec:
+      containers:
+        - resources:
+            requests:
+              memory: 500Mi
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 60
+            timeoutSeconds: 1
+            periodSeconds: 20
+            successThreshold: 1
+            failureThreshold: 5
+          terminationMessagePath: /dev/termination-log
+          name: ddm-admin-console
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 180
+            timeoutSeconds: 1
+            periodSeconds: 20
+            successThreshold: 1
+            failureThreshold: 5
+          env:
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.namespace
+            - name: HOST
+              value: >-
+                https://ddm-admin-console-mdtu-ddm-edp-cicd.apps.cicd.mdtu-ddm.projects.epam.com
+            - name: BASE_PATH
+            - name: EDP_ADMIN_CONSOLE_VERSION
+              value: 2.5.2
+            - name: EDP_VERSION
+              value: 2.5.1
+            - name: AUTH_KEYCLOAK_ENABLED
+              value: 'true'
+            - name: DNS_WILDCARD
+              value: apps.cicd.mdtu-ddm.projects.epam.com
+            - name: OPENSHIFT_CLUSTER_URL
+              value: >-
+                https://console-openshift-console.apps.cicd.mdtu-ddm.projects.epam.com
+            - name: PG_USER
+              valueFrom:
+                secretKeyRef:
+                  name: db-admin-console
+                  key: username
+            - name: PG_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-admin-console
+                  key: password
+            - name: INTEGRATION_STRATEGIES
+              value: 'Import,Create,Clone'
+            - name: BUILD_TOOLS
+              value: 'maven,helm,docker'
+            - name: DEPLOYMENT_SCRIPT
+              value: 'helm-chart,openshift-template'
+            - name: PLATFORM_TYPE
+              value: openshift
+            - name: VERSIONING_TYPES
+              value: 'default,edp'
+            - name: CI_TOOLS
+              value: 'Jenkins,GitLab CI'
+            - name: VCS_INTEGRATION_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: edp-config
+                  key: vcs_integration_enabled
+            - name: EDP_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: edp-config
+                  key: edp_name
+            - name: PG_HOST
+              value: edp-install-wizard-db
+            - name: PG_PORT
+              value: '5432'
+            - name: PG_DATABASE
+              value: edp-install-wizard-db
+            - name: DB_ENABLED
+              value: 'true'
+            - name: KEYCLOAK_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: admin-console-client
+                  key: username
+            - name: KEYCLOAK_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: admin-console-client
+                  key: password
+            - name: KEYCLOAK_URL
+              value: >-
+                https://keycloak-edp-security.apps.cicd.mdtu-ddm.projects.epam.com/auth/realms/mdtu-ddm-edp-cicd-main
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          imagePullPolicy: IfNotPresent
+          terminationMessagePolicy: File
+          image: 'epamedp/ddm-admin-console:0.0.1'
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      serviceAccountName: edp-admin-console
+      serviceAccount: edp-admin-console
+      securityContext: {}
+      schedulerName: default-scheduler
