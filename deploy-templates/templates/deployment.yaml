@@ -5,8 +5,8 @@ metadata:
     meta.helm.sh/release-name: edp-install
     meta.helm.sh/release-namespace: mdtu-ddm-edp-cicd
   selfLink: >-
-    /apis/apps.openshift.io/v1/namespaces/mdtu-ddm-edp-cicd/deploymentconfigs/edp-admin-console
-  name: edp-admin-console
+    /apis/apps.openshift.io/v1/namespaces/mdtu-ddm-edp-cicd/deploymentconfigs/ddm-admin-console
+  name: ddm-admin-console
   namespace: mdtu-ddm-edp-cicd
   labels:
     app: ddm-admin-console
@@ -28,12 +28,12 @@ spec:
   revisionHistoryLimit: 10
   test: false
   selector:
-    app: edp-admin-console
+    app: ddm-admin-console
   template:
     metadata:
       creationTimestamp: null
       labels:
-        app: edp-admin-console
+        app: ddm-admin-console
     spec:
       containers:
         - resources:
@@ -140,7 +140,7 @@ spec:
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       dnsPolicy: ClusterFirst
-      serviceAccountName: edp-admin-console
-      serviceAccount: edp-admin-console
+      serviceAccountName: ddm-admin-console
+      serviceAccount: ddm-admin-console
       securityContext: {}
       schedulerName: default-scheduler
