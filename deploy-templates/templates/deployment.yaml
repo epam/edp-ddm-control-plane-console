@@ -3,14 +3,9 @@ apiVersion: apps.openshift.io/v1
 metadata:
   annotations:
     meta.helm.sh/release-name: edp-install
-    meta.helm.sh/release-namespace: mdtu-ddm-edp-cicd
-  selfLink: >-
-    /apis/apps.openshift.io/v1/namespaces/mdtu-ddm-edp-cicd/deploymentconfigs/ddm-admin-console
   name: ddm-admin-console
-  namespace: mdtu-ddm-edp-cicd
   labels:
     app: ddm-admin-console
-    app.kubernetes.io/managed-by: Helm
 spec:
   strategy:
     type: Rolling
