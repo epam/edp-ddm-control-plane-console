@@ -3,15 +3,9 @@ apiVersion: route.openshift.io/v1
 metadata:
   annotations:
     meta.helm.sh/release-name: edp-install
-    meta.helm.sh/release-namespace: mdtu-ddm-edp-cicd
-  selfLink: >-
-    /apis/route.openshift.io/v1/namespaces/mdtu-ddm-edp-cicd/routes/ddm-admin-console
-  resourceVersion: '525361'
   name: ddm-admin-console
-  namespace: mdtu-ddm-edp-cicd
   labels:
     app: ddm-admin-console
-    app.kubernetes.io/managed-by: Helm
 spec:
   host: ddm-admin-console-mdtu-ddm-edp-cicd.apps.cicd.mdtu-ddm.projects.epam.com
   to:
