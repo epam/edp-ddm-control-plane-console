@@ -1,4 +1,4 @@
-FROM golang:1.10.3-alpine3.8
+FROM golang:1.13.15-stretch
 
 ENV USER_UID=1001 \
     USER_NAME=admin-console \
@@ -17,4 +17,4 @@ COPY db db
 
 USER ${USER_UID}
 
-ENTRYPOINT ["admin-console"]
+ENTRYPOINT ["ddm-admin-console"]
