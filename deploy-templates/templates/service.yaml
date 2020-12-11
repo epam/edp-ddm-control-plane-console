@@ -1,15 +1,23 @@
-apiVersion: v1
 kind: Service
+apiVersion: v1
 metadata:
-    name: {{ .Values.name }}
-    labels:
-        app: {{ .Values.name }}
+  annotations:
+    meta.helm.sh/release-name: edp-install
+    meta.helm.sh/release-namespace: mdtu-ddm-edp-cicd
+  name: ddm-admin-console
+  namespace: mdtu-ddm-edp-cicd
+  labels:
+    app: ddm-admin-console
+    app.kubernetes.io/managed-by: Helm
 spec:
-    ports:
-        - name: {{ .Values.name }}
-          port: 8080
-          protocol: TCP
-          targetPort: 8080
-    selector:
-        app: {{ .Values.name }}
-    type: ClusterIP
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  selector:
+    app: edp-admin-console
+  clusterIP: 172.30.151.246
+  type: ClusterIP
+  sessionAffinity: None
+status:
+  loadBalancer: {}
