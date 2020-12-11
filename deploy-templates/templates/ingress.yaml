@@ -9,7 +9,7 @@ metadata:
   name: {{ .Values.name }}
 spec:
   rules:
-    - host: {{ .Values.name }}-{{ .Values.namespace }}.{{ .Values.dnsWildcard }}
+    - host: {{ .Values.name }}.{{ .Values.dnsWildcard }}
       http:
         paths:
           - backend:
