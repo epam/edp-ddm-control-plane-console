@@ -8,7 +8,7 @@ platform: "openshift"
 database:
   image: postgres:9.6
   capacity: 2Gi
-  storageClass: gp2-a
+  storageClass: gp2
 
 ingress:
   required: true
