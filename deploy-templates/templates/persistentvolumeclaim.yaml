@@ -8,5 +8,5 @@ spec:
     resources:
         requests:
             storage: {{ .Values.database.capacity | quote}}
-    storageClassName: {{ .Values.database.storageClass | quote }}
+    storageClassName: {{ .Values.database.storageClass }}
     volumeMode: Filesystem
