@@ -45,7 +45,7 @@ spec:
       serviceAccount: {{ .Values.name }}
       securityContext:
         runAsNonRoot: true
-      schedulerName: default-schedulerreconciler.yaml
+      schedulerName: default-scheduler
   strategy:
     type: RollingUpdate
     rollingUpdate:
