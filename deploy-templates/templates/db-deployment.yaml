@@ -3,24 +3,24 @@ kind: Deployment
 metadata:
     labels:
         app: {{ .Values.name }}
-    name: admin-console-db
+    name: {{ .Values.name }}-db
 spec:
     replicas: 1
     selector:
       matchLabels:
-        app: admin-console-db
+        app: {{ .Values.name }}-db
     strategy:
         type: Recreate
     template:
         metadata:
             labels:
-                app: admin-console-db
+                app: {{ .Values.name }}-db
         spec:
             containers:
-                - name: admin-console-db
+                - name: {{ .Values.name }}-db
                   env:
                       - name: POSTGRES_DB
-                        value: admin-console-db
+                        value: {{ .Values.name }}-db
                       - name: POSTGRES_USER
                         value: "admin"
                       - name: POSTGRES_PASSWORD
@@ -29,7 +29,7 @@ spec:
                         value: /var/lib/postgresql/data/pgdata
                       - name: POD_IP
                         valueFrom: { fieldRef: { fieldPath: status.podIP } }
-                  image: {{ .Values.database.version | quote }}
+                  image: {{ .Values.database.image | quote }}
                   imagePullPolicy: IfNotPresent
                   ports:
                       - containerPort: 5432
@@ -57,6 +57,6 @@ spec:
                         name: {{ .Values.name }}-db
             serviceAccount: {{ .Values.name }}
             volumes:
-                - name: admin-console-db
+                - name: {{ .Values.name }}-db
                   persistentVolumeClaim:
-                      claimName: admin-console-db
+                      claimName: {{ .Values.name }}-db
