@@ -1,4 +1,3 @@
-{{- if .Values.database.required }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -61,4 +60,3 @@ spec:
                 - name: {{ .Values.name }}-db
                   persistentVolumeClaim:
                       claimName: {{ .Values.name }}-db
-{{- end }}
