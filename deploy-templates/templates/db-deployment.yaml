@@ -3,24 +3,24 @@ kind: Deployment
 metadata:
     labels:
         app: {{ .Values.name }}
-    name: {{ .Values.name }}-db
+    name: admin-console-db
 spec:
     replicas: 1
     selector:
       matchLabels:
-        app: {{ .Values.name }}-db
+        app: admin-console-db
     strategy:
         type: Recreate
     template:
         metadata:
             labels:
-                app: {{ .Values.name }}-db
+                app: admin-console-db
         spec:
             containers:
-                - name: {{ .Values.name }}-db
+                - name: admin-console-db
                   env:
                       - name: POSTGRES_DB
-                        value: {{ .Values.name }}-db
+                        value: admin-console-db
                       - name: POSTGRES_USER
                         value: "admin"
                       - name: POSTGRES_PASSWORD
@@ -57,6 +57,6 @@ spec:
                         name: {{ .Values.name }}-db
             serviceAccount: {{ .Values.name }}
             volumes:
-                - name: {{ .Values.name }}-db
+                - name: admin-console-db
                   persistentVolumeClaim:
-                      claimName: {{ .Values.name }}-db
+                      claimName: admin-console-db
