@@ -6,7 +6,9 @@ dnsWildcard: apps.cicd.mdtu-ddm.projects.epam.com
 platform: "openshift"
 
 database:
-  required: false
+  image: postgres:9.6
+  capacity: 2Gi
+  storageClass: gp2-a
 
 ingress:
   required: true
