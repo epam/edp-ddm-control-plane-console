@@ -8,4 +8,4 @@ spec:
     resources:
         requests:
             storage: {{ .Values.database.capacity | quote}}
-    storageClassName: {{ .Values.database.storageClass }}
+    storageClassName: {{ .Values.database.storageClass | quote }}
