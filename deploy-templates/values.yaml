@@ -5,8 +5,8 @@ cdPipelineStageName: ""
 dnsWildcard: apps.cicd.mdtu-ddm.projects.epam.com
 platform: "openshift"
 
-database:
-  image: postgres:9.6
+db:
+  image: "postgres:9.6"
   capacity: 2Gi
   storageClass: gp2
 

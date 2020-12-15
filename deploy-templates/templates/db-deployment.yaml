@@ -29,7 +29,7 @@ spec:
                         value: /var/lib/postgresql/data/pgdata
                       - name: POD_IP
                         valueFrom: { fieldRef: { fieldPath: status.podIP } }
-                  image: {{ .Values.database.image | quote }}
+                  image: {{ .Values.db.image }}
                   imagePullPolicy: IfNotPresent
                   ports:
                       - containerPort: 5432

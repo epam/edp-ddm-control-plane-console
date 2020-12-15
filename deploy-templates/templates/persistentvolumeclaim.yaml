@@ -7,6 +7,6 @@ spec:
         - ReadWriteOnce
     resources:
         requests:
-            storage: {{ .Values.database.capacity | quote}}
-    storageClassName: {{ .Values.database.storageClass }}
+            storage: {{ .Values.db.capacity | quote}}
+    storageClassName: {{ .Values.db.storageClass }}
     volumeMode: Filesystem
