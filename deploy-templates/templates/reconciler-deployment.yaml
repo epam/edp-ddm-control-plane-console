@@ -1,23 +1,23 @@
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-  name: admin-console-operator
+  name: reconciler-operator
 spec:
   replicas: 1
   selector:
     matchLabels:
-      name: admin-console-operator
+      name: reconciler
   template:
     metadata:
       labels:
-        name: admin-console-operator
+        name: reconciler
     spec:
       containers:
         - resources: {}
           terminationMessagePath: /dev/termination-log
-          name: admin-console-operator
+          name: reconciler
           command:
-            - admin-console-operator
+            - reconciler
           env:
             - name: WATCH_NAMESPACE
               valueFrom:
@@ -30,14 +30,32 @@ spec:
                   apiVersion: v1
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
-              value: admin-console-operator
+              value: reconciler
             - name: PLATFORM_TYPE
               value: openshift
+            - name: DB_HOST
+              value: edp-install-wizard-db
+            - name: DB_PORT
+              value: '5432'
+            - name: DB_NAME
+              value: edp-install-wizard-db
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: db-admin-console
+                  key: username
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: db-admin-console
+                  key: password
+            - name: DB_SSL_MODE
+              value: disable
           securityContext:
             allowPrivilegeEscalation: false
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           terminationMessagePolicy: File
-          image: 'epamedp/admin-console-operator:v2.5.1'
+          image: 'epamedp/reconciler:v2.5.0'
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       dnsPolicy: ClusterFirst
@@ -45,7 +63,7 @@ spec:
       serviceAccount: {{ .Values.name }}
       securityContext:
         runAsNonRoot: true
-      schedulerName: default-schedulerreconciler.yaml
+      schedulerName: default-scheduler
   strategy:
     type: RollingUpdate
     rollingUpdate:
