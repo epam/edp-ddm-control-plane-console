@@ -8,18 +8,20 @@ import (
 
 const (
 	debugVerbosity = "debugVerbosity"
+	loggerEncoding = "loggerEncoding"
+	loggerDevelopment = "loggerDevelopment"
 )
 
 func GetLogger() *zap.Logger {
 	b, _ := beego.AppConfig.Bool(debugVerbosity)
 	cfg := zap.Config{
 		Level:       zap.NewAtomicLevelAt(getLevel(b)),
-		Development: false,
+		Development: beego.AppConfig.DefaultBool(loggerDevelopment, false),
 		Sampling: &zap.SamplingConfig{
 			Initial:    100,
 			Thereafter: 100,
 		},
-		Encoding:         "json",
+		Encoding:         beego.AppConfig.DefaultString(loggerEncoding, "json"),
 		EncoderConfig:    zap.NewProductionEncoderConfig(),
 		OutputPaths:      []string{"stderr"},
 		ErrorOutputPaths: []string{"stderr"},
