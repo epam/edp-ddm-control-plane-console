@@ -18,3 +18,7 @@ ingress:
 image:
   name: ddm-admin-console
   version: latest
+
+operator:
+  serviceAccountName: ddm-admin-console
+  clusterRoleName: edp-admin-console-operator-clusterrole-mdtu-ddm-edp-cicd
