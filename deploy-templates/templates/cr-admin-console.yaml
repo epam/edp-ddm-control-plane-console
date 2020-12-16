@@ -12,7 +12,7 @@ spec:
   edpSpec:
     dnsWildcard: apps.cicd.mdtu-ddm.projects.epam.com
     integrationStrategies: 'Create,Clone,Import'
-    name: mdtu-ddm-edp-cicd
+    name: {{ .Values.namespace }}
     testReportTools: Allure
     version: {{ .Values.image.version }}
   image: {{ .Values.image.name }}
