@@ -2,11 +2,11 @@ package controllers
 
 import "github.com/astaxie/beego"
 
-type RegistryController struct {
+type ListRegistry struct {
 	beego.Controller
 }
 
-func (r *RegistryController) Get() {
+func (r *ListRegistry) Get() {
 	r.Data["Type"] = "registry"
 	r.TplName = "registry/list.html"
 }
