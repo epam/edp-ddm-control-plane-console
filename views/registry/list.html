@@ -1,0 +1,100 @@
+{{ template "layout.html" . }}
+
+{{ define "content" }}
+    <div class="registry">
+        <div class="registry-header">
+            <h1>Реєстри</h1>
+            <a href="#" class="registry-add">
+                <img alt="add registry" src="{{ .BasePath }}/static/img/plus.png" />
+                <span>Створити новий</span>
+            </a>
+        </div>
+        <div class="registry-description">Перелік реєстрів та їх статусів.</div>
+
+        <table class="registry-table">
+            <thead>
+                <tr>
+                    <th>Статус</th>
+                    <th>Назва</th>
+                    <th>Опис</th>
+                    <th colspan="3">Час створення</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <img src="{{ .BasePath}}/static/img/status-ok.png" alt="status ok" />
+                    </td>
+                    <td>
+                        <a href="#">business-pro</a>
+                    </td>
+                    <td>
+                        business-process-administration-portal
+                    </td>
+                    <td>
+                        12.05.2020 15:45
+                    </td>
+                    <td>
+                        <a href="#">
+                            <img src="{{ .BasePath}}/static/img/action-edit.png" alt="edit registry" />
+                        </a>
+                    </td>
+                    <td>
+                        <a href="#">
+                            <img src="{{ .BasePath}}/static/img/action-delete.png" alt="delete registry" />
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <img src="{{ .BasePath}}/static/img/status-ok.png" alt="status ok" />
+                    </td>
+                    <td>
+                        <a href="#">business-pro</a>
+                    </td>
+                    <td>
+                        Єдиний державний реєстр юридичних осіб, фізичних осіб-підприємців та громадських формувань
+                    </td>
+                    <td>
+                        12.05.2020 15:45
+                    </td>
+                    <td>
+                        <a href="#">
+                            <img src="{{ .BasePath}}/static/img/action-edit.png" alt="edit registry" />
+                        </a>
+                    </td>
+                    <td>
+                        <a href="#">
+                            <img src="{{ .BasePath}}/static/img/action-delete.png" alt="delete registry" />
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <img src="{{ .BasePath}}/static/img/status-failure.png" alt="status failure" />
+                    </td>
+                    <td>
+                        <a href="#">business-pro</a>
+                    </td>
+                    <td>
+                        business-process-administration-portal
+                    </td>
+                    <td>
+                        12.05.2020 15:45
+                    </td>
+                    <td>
+                        <a href="#">
+                            <img src="{{ .BasePath}}/static/img/action-edit.png" alt="edit registry" />
+                        </a>
+                    </td>
+                    <td>
+                        <a href="#">
+                            <img src="{{ .BasePath}}/static/img/action-delete.png" alt="delete registry" />
+                        </a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+{{ end }}

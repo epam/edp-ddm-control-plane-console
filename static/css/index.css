@@ -87,7 +87,7 @@
 }
 
 .icon-dashboard:before {
-    content: "\e900";
+    /*content: "\e900";*/
 }
 
 .icon-apps:before {
@@ -8615,7 +8615,7 @@ button.bg-blue:focus {
 
 .pl-4,
 .px-4 {
-    padding-left: 1.5rem !important;
+    padding: 0!important;
 }
 
 .p-5 {
@@ -10406,11 +10406,12 @@ button.delete .icon-trashcan {
 }
 
 .aside-menu .navbar-dark .nav-item {
-    padding: 0 1.5rem;
+    padding: 0 0 0 30px;
     border-bottom: solid 0.5px rgba(224, 224, 224, 0.1);
-    font-family: "MuseoSans", sans-serif;
-    font-size: 0.75rem;
-    font-weight: 500;
+    font-family: "Oswald", "MuseoSans", sans-serif;
+    font-size: 18px;
+    font-weight: normal;
+    width: 224px;
 }
 
 .aside-menu .navbar-dark .icon-autotest {
@@ -10428,7 +10429,8 @@ button.delete .icon-trashcan {
 
 .aside-menu .navbar-dark [class^="icon-"] {
     display: inline-block;
-    width: auto;
+    width: 20px;
+    height: 20px;
     font-size: 1.4rem;
 }
 
@@ -10448,11 +10450,12 @@ button.delete .icon-trashcan {
 }
 
 .aside-menu.active [class^="icon-"] {
-    width: 2.5rem;
+    margin-right: 10px;
 }
 
 .aside-menu.active .link-name {
     display: block;
+    width: 100px;
 }
 
 @media (max-width: 1024px) {
@@ -11343,4 +11346,82 @@ div#kubernetes-component {
 
 .navbar-text-padding {
     padding-left: 15px;
+}
+
+/** registry **/
+
+.registry {
+    padding: 24px 32px 0 16px;
+}
+
+.registry h1 {
+    font-weight: normal;
+    font-size: 32px;
+}
+
+.registry > .registry-header {
+    display: flex;
+    font-family: 'Oswald', sans-serif;
+    justify-content: space-between;
+}
+
+.registry-add {
+    display: flex;
+    align-items: baseline;
+}
+
+.registry-add:hover {
+    text-decoration: none;
+}
+.registry-add > img {
+    width: 14px;
+    height: 14px;
+    margin-right: 13px;
+}
+
+.registry-add > span {
+    font-size: 18px;
+    color: rgba(0, 0, 0, 0.5);
+    text-transform: uppercase;
+}
+
+.registry-description {
+    font-family: "Source Sans Pro", sans-serif;
+    font-size: 16px;
+    font-weight: 300;
+    margin: 16px 0 32px 0;
+}
+
+.registry-table {
+    width: 100%;
+    box-shadow: 0 6px 20px -5px rgba(34, 34, 34, 0.26);
+    border-radius: 4px;
+    font-family: "Source Sans Pro", sans-serif;
+    margin: 0 0 32px 0;
+}
+
+.registry-table th {
+    padding: 16px;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.registry-table tr {
+    border-bottom: 1px solid #E1E3EB;
+}
+
+.registry-table tr:last-of-type {
+    border-bottom: none;
+}
+
+.registry-table td {
+    padding: 16px;
+}
+
+.registry-table td:nth-child(2) {
+    min-width: 160px;
+}
+
+.registry-table td:nth-child(4) {
+    min-width: 150px;
 }
