@@ -14,13 +14,13 @@ spec:
     template:
         metadata:
             labels:
-                app: {{ .Values.name }}-db
+                app: {{ .Values.db.name }}
         spec:
             containers:
-                - name: {{ .Values.name }}-db
+                - name: {{ .Values.db.name }}
                   env:
                       - name: POSTGRES_DB
-                        value: {{ .Values.name }}-db
+                        value: {{ .Values.db.name }}
                       - name: POSTGRES_USER
                         value: "admin"
                       - name: POSTGRES_PASSWORD
@@ -32,7 +32,7 @@ spec:
                   image: {{ .Values.db.image }}
                   imagePullPolicy: IfNotPresent
                   ports:
-                      - containerPort: 5432
+                      - containerPort: {{ .Values.db.port }}
                         protocol: TCP
                   livenessProbe:
                       exec:
@@ -54,9 +54,9 @@ spec:
                       periodSeconds: 5
                   volumeMounts:
                       - mountPath: /var/lib/postgresql/data
-                        name: {{ .Values.name }}-db
+                        name: {{ .Values.db.name }}
             serviceAccount: {{ .Values.name }}
             volumes:
-                - name: {{ .Values.name }}-db
+                - name: {{ .Values.db.name }}
                   persistentVolumeClaim:
-                      claimName: {{ .Values.name }}-db
+                      claimName: {{ .Values.db.name }}
