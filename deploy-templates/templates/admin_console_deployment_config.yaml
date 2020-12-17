@@ -2,8 +2,8 @@ apiVersion: apps.openshift.io/v1
 kind: DeploymentConfig
 metadata:
   labels:
-    app: ddm-admin-console
-  name: ddm-admin-console
+    app: {{ .Values.name }}
+  name: {{ .Values.name }}
 spec:
   replicas: 1
   revisionHistoryLimit: 10
@@ -58,7 +58,7 @@ spec:
                   key: password
                   name: db-admin-console
             - name: INTEGRATION_STRATEGIES
-              value: "Create,Clone,Import"
+              value: "Create,Import"
             - name: BUILD_TOOLS
               value: "maven"
             - name: DEPLOYMENT_SCRIPT
