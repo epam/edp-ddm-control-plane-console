@@ -1,11 +1,10 @@
-{{ if eq .Values.global.platform "openshift" }}
 apiVersion: authorization.openshift.io/v1
 kind: ClusterRole
 metadata:
     annotations:
         openshift.io/description: Role for {{ .Values.name }}-edp service account
         openshift.io/reconcile-protect: "false"
-    name: edp-{{ .Values.name }}-clusterrole-{{ .Values.global.edpName }}
+    name: edp-{{ .Values.name }}-clusterrole
 rules:
 - apiGroups:
   - '*'
@@ -42,4 +41,3 @@ rules:
     - edpcomponents
   verbs:
     - '*'
-{{ end }}
