@@ -63,3 +63,21 @@ func TestEditRegistry_Get(t *testing.T) {
 		t.Fatal("edit registry not found")
 	}
 }
+
+func TestViewRegistry_Get(t *testing.T) {
+	if err := os.Chdir(".."); err != nil {
+		t.Fatal("unable to change dir")
+	}
+
+	beego.ErrorController(&ErrorController{})
+	beego.Router("/view-registry", &ViewRegistry{})
+	request, _ := http.NewRequest("GET", "/view-registry", nil)
+	responseWriter := httptest.NewRecorder()
+
+	beego.BeeApp.Handlers.ServeHTTP(responseWriter, request)
+
+	if responseWriter.Code != 200 {
+		t.Log(responseWriter.Body.String())
+		t.Fatal("view registry not found")
+	}
+}
