@@ -52,7 +52,7 @@ func TestEditRegistry_Get(t *testing.T) {
 	}
 
 	beego.ErrorController(&ErrorController{})
-	beego.Router("/edit-registry", &ListRegistry{})
+	beego.Router("/edit-registry", &EditRegistry{})
 	request, _ := http.NewRequest("GET", "/edit-registry", nil)
 	responseWriter := httptest.NewRecorder()
 
