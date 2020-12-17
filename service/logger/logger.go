@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	debugVerbosity = "debugVerbosity"
-	loggerEncoding = "loggerEncoding"
+	debugVerbosity    = "debugVerbosity"
+	loggerEncoding    = "loggerEncoding"
 	loggerDevelopment = "loggerDevelopment"
 )
 

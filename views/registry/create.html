@@ -1,0 +1,36 @@
+{{ template "layout.html" . }}
+
+{{ define "content" }}
+    <div class="registry registry-create">
+        <div class="registry-header">
+            <a href="{{ .BasePath }}/admin/edp/registry/overview" class="registry-add">
+                <img alt="add registry" src="{{ .BasePath }}/static/img/action-back.png" />
+                <span>НАЗАД</span>
+            </a>
+        </div>
+        <h1>Створити новий реєстр</h1>
+        <div class="registry-description">Щоб створити реєстр, вкажіть його назву та додайте опис.</div>
+
+        <form class="registry-create-form" method="post" action="">
+            <input type="hidden" name="_xsrf" value="{{ .xsrfdata }}" />
+            <div class="rc-title">
+                Увага! Назва повинна бути унікальною і її неможливо буде змінити після створення реєстру!
+            </div>
+            <!-- error state: <div class="rc-form-group error"> -->
+            <div class="rc-form-group">
+                <label for="name">Назва реєстру</label>
+                <input type="text" id="name" name="name" maxlength="12" required pattern="[a-zA-Z0-9-]+" />
+                <span>Така назва вже викорастана для іншого реєстру.</span>
+                <p>Допустимі символи: “a-z”, “-”. Назва не може перевищувати довжину у 12 символів.</p>
+            </div>
+            <div class="rc-form-group">
+                <label for="description">Опис</label>
+                <textarea rows="3" name="description" id="description" maxlength="250"></textarea>
+                <p>Опис може містити офіційну назву реєстру чи його призначення.</p>
+            </div>
+            <div class="rc-form-group">
+                <button type="submit" name="submit">Підтвердити</button>
+            </div>
+        </form>
+    </div>
+{{ end }}
