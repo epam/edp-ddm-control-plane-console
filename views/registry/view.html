@@ -1,0 +1,123 @@
+{{ template "layout.html" . }}
+
+{{ define "content" }}
+<div class="registry">
+    <div class="registry-header">
+        <a href="{{ .BasePath }}/admin/edp/registry/overview" class="registry-add">
+            <img alt="add registry" src="{{ .BasePath }}/static/img/action-back.png" />
+            <span>НАЗАД</span>
+        </a>
+    </div>
+    <div class="registry-header registry-header-view">
+        <h1>Реєстр "business-pro"</h1>
+        <a href="{{ .BasePath }}/admin/edp/registry/edit/test" class="registry-add">
+            <img alt="add registry" src="{{ .BasePath }}/static/img/action-edit.png" />
+            <span>Редагувати</span>
+        </a>
+    </div>
+    <div class="registry-description">Перелік реєстрів та їх статусів.</div>
+
+    <div class="rg-info-block">
+        <div class="rg-info-block-header">
+            <span>Загальна інформація</span>
+            <img src="{{ .BasePath }}/static/img/action-toggle.png" alt="toggle block" />
+        </div>
+        <div class="rg-info-block-body">
+            <div class="rg-info-line-horizontal">
+                <span>Назва</span>
+                <span>business-pro</span>
+            </div>
+            <div class="rg-info-line-horizontal">
+                <span>Опис</span>
+                <span>business-process-administration-portal</span>
+            </div>
+            <div class="rg-info-line-horizontal">
+                <span>Час створення</span>
+                <span>12.05.2020 15:45</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="rg-info-block">
+        <div class="rg-info-block-header">
+            <span>Конфігурація</span>
+            <img src="{{ .BasePath }}/static/img/action-toggle.png" alt="toggle block" />
+        </div>
+        <div class="rg-info-block-body">
+            <table class="rg-info-table rg-info-table-config">
+                <thead>
+                <tr>
+                    <th>Статус</th>
+                    <th>Конфігурація</th>
+                    <th>VCS</th>
+                    <th>CI</th>
+                    <th>Версія</th>
+                    <th>Номер збірки</th>
+                    <th>Остання вдала збірка</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>
+                        <img src="{{ .BasePath }}/static/img/status-ok.png" />
+                    </td>
+                    <td>
+                        mdtuddm-1277-2
+                    </td>
+                    <td>
+                        <a href="#">
+                            <img alt="vcs" src="{{ .BasePath }}/static/img/action-link.png" />
+                        </a>
+                    </td>
+                    <td>
+                        <a href="#">
+                            <img alt="ci" src="{{ .BasePath }}/static/img/action-link.png" />
+                        </a>
+                    </td>
+                    <td>0.0.2-MDTUDDM-1277-2-SNAPSHOT</td>
+                    <td>23</td>
+                    <td>23</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="rg-info-block">
+        <div class="rg-info-block-header">
+            <span>Журнал подій</span>
+            <img src="{{ .BasePath }}/static/img/action-toggle.png" alt="toggle block" />
+        </div>
+        <div class="rg-info-block-body">
+            <table class="rg-info-table rg-info-table-config">
+                <thead>
+                <tr>
+                    <th>Дата</th>
+                    <th>Користувач</th>
+                    <th>Дія</th>
+                    <th>Результат</th>
+                    <th>Повідомлення</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>00.00.0000 00:00:00</td>
+                    <td>system</td>
+                    <td>accept_codebase_branch_registration</td>
+                    <td>success</td>
+                    <td>Accept branch master for codebase bpms registration</td>
+                </tr>
+                <tr>
+                    <td>00.00.0000 00:00:00</td>
+                    <td>system</td>
+                    <td>accept_codebase_branch_registration</td>
+                    <td>success</td>
+                    <td>Accept branch master for codebase bpms registration</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{{ end }}

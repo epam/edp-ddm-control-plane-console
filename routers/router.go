@@ -175,6 +175,9 @@ func init() {
 		beego.NSRouter("/diagram/overview", &dc, "get:GetDiagramPage"),
 
 		beego.NSRouter("/registry/overview", &controllers.ListRegistry{}),
+		beego.NSRouter("/registry/create", &controllers.CreateRegistry{}),
+		beego.NSRouter("/registry/edit/:name", &controllers.EditRegistry{}),
+		beego.NSRouter("/registry/view/:name", &controllers.ViewRegistry{}),
 	)
 	beego.AddNamespace(adminEdpNamespace)
 

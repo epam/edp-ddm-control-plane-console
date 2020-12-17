@@ -11349,6 +11349,7 @@ div#kubernetes-component {
 }
 
 /** registry **/
+/** registry list **/
 
 .registry {
     padding: 24px 32px 0 16px;
@@ -11357,6 +11358,7 @@ div#kubernetes-component {
 .registry h1 {
     font-weight: normal;
     font-size: 32px;
+    font-family: 'Oswald', sans-serif;
 }
 
 .registry > .registry-header {
@@ -11392,12 +11394,16 @@ div#kubernetes-component {
     margin: 16px 0 32px 0;
 }
 
-.registry-table {
-    width: 100%;
+.registry-table-wrap {
     box-shadow: 0 6px 20px -5px rgba(34, 34, 34, 0.26);
     border-radius: 4px;
-    font-family: "Source Sans Pro", sans-serif;
     margin: 0 0 32px 0;
+    padding: 0 8px 0 8px;
+}
+
+.registry-table {
+    width: 100%;
+    font-family: "Source Sans Pro", sans-serif;
 }
 
 .registry-table th {
@@ -11414,8 +11420,16 @@ div#kubernetes-component {
     border-bottom: none;
 }
 
+.registry-table thead {
+    border-bottom: 1px solid #E1E3EB;
+}
+
 .registry-table td {
     padding: 16px;
+}
+
+.registry-table td:nth-child(1) {
+    padding: 18px;
 }
 
 .registry-table td:nth-child(2) {
@@ -11424,4 +11438,180 @@ div#kubernetes-component {
 
 .registry-table td:nth-child(4) {
     min-width: 150px;
+}
+
+/** registry create **/
+
+.registry-create h1 {
+    margin: 32px 0 0 0;
+}
+
+.registry-create-form {
+    width: 512px;
+    box-shadow: 0 6px 20px -5px rgba(34, 34, 34, 0.26);
+    font-family: "Source Sans Pro", sans-serif;
+    padding: 16px;
+    margin: 0 0 24px 0;
+}
+
+.rc-title {
+    font-size: 12px;
+    margin: 0 0 24px 0;
+}
+
+.rc-form-group {
+    margin: 0 0 24px 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.rc-form-group:last-of-type {
+    margin: 0;
+}
+
+.rc-form-group label {
+    font-size: 16px;
+    font-weight: bold;
+    margin: 0 0 8px 0;
+}
+
+.rc-form-group input {
+    height: 40px;
+    border: 1px solid #CED0DB;
+    background: #FFFFFF;
+}
+
+.rc-form-group span {
+    font-size: 12px;
+    color: #D35D47;
+    margin: 8px 0 0 0;
+    display: none;
+}
+
+.rc-form-group input:focus {
+    outline: none;
+}
+
+.rc-form-group p {
+    margin: 8px 0 0 0;
+    font-size: 12px;
+}
+
+.rc-form-group textarea {
+    background: #FFFFFF;
+    border: 1px solid #CED0DB;
+    border-radius: 2px;
+}
+
+.rc-form-group textarea:focus {
+    outline: none;
+}
+
+.rc-form-group button {
+    background: #6DA300;
+    width: 129px;
+    padding: 8px 16px 8px 16px;
+    color: #FFFFFF;
+    font-size: 18px;
+    text-transform: uppercase;
+    border-radius: 4px;
+    display: block;
+    border: none;
+    font-family: "Oswald", sans-serif;
+}
+
+.rc-form-group button:focus {
+    outline: none;
+}
+
+.rc-form-group.error input {
+    border: 1px solid #D35D47;
+}
+
+.rc-form-group.error span {
+    display: inline;
+}
+
+.registry-header-view {
+    margin: 32px 0 0 0;
+}
+
+.rg-info-block {
+    box-shadow: 0 6px 20px -5px rgba(34, 34, 34, 0.26);
+    border-radius: 4px;
+    margin: 0 0 24px 0;
+}
+
+.rg-info-block-header {
+    background: #008ACE;
+    display: flex;
+    justify-content: space-between;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    align-items: center;
+}
+
+.rg-info-block-header span {
+    margin: 16px;
+    color: #FFFFFF;
+    font-size: 18px;
+    font-family: "Oswald", sans-serif;
+    text-transform: uppercase;
+}
+
+.rg-info-block-header img {
+    margin: 0 25px 0 0;
+    display: block;
+}
+
+.rg-info-block-body {
+    padding: 0 8px 0 8px;
+}
+
+.rg-info-line-horizontal {
+    border-bottom: 1px solid #E1E3EB;
+    padding: 16px;
+    font-size: 16px;
+    display: flex;
+}
+
+.rg-info-line-horizontal span:first-of-type {
+    width: 272px;
+    display: block;
+    font-weight: bold;
+}
+
+.rg-info-table {
+    width: 100%;
+    font-weight: 300;
+    font-size: 16px;
+    font-family: "Source Sans Pro", sans-serif;
+}
+
+.rg-info-table td {
+    padding: 16px;
+}
+
+.rg-info-table th {
+    padding: 16px;
+}
+
+.rg-info-table-config th:nth-child(6) {
+    width: 80px;
+}
+
+.rg-info-table-config th:nth-child(7) {
+    width: 140px;
+}
+
+.rg-info-table thead {
+    border-bottom: 1px solid #E1E3EB;
+}
+
+.rg-info-table tr {
+    border-bottom: 1px solid #dee2e6;
+}
+
+.rg-info-table tr:last-child {
+    border-bottom: none;
 }
