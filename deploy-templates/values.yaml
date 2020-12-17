@@ -4,11 +4,16 @@ cdPipelineName: ""
 cdPipelineStageName: ""
 dnsWildcard: apps.cicd.mdtu-ddm.projects.epam.com
 platform: "openshift"
+basePath: ""
+projectUrlMask: "/console/project/{namespace}/overview"
+imageStreamUrlMask: "/console/project/{namespace}/browse/images/{stream}"
 
 db:
   image: "postgres:9.6"
   capacity: 2Gi
   storageClass: gp2
+  port: 5432
+  name: ddm-admin-console-db
 
 ingress:
   required: true
