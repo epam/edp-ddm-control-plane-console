@@ -25,22 +25,12 @@ func (r *CreateRegistry) Get() {
 	r.TplName = "registry/create.html"
 }
 
-func (r *CreateRegistry) Post() {
-	r.Data["Type"] = registryType
-	r.TplName = "registry/create.html"
-}
-
 type EditRegistry struct {
 	beego.Controller
 }
 
 func (r *EditRegistry) Get() {
 	r.Data["xsrfdata"] = r.XSRFToken()
-	r.Data["Type"] = registryType
-	r.TplName = "registry/edit.html"
-}
-
-func (r *EditRegistry) Post() {
 	r.Data["Type"] = registryType
 	r.TplName = "registry/edit.html"
 }
