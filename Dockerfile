@@ -1,4 +1,4 @@
-FROM golang:1.13.15-stretch AS builder
+FROM golang:1.14 AS builder
 WORKDIR /app
 COPY .   /app
 RUN go mod tidy && go mod download && go mod vendor
