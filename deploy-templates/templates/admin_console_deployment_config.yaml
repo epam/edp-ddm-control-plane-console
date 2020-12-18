@@ -50,10 +50,7 @@ spec:
             - name: PG_USER
               value: "admin"
             - name: PG_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  key: password
-                  name: db-admin-console
+              value: "admin"
             - name: INTEGRATION_STRATEGIES
               value: "Create,Import"
             - name: BUILD_TOOLS
