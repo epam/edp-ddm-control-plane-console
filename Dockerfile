@@ -17,4 +17,4 @@ COPY db db
 
 USER ${USER_UID}
 
-ENTRYPOINT ["ddm-admin-console"]
+ENTRYPOINT ["entrypoint"]
