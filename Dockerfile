@@ -1,4 +1,4 @@
-FROM golang:1.13.15-stretch
+FROM image-registry.apps.cicd.mdtu-ddm.projects.epam.com:5000/mdtu-ddm-edp-cicd/golang:1.13.15-stretch
 
 ENV USER_UID=1001 \
     USER_NAME=admin-console \
