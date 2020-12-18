@@ -48,10 +48,7 @@ spec:
             - name: OPENSHIFT_CLUSTER_URL
               value: "console-openshift-console.{{ .Values.dnsWildCard }}"
             - name: PG_USER
-              valueFrom:
-                secretKeyRef:
-                  key: username
-                  name: db-admin-console
+              value: "admin"
             - name: PG_PASSWORD
               valueFrom:
                 secretKeyRef:
