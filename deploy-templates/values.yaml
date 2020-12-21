@@ -9,7 +9,7 @@ projectUrlMask: "/console/project/{namespace}/overview"
 imageStreamUrlMask: "/console/project/{namespace}/browse/images/{stream}"
 
 db:
-  image: "postgres:9.6"
+  image: "image-registry.openshift-image-registry.svc:5000/mdtu-ddm-edp-cicd/postgres:9.6"
   capacity: 2Gi
   storageClass: gp2
   port: 5432
