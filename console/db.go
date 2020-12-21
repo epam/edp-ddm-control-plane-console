@@ -51,7 +51,7 @@ func InitDb() {
 
 	err = orm.RegisterDataBase("default", "postgres", params)
 	if err != nil {
-		log.Fatal("register DB", zap.Error(err))
+		log.Fatal("register DB: " + params, zap.Error(err))
 	}
 	log.Info("Connection to database is established.",
 		zap.String("host", pgHost),
