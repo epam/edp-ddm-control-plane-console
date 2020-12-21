@@ -35,7 +35,9 @@ var log = logger.GetLogger()
 
 func InitDb() {
 	err := orm.RegisterDriver("postgres", orm.DRPostgres)
-	checkErr(err)
+	if err != nil {
+		log.Fatal("register orm driver", zap.Error(err))
+	}
 
 	pgUser := beego.AppConfig.String("pgUser")
 	pgPassword := beego.AppConfig.String("pgPassword")
@@ -48,13 +50,17 @@ func InitDb() {
 		pgUser, pgPassword, pgHost, pgPort, pgDatabase, pgSchema)
 
 	err = orm.RegisterDataBase("default", "postgres", params)
-	checkErr(err)
+	if err != nil {
+		log.Fatal("register DB", zap.Error(err))
+	}
 	log.Info("Connection to database is established.",
 		zap.String("host", pgHost),
 		zap.String("port", pgPort))
 
 	db, err := orm.GetDB("default")
-	checkErr(err)
+	if err != nil {
+		log.Fatal("getting default DB", zap.Error(err))
+	}
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
 		log.Error("Cannot get postgres driver", zap.Error(err))
@@ -62,9 +68,14 @@ func InitDb() {
 	m, err := migrate.NewWithDatabaseInstance(
 		"file://db/migrations",
 		pgDatabase, driver)
-	checkErr(err)
+	if err != nil {
+		log.Warn("migrations instance", zap.Error(err))
+	}
 	err = m.Up()
-	checkErr(err)
+	if err != nil {
+		log.Warn("migrations up", zap.Error(err))
+	}
+
 	debug, err := beego.AppConfig.Bool("ormDebug")
 	if err != nil {
 		log.Info("Cannot read orm debug config. Set to false", zap.Error(err))
@@ -75,18 +86,4 @@ func InitDb() {
 		new(query.CDPipeline), new(query.JobProvisioning), new(query.Stage), new(query.QualityGate), new(query.ApplicationsToPromote),
 		new(query.CodebaseDockerStream), new(query.GitServer), new(query.JenkinsSlave),
 		new(query.EDPComponent), new(query.JiraServer))
-}
-
-func checkErr(err error) {
-	if err != nil {
-		handleErr(err)
-	}
-}
-
-func handleErr(err error) {
-	if err.Error() == "no change" {
-		log.Info("Warning from db migration", zap.Error(err))
-	} else {
-		log.Fatal("An error has occurred during migration", zap.Error(err))
-	}
 }
