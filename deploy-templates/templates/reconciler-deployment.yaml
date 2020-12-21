@@ -40,15 +40,9 @@ spec:
             - name: DB_NAME
               value: edp-install-wizard-db
             - name: DB_USER
-              valueFrom:
-                secretKeyRef:
-                  name: db-admin-console
-                  key: username
+              value: "admin"
             - name: DB_PASS
-              valueFrom:
-                secretKeyRef:
-                  name: db-admin-console
-                  key: password
+              value: "admin"
             - name: DB_SSL_MODE
               value: disable
           securityContext:
