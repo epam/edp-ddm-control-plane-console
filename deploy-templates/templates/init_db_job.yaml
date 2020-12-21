@@ -8,16 +8,16 @@ spec:
     metadata:
       name: db-init
       labels:
-        app: {{.Values.global.database.name}}
+        app: {{.Values.db.name}}
     spec:
       restartPolicy: Never
       containers:
-        - image: {{.Values.global.database.image}}
+        - image: {{.Values.db.image}}
           name: db-init
           command:
             - "/bin/bash"
             - "-c"
-            - "psql -h $(PGHOST) -d $(POSTGRES_DB) -U $(POSTGRES_USER) -c 'CREATE SCHEMA IF NOT EXISTS \"{{.Values.global.edpName}}\"; \
+            - "psql -h $(PGHOST) -d $(POSTGRES_DB) -U $(POSTGRES_USER) -c 'CREATE SCHEMA IF NOT EXISTS \"$(EDP_NAME)\"; \
               DO \
               $do$ \
               BEGIN \
@@ -26,34 +26,27 @@ spec:
                  END IF; \
               END \
               $do$; \
-              GRANT ALL PRIVILEGES ON SCHEMA \"{{.Values.global.edpName}}\" TO \"$(TENANT_ADMIN_USERNAME)\"';"
+              GRANT ALL PRIVILEGES ON SCHEMA \"$(EDP_NAME)\" TO \"$(TENANT_ADMIN_USERNAME)\"';"
           env:
+            - name: EDP_NAME
+              valueFrom:
+                configMapKeyRef:
+                  key: edp_name
+                  name: edp-config
             - name: POSTGRES_USER
-              valueFrom:
-                secretKeyRef:
-                  name: super-admin-db
-                  key: username
+              value: "admin"
             - name: PGPASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: super-admin-db
-                  key: password
+              value: "admin"
             - name: TENANT_ADMIN_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: db-admin-console
-                  key: username
+              value: "admin"
             - name: TENANT_ADMIN_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: db-admin-console
-                  key: password
+              value: "admin"
             - name: POSTGRES_DB
-              value: {{.Values.global.database.name}}
+              value: {{.Values.db.name}}
             - name: PGHOST
-              value: {{.Values.global.database.host}}
+              value: {{.Values.db.host}}
       initContainers:
-        - image: {{.Values.global.database.image}}
+        - image: {{.Values.db.image}}
           name: db-wait
           command:
             - /bin/bash
@@ -62,26 +55,14 @@ spec:
               sleep 10; done;
           env:
             - name: POSTGRES_USER
-              valueFrom:
-                secretKeyRef:
-                  name: super-admin-db
-                  key: username
+              value: "admin"
             - name: PGPASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: super-admin-db
-                  key: password
+              value: "admin"
             - name: TENANT_ADMIN_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: db-admin-console
-                  key: username
+              value: "admin"
             - name: TENANT_ADMIN_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: db-admin-console
-                  key: password
+              value: "admin"
             - name: POSTGRES_DB
-              value: {{.Values.global.database.name}}
+              value: {{.Values.db.name}}
             - name: PGHOST
-              value: {{.Values.global.database.host}}
+              value: {{.Values.db.name}}
