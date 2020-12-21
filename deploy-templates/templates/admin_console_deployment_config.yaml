@@ -42,7 +42,7 @@ spec:
             - name: EDP_VERSION
               value: "{{.Values.version}}"
             - name: AUTH_KEYCLOAK_ENABLED
-              value: "false"
+              value: "true"
             - name: DNS_WILDCARD
               value: "{{.Values.dnsWildCard}}"
             - name: OPENSHIFT_CLUSTER_URL
