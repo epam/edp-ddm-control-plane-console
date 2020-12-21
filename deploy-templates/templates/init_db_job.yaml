@@ -44,7 +44,7 @@ spec:
             - name: POSTGRES_DB
               value: {{.Values.db.name}}
             - name: PGHOST
-              value: {{.Values.db.host}}
+              value: {{.Values.db.name}}
       initContainers:
         - image: {{.Values.db.image}}
           name: db-wait
