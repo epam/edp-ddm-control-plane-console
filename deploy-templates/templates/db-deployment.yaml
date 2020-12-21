@@ -3,12 +3,12 @@ kind: Deployment
 metadata:
     labels:
         app: {{ .Values.name }}
-    name: {{ .Values.name }}-db
+    name: {{ .Values.db.name }}
 spec:
     replicas: 1
     selector:
       matchLabels:
-        app: {{ .Values.name }}-db
+        app: {{ .Values.db.name }}
     strategy:
         type: Recreate
     template:
