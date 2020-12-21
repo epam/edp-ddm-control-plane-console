@@ -33,7 +33,6 @@ spec:
                   apiVersion: v1
                   fieldPath: metadata.namespace
             - name: HOST
-
               value: "https://{{if .Values.basePath}}{{ .Values.dnsWildCard }}{{else}}ddm-admin-console.{{.Values.dnsWildCard}}{{end}}{{if .Values.basePath}}/{{.Values.basePath}}{{end}}"
             - name: BASE_PATH
               value: "{{if .Values.basePath}}/{{.Values.basePath}}{{else}}{{end}}"
@@ -43,6 +42,19 @@ spec:
               value: "{{.Values.version}}"
             - name: AUTH_KEYCLOAK_ENABLED
               value: "true"
+            - name: KEYCLOAK_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: admin-console-client
+                  key: username
+            - name: KEYCLOAK_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: admin-console-client
+                  key: password
+            - name: KEYCLOAK_URL
+              value: >-
+                "https://keycloak-edp-security.{{ .Values.dnsWildcard }}/auth/realms/mdtu-ddm-edp-cicd-main"
             - name: DNS_WILDCARD
               value: "{{.Values.dnsWildCard}}"
             - name: OPENSHIFT_CLUSTER_URL
