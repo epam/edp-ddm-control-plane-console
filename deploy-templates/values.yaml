@@ -1,4 +1,4 @@
-name: ddm-admin-console
+name: control-plane-admin-console
 namespace: ""
 cdPipelineName: ""
 cdPipelineStageName: ""
