@@ -14,6 +14,7 @@ db:
   storageClass: gp2
   port: 5432
   name: ddm-admin-console-db
+  deploy: true
 
 ingress:
   required: true
