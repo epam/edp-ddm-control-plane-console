@@ -169,11 +169,8 @@ func init() {
 
 	adminEdpNamespace := beego.NewNamespace(fmt.Sprintf("%s/admin/edp", console.BasePath),
 		beego.NSRouter("/overview", &ec, "get:GetEDPComponents"),
-
 		beego.NSRouter("/service/overview", &tpsc, "get:GetServicePage"),
-
 		beego.NSRouter("/diagram/overview", &dc, "get:GetDiagramPage"),
-
 		beego.NSRouter("/registry/overview", &controllers.ListRegistry{}),
 		beego.NSRouter("/registry/create", &controllers.CreateRegistry{}),
 		beego.NSRouter("/registry/edit/:name", &controllers.EditRegistry{}),
