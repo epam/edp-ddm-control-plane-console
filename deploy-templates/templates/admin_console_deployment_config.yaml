@@ -54,7 +54,7 @@ spec:
                   key: password
             - name: KEYCLOAK_URL
               value: >-
-                "https://keycloak-edp-security.{{ .Values.dnsWildcard }}/auth/realms/mdtu-ddm-edp-cicd-main"
+                https://keycloak-edp-security.{{ .Values.dnsWildcard }}/auth/realms/mdtu-ddm-edp-cicd-main
             - name: DNS_WILDCARD
               value: "{{.Values.dnsWildCard}}"
             - name: OPENSHIFT_CLUSTER_URL
