@@ -43,7 +43,6 @@ func TestListRegistry_GetFailure(t *testing.T) {
 
 	k8sMock := test.MockCoreClient{
 		MockNamespaceInterface: test.MockNamespaceInterface{
-			//ListResult: &v1.NamespaceList{},
 			ListError: errors.New("list error"),
 		},
 	}
