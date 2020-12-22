@@ -12,20 +12,26 @@
         <div class="registry-description">Щоб створити реєстр, вкажіть його назву та додайте опис.</div>
 
         <form class="registry-create-form" method="post" action="">
+            {{ if .error }}
+            <div class="rc-global-error">{{.error}}</div>
+            {{ end }}
+
             <input type="hidden" name="_xsrf" value="{{ .xsrfdata }}" />
             <div class="rc-title">
                 Увага! Назва повинна бути унікальною і її неможливо буде змінити після створення реєстру!
             </div>
             <!-- error state: <div class="rc-form-group error"> -->
-            <div class="rc-form-group">
+            <div class="rc-form-group {{ if .errorsMap.Name }}error{{end}}">
                 <label for="name">Назва реєстру</label>
-                <input type="text" id="name" name="name" maxlength="12" required pattern="[a-zA-Z0-9-]+" />
-                <span>Така назва вже викорастана для іншого реєстру.</span>
+                <input type="text" id="name" name="name" maxlength="12" required pattern="[a-zA-Z0-9-]+"
+                       value="{{.model.Name}}" />
+                <span>{{range $key, $val := .errorsMap.Name}}{{ $val }}{{end}}</span>
                 <p>Допустимі символи: “a-z”, “-”. Назва не може перевищувати довжину у 12 символів.</p>
             </div>
-            <div class="rc-form-group">
+            <div class="rc-form-group {{ if .errorsMap.Description }}error{{end}}">
                 <label for="description">Опис</label>
-                <textarea rows="3" name="description" id="description" maxlength="250"></textarea>
+                <textarea rows="3" name="description" id="description" maxlength="250">{{.model.Description}}</textarea>
+                <span>{{range $key, $val := .errorsMap.Description}}{{ $val }}{{end}}</span>
                 <p>Опис може містити офіційну назву реєстру чи його призначення.</p>
             </div>
             <div class="rc-form-group">

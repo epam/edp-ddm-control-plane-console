@@ -45,6 +45,7 @@ const (
 	testReportTools       = "testReportTools"
 	deploymentScript      = "deploymentScript"
 	ciTools               = "ciTools"
+	registryNamespaceEnv  = "app-router"
 )
 
 func init() {
@@ -167,12 +168,15 @@ func init() {
 		PipelineService: pipelineService,
 	}
 
+	registryService := service.MakeRegistry(clients.CoreClient, registryNamespaceEnv)
+
 	adminEdpNamespace := beego.NewNamespace(fmt.Sprintf("%s/admin/edp", console.BasePath),
 		beego.NSRouter("/overview", &ec, "get:GetEDPComponents"),
 		beego.NSRouter("/service/overview", &tpsc, "get:GetServicePage"),
 		beego.NSRouter("/diagram/overview", &dc, "get:GetDiagramPage"),
-		beego.NSRouter("/registry/overview", &controllers.ListRegistry{}),
-		beego.NSRouter("/registry/create", &controllers.CreateRegistry{}),
+
+		beego.NSRouter("/registry/overview", controllers.MakeListRegistry(registryService)),
+		beego.NSRouter("/registry/create", controllers.MakeCreateRegistry(registryService)),
 		beego.NSRouter("/registry/edit/:name", &controllers.EditRegistry{}),
 		beego.NSRouter("/registry/view/:name", &controllers.ViewRegistry{}),
 	)

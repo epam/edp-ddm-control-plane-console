@@ -11532,6 +11532,10 @@ div#kubernetes-component {
     display: inline;
 }
 
+.rc-form-group.error textarea {
+    border: 1px solid #D35D47;
+}
+
 .registry-header-view {
     margin: 32px 0 0 0;
 }
@@ -11614,4 +11618,8 @@ div#kubernetes-component {
 
 .rg-info-table tr:last-child {
     border-bottom: none;
+}
+
+.rc-global-error {
+    color: red;
 }
