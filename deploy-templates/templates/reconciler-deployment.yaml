@@ -53,8 +53,8 @@ spec:
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       dnsPolicy: ClusterFirst
-      serviceAccountName: {{ .Values.name }}
-      serviceAccount: {{ .Values.name }}
+      serviceAccountName: {{ .Values.operator.serviceAccountName }}
+      serviceAccount: {{ .Values.operator.serviceAccountName }}
       securityContext:
         runAsNonRoot: true
       schedulerName: default-scheduler
