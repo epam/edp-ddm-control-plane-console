@@ -19,7 +19,8 @@ deps:
 	go mod vendor
 
 .PHONY: unit-test
-unit-test: go test -mod=vendor -v -cover go list -mod=vendor ./... | grep -v tests_system
+unit-test:
+	go test -v -cover ./...
 
 .PHONY: lint
 lint:
