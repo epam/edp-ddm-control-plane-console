@@ -23,7 +23,7 @@ spec:
     metadata:
       creationTimestamp: null
       labels:
-        app: ddm-admin-console
+        app: {{ .Values.name }}
     spec:
       containers:
         - env:
@@ -33,13 +33,13 @@ spec:
                   apiVersion: v1
                   fieldPath: metadata.namespace
             - name: HOST
-              value: "https://{{if .Values.basePath}}{{ .Values.dnsWildCard }}{{else}}ddm-admin-console.{{.Values.dnsWildCard}}{{end}}{{if .Values.basePath}}/{{.Values.basePath}}{{end}}"
+              value: "https://{{if .Values.basePath}}{{ .Values.dnsWildCard }}{{else}}ddm-admin-console.{{ .Values.dnsWildCard }}{{end}}{{if .Values.basePath}}/{{ .Values.basePath }}{{end}}"
             - name: BASE_PATH
-              value: "{{if .Values.basePath}}/{{.Values.basePath}}{{else}}{{end}}"
+              value: "{{if .Values.basePath}}/{{ .Values.basePath }}{{else}}{{end}}"
             - name: EDP_ADMIN_CONSOLE_VERSION
-              value: "{{.Values.version}}"
+              value: "{{ .Values.version }}"
             - name: EDP_VERSION
-              value: "{{.Values.version}}"
+              value: "{{ .Values.version }}"
             - name: AUTH_KEYCLOAK_ENABLED
               value: "true"
             - name: KEYCLOAK_CLIENT_ID
@@ -56,13 +56,9 @@ spec:
               value: >-
                 https://keycloak-edp-security.{{ .Values.dnsWildcard }}/auth/realms/mdtu-ddm-edp-cicd-main
             - name: DNS_WILDCARD
-              value: "{{.Values.dnsWildCard}}"
+              value: "{{ .Values.dnsWildCard }}"
             - name: OPENSHIFT_CLUSTER_URL
               value: "console-openshift-console.{{ .Values.dnsWildCard }}"
-            - name: PG_USER
-              value: "admin"
-            - name: PG_PASSWORD
-              value: "admin"
             - name: INTEGRATION_STRATEGIES
               value: "Create,Import"
             - name: BUILD_TOOLS
@@ -87,6 +83,10 @@ spec:
                 configMapKeyRef:
                   key: edp_name
                   name: edp-config
+            - name: PG_USER
+              value: "admin"
+            - name: PG_PASSWORD
+              value: "admin"
             - name: PG_HOST
               value: "{{ .Values.db.name }}"
             - name: PG_PORT
@@ -98,7 +98,7 @@ spec:
             - name: PROJECT_MASK_URL
               value: "{{.Values.projectUrlMask}}"
             - name: IMAGE_STREAM_MASK_URL
-              value: "{{.Values.imageStreamUrlMask}}"
+              value: "{{ .Values.imageStreamUrlMask }}"
           image: "{{ .Values.image.name }}:{{ .Values.image.version }}"
           imagePullPolicy: Always
           livenessProbe:
