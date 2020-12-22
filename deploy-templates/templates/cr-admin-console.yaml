@@ -17,5 +17,5 @@ spec:
     version: {{ .Values.image.version }}
   image: {{ .Values.image.name }}
   keycloakSpec:
-    enabled: false
+    enabled: true
   version:  {{ .Values.image.version }}
