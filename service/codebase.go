@@ -30,14 +30,14 @@ import (
 	"ddm-admin-console/util/consts"
 	dberror "ddm-admin-console/util/error/db-errors"
 	"fmt"
+	"strings"
+	"time"
+
 	edpv1alpha1 "github.com/epmd-edp/codebase-operator/v2/pkg/apis/edp/v1alpha1"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	coreV1Client "k8s.io/client-go/kubernetes/typed/core/v1"
-	"strings"
-	"time"
 )
 
 var clog = logger.GetLogger()
@@ -159,7 +159,7 @@ func (s CodebaseService) ExistCodebaseAndBranch(cbName, brName string) bool {
 	return s.ICodebaseRepository.ExistCodebaseAndBranch(cbName, brName)
 }
 
-func createSecret(namespace string, secret *v1.Secret, coreClient *coreV1Client.CoreV1Client) (*v1.Secret, error) { //nolint
+func createSecret(namespace string, secret *v1.Secret, coreClient k8s.CoreClient) (*v1.Secret, error) { //nolint
 	createdSecret, err := coreClient.Secrets(namespace).Create(secret)
 	if err != nil {
 		clog.Error("an error has occurred while saving secret", zap.Error(err))
@@ -168,7 +168,7 @@ func createSecret(namespace string, secret *v1.Secret, coreClient *coreV1Client.
 	return createdSecret, nil
 }
 
-func createTempSecrets(namespace string, codebase command.CreateCodebase, coreClient *coreV1Client.CoreV1Client) error {
+func createTempSecrets(namespace string, codebase command.CreateCodebase, coreClient k8s.CoreClient) error {
 	if codebase.Repository != nil && (codebase.Repository.Login != "" && codebase.Repository.Password != "") {
 		repoSecretName := fmt.Sprintf("repository-codebase-%s-temp", codebase.Name)
 		tempRepoSecret := getSecret(repoSecretName, codebase.Repository.Login, codebase.Repository.Password)

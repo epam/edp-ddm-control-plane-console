@@ -18,6 +18,7 @@ package k8s
 
 import (
 	"ddm-admin-console/service/logger"
+
 	edppipelinesv1alpha1 "github.com/epmd-edp/cd-pipeline-operator/v2/pkg/apis/edp/v1alpha1"
 	edpv1alpha1 "github.com/epmd-edp/codebase-operator/v2/pkg/apis/edp/v1alpha1"
 	appsV1Client "github.com/openshift/client-go/apps/clientset/versioned/typed/apps/v1"
@@ -39,7 +40,7 @@ var k8sConfig clientcmd.ClientConfig
 var SchemeGroupVersion = schema.GroupVersion{Group: "v2.edp.epam.com", Version: "v1alpha1"}
 
 type ClientSet struct {
-	CoreClient     *coreV1Client.CoreV1Client
+	CoreClient     CoreClient
 	StorageClient  *storageV1Client.StorageV1Client
 	EDPRestClient  *rest.RESTClient
 	AppsV1Client   *appsV1Client.AppsV1Client
@@ -102,6 +103,7 @@ func getCoreClient() (*coreV1Client.CoreV1Client, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return coreClient, nil
 }
 

@@ -21,78 +21,32 @@
                     </tr>
                 </thead>
                 <tbody>
+                    {{range $key, $registry := .registries}}
                     <tr>
                         <td>
-                            <img src="{{ .BasePath}}/static/img/status-ok.png" alt="status ok" />
+                            <img src="{{ $.BasePath }}/static/img/status-ok.png" alt="status ok" />
                         </td>
                         <td>
-                            <a href="{{ .BasePath}}/admin/edp/registry/view/test">business-pro</a>
+                            <a href="{{ $.BasePath }}/admin/edp/registry/view/{{$registry.Name}}">{{$registry.Name}}</a>
                         </td>
                         <td>
-                            business-process-administration-portal
+                            {{$registry.Description}}
                         </td>
                         <td>
-                            12.05.2020 15:45
+                            {{$registry.FormattedCreatedAt}}
                         </td>
                         <td>
-                            <a href="{{ .BasePath}}/admin/edp/registry/edit/test">
-                                <img src="{{ .BasePath}}/static/img/action-edit.png" alt="edit registry" />
+                            <a href="{{ $.BasePath }}/admin/edp/registry/edit/{{$registry.Name}}">
+                                <img src="{{ $.BasePath }}/static/img/action-edit.png" alt="edit registry" />
                             </a>
                         </td>
                         <td>
                             <a href="#">
-                                <img src="{{ .BasePath}}/static/img/action-delete.png" alt="delete registry" />
+                                <img src="{{ $.BasePath }}/static/img/action-delete.png" alt="delete registry" />
                             </a>
                         </td>
                     </tr>
-                    <tr>
-                        <td>
-                            <img src="{{ .BasePath}}/static/img/status-ok.png" alt="status ok" />
-                        </td>
-                        <td>
-                            <a href="{{ .BasePath}}/admin/edp/registry/view/test">business-pro</a>
-                        </td>
-                        <td>
-                            Єдиний державний реєстр юридичних осіб, фізичних осіб-підприємців та громадських формувань
-                        </td>
-                        <td>
-                            12.05.2020 15:45
-                        </td>
-                        <td>
-                            <a href="{{ .BasePath}}/admin/edp/registry/edit/test">
-                                <img src="{{ .BasePath}}/static/img/action-edit.png" alt="edit registry" />
-                            </a>
-                        </td>
-                        <td>
-                            <a href="#">
-                                <img src="{{ .BasePath}}/static/img/action-delete.png" alt="delete registry" />
-                            </a>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <img src="{{ .BasePath}}/static/img/status-failure.png" alt="status failure" />
-                        </td>
-                        <td>
-                            <a href="{{ .BasePath}}/admin/edp/registry/view/test">business-pro</a>
-                        </td>
-                        <td>
-                            business-process-administration-portal
-                        </td>
-                        <td>
-                            12.05.2020 15:45
-                        </td>
-                        <td>
-                            <a href="{{ .BasePath}}/admin/edp/registry/edit/test">
-                                <img src="{{ .BasePath}}/static/img/action-edit.png" alt="edit registry" />
-                            </a>
-                        </td>
-                        <td>
-                            <a href="#">
-                                <img src="{{ .BasePath}}/static/img/action-delete.png" alt="delete registry" />
-                            </a>
-                        </td>
-                    </tr>
+                    {{end}}
                 </tbody>
             </table>
         </div>
