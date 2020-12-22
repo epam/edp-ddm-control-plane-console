@@ -14,6 +14,7 @@ type MockConfigMapInterface struct {
 	GetError     error
 	UpdateResult *v1.ConfigMap
 	UpdateError  error
+	DeleteError  error
 }
 
 func (m MockConfigMapInterface) Create(*v1.ConfigMap) (*v1.ConfigMap, error) {
@@ -24,8 +25,8 @@ func (m MockConfigMapInterface) Update(*v1.ConfigMap) (*v1.ConfigMap, error) {
 	return m.UpdateResult, m.UpdateError
 }
 
-func (MockConfigMapInterface) Delete(name string, options *metav1.DeleteOptions) error {
-	return nil
+func (m MockConfigMapInterface) Delete(name string, options *metav1.DeleteOptions) error {
+	return m.DeleteError
 }
 
 func (MockConfigMapInterface) DeleteCollection(options *metav1.DeleteOptions, listOptions metav1.ListOptions) error {

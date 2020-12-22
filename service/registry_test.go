@@ -1,7 +1,6 @@
 package service
 
 import (
-	"ddm-admin-console/k8s"
 	"ddm-admin-console/test"
 	"testing"
 	"time"
@@ -10,6 +9,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 const (
@@ -18,42 +18,32 @@ const (
 )
 
 func TestRegistry_Create(t *testing.T) {
-	clients := k8s.CreateOpenShiftClients()
-	regService := MakeRegistry(clients.CoreClient, "test")
+	coreClientMock := test.MockCoreClient{
+		MockNamespaceInterface: test.MockNamespaceInterface{
+			GetError:     k8sErrors.NewNotFound(schema.GroupResource{}, "namespace"),
+			CreateResult: &v1.Namespace{},
+		},
+		MockConfigMapInterface: test.MockConfigMapInterface{
+			CreateResult: &v1.ConfigMap{},
+		},
+	}
+	regService := MakeRegistry(coreClientMock, "test")
 
 	if _, err := regService.Create("foo14", "bar"); err != nil {
-		t.Fatal(err)
-	}
-
-	defer func() {
-		if err := regService.Delete("foo14"); err != nil {
-			t.Fatal(err)
-		}
-	}()
-
-	if _, err := regService.Get("foo14"); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestRegistry_CreateFailure_NamespaceExists(t *testing.T) {
-	clients := k8s.CreateOpenShiftClients()
-	regService := MakeRegistry(clients.CoreClient, "test")
-
-	if _, err := regService.Create("foo31", "bar"); err != nil {
-		t.Fatal(err)
+	coreClientMock := test.MockCoreClient{
+		MockNamespaceInterface: test.MockNamespaceInterface{},
 	}
+	regService := MakeRegistry(coreClientMock, "test")
 
 	_, err := regService.Create("foo31", "bar")
 	if err == nil {
 		t.Fatal("no error on duplicate name")
 	}
-
-	defer func() {
-		if err := regService.Delete("foo31"); err != nil {
-			t.Fatal(err)
-		}
-	}()
 
 	switch errors.Cause(err).(type) {
 	case RegistryExistsError:
@@ -128,39 +118,26 @@ func TestRegistry_CreateFailure_ConfigMapError(t *testing.T) {
 }
 
 func TestRegistry_List(t *testing.T) {
-	clients := k8s.CreateOpenShiftClients()
-	pseudoProdRegService := MakeRegistry(clients.CoreClient, "pseudo-test")
-
-	if _, err := pseudoProdRegService.Create("foo55", "bar"); err != nil {
-		t.Fatal(err)
+	mockCoreClient := test.MockCoreClient{
+		MockNamespaceInterface: test.MockNamespaceInterface{
+			ListResult: &v1.NamespaceList{
+				Items: []v1.Namespace{
+					{},
+					{},
+				},
+			},
+		},
+		MockConfigMapInterface: test.MockConfigMapInterface{
+			GetResult: &v1.ConfigMap{
+				Data: map[string]string{
+					registryUpdatedAtConfigMapKey: time.Now().Format(registryUpdatedAtTimeFormat),
+				},
+			},
+		},
 	}
-	defer func() {
-		if err := pseudoProdRegService.Delete("foo55"); err != nil {
-			t.Fatal(err)
-		}
-	}()
+	regService := MakeRegistry(mockCoreClient, "test")
 
-	testRegService := MakeRegistry(clients.CoreClient, "test2")
-
-	if _, err := testRegService.Create("foo61", "bar"); err != nil {
-		t.Fatal(err)
-	}
-	defer func() {
-		if err := testRegService.Delete("foo61"); err != nil {
-			t.Fatal(err)
-		}
-	}()
-
-	if _, err := testRegService.Create("foo65", "bar"); err != nil {
-		t.Fatal(err)
-	}
-	defer func() {
-		if err := pseudoProdRegService.Delete("foo65"); err != nil {
-			t.Fatal(err)
-		}
-	}()
-
-	rgs, err := testRegService.List()
+	rgs, err := regService.List()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -171,37 +148,33 @@ func TestRegistry_List(t *testing.T) {
 }
 
 func TestRegistry_EditDescription(t *testing.T) {
-	clients := k8s.CreateOpenShiftClients()
-	regService := MakeRegistry(clients.CoreClient, "test")
-
-	if _, err := regService.Create("foo95", "bar"); err != nil {
-		t.Fatal(err)
+	coreClientMock := test.MockCoreClient{
+		MockNamespaceInterface: test.MockNamespaceInterface{
+			GetResult: &v1.Namespace{},
+		},
+		MockConfigMapInterface: test.MockConfigMapInterface{
+			GetResult: &v1.ConfigMap{
+				Data: map[string]string{},
+			},
+		},
 	}
-	defer func() {
-		if err := regService.Delete("foo95"); err != nil {
-			t.Fatal(err)
-		}
-	}()
+	regService := MakeRegistry(coreClientMock, "test")
 
-	newDescription := "new description"
-
-	if err := regService.EditDescription("foo95", newDescription); err != nil {
+	if err := regService.EditDescription("foo95", "new description"); err != nil {
 		t.Fatal(err)
-	}
-
-	rg, err := regService.Get("foo95")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if rg.Description != newDescription {
-		t.Fatal("description is not updated")
 	}
 }
 
 func TestRegistry_DeleteFailure_NamespaceNotExists(t *testing.T) {
-	clients := k8s.CreateOpenShiftClients()
-	regService := MakeRegistry(clients.CoreClient, "test")
+	getError := k8sErrors.NewNotFound(schema.GroupResource{}, "namespace")
+	getError.ErrStatus.Message = namespaceNotFoundMessage
+
+	coreClientMock := test.MockCoreClient{
+		MockNamespaceInterface: test.MockNamespaceInterface{
+			GetError: getError,
+		},
+	}
+	regService := MakeRegistry(coreClientMock, "test")
 	err := regService.Delete("unknown-registry")
 	if err == nil {
 		t.Fatal("no error on trying to delete not existing registry")
@@ -218,26 +191,20 @@ func TestRegistry_DeleteFailure_NamespaceNotExists(t *testing.T) {
 }
 
 func TestRegistry_DeleteFailure_ConfigMapMissing(t *testing.T) {
-	clients := k8s.CreateOpenShiftClients()
-	regService := MakeRegistry(clients.CoreClient, "test-delete")
+	deleteError := k8sErrors.NewNotFound(schema.GroupResource{}, "configMap")
+	deleteError.ErrStatus.Message = configMapNotFoundMessage
 
-	ns, err := regService.Create("foo208", "bar")
-	if err != nil {
-		t.Fatal(err)
+	coreClientMock := test.MockCoreClient{
+		MockNamespaceInterface: test.MockNamespaceInterface{
+			GetResult: &v1.Namespace{},
+		},
+		MockConfigMapInterface: test.MockConfigMapInterface{
+			DeleteError: deleteError,
+		},
 	}
+	regService := MakeRegistry(coreClientMock, "test-delete")
 
-	defer func() {
-		if err := clients.CoreClient.Namespaces().Delete(ns.Name, &metav1.DeleteOptions{}); err != nil {
-			t.Fatal(err)
-		}
-	}()
-
-	if err := clients.CoreClient.ConfigMaps(ns.Name).Delete(registryConfigMapName,
-		&metav1.DeleteOptions{}); err != nil {
-		t.Fatal(err)
-	}
-
-	err = regService.Delete(ns.Name)
+	err := regService.Delete("test")
 	if err == nil {
 		t.Fatal("no error on deleted config map")
 	}
@@ -275,8 +242,15 @@ func TestRegistry_DeleteFailure_DeletionError(t *testing.T) {
 }
 
 func TestRegistry_GetFailure_NotExists(t *testing.T) {
-	clients := k8s.CreateOpenShiftClients()
-	regService := MakeRegistry(clients.CoreClient, "test")
+	getError := k8sErrors.NewNotFound(schema.GroupResource{}, "namespace")
+	getError.ErrStatus.Message = namespaceNotFoundMessage
+
+	mockCoreClient := test.MockCoreClient{
+		MockNamespaceInterface: test.MockNamespaceInterface{
+			GetError: getError,
+		},
+	}
+	regService := MakeRegistry(mockCoreClient, "test")
 	_, err := regService.Get("unknown-registry")
 	if err == nil {
 		t.Fatal("no error on trying to get not existing registry")
@@ -293,26 +267,21 @@ func TestRegistry_GetFailure_NotExists(t *testing.T) {
 }
 
 func TestRegistry_GetFailure_ConfigMap(t *testing.T) {
-	clients := k8s.CreateOpenShiftClients()
-	regService := MakeRegistry(clients.CoreClient, "test-delete")
+	getError := k8sErrors.NewNotFound(schema.GroupResource{}, "configMap")
+	getError.ErrStatus.Message = configMapNotFoundMessage
 
-	ns, err := regService.Create("foo282", "bar")
-	if err != nil {
-		t.Fatal(err)
+	mockCoreClient := test.MockCoreClient{
+		MockNamespaceInterface: test.MockNamespaceInterface{
+			GetResult: &v1.Namespace{},
+		},
+		MockConfigMapInterface: test.MockConfigMapInterface{
+			GetError: getError,
+		},
 	}
 
-	defer func() {
-		if err := clients.CoreClient.Namespaces().Delete(ns.Name, &metav1.DeleteOptions{}); err != nil {
-			t.Fatal(err)
-		}
-	}()
+	regService := MakeRegistry(mockCoreClient, "test-delete")
 
-	if err := clients.CoreClient.ConfigMaps(ns.Name).Delete(registryConfigMapName,
-		&metav1.DeleteOptions{}); err != nil {
-		t.Fatal(err)
-	}
-
-	_, err = regService.Get(ns.Name)
+	_, err := regService.Get("test")
 	if err == nil {
 		t.Fatal("no error on deleted config map")
 	}
@@ -328,32 +297,21 @@ func TestRegistry_GetFailure_ConfigMap(t *testing.T) {
 }
 
 func TestRegistry_GetFailure_ConfigMapUpdatedAt(t *testing.T) {
-	clients := k8s.CreateOpenShiftClients()
-	regService := MakeRegistry(clients.CoreClient, "test-delete")
-
-	ns, err := regService.Create("317", "bar")
-	if err != nil {
-		t.Fatal(err)
+	mockCoreClient := test.MockCoreClient{
+		MockNamespaceInterface: test.MockNamespaceInterface{
+			GetResult: &v1.Namespace{},
+		},
+		MockConfigMapInterface: test.MockConfigMapInterface{
+			GetResult: &v1.ConfigMap{
+				Data: map[string]string{
+					registryUpdatedAtConfigMapKey: "wrong time format",
+				},
+			},
+		},
 	}
+	regService := MakeRegistry(mockCoreClient, "test-delete")
 
-	defer func() {
-		if err := regService.Delete(ns.Name); err != nil {
-			t.Fatal(err)
-		}
-	}()
-
-	cm, err := clients.CoreClient.ConfigMaps(ns.Name).Get(registryConfigMapName,
-		metav1.GetOptions{IncludeUninitialized: true})
-	if err != nil {
-		t.Fatal(err)
-	}
-	cm.Data[registryUpdatedAtConfigMapKey] = "wrong time format"
-
-	if _, err := clients.CoreClient.ConfigMaps(ns.Name).Update(cm); err != nil {
-		t.Fatal(err)
-	}
-
-	_, err = regService.Get(ns.Name)
+	_, err := regService.Get("test")
 	if err == nil {
 		t.Fatal("no error on deleted config map")
 	}
@@ -416,8 +374,15 @@ func TestRegistry_ListFailure_ConfigMap(t *testing.T) {
 }
 
 func TestRegistry_EditDescriptionFailure_NotExists(t *testing.T) {
-	clients := k8s.CreateOpenShiftClients()
-	regService := MakeRegistry(clients.CoreClient, "test")
+	getError := k8sErrors.NewNotFound(schema.GroupResource{}, "namespace")
+	getError.ErrStatus.Message = namespaceNotFoundMessage
+
+	mockCoreClient := test.MockCoreClient{
+		MockNamespaceInterface: test.MockNamespaceInterface{
+			GetError: getError,
+		},
+	}
+	regService := MakeRegistry(mockCoreClient, "test")
 	err := regService.EditDescription("unknown-registry", "description")
 	if err == nil {
 		t.Fatal("no error on trying to get not existing registry")
@@ -433,27 +398,21 @@ func TestRegistry_EditDescriptionFailure_NotExists(t *testing.T) {
 	}
 }
 
-func TestRegistry_EditDescription_ConfigMap(t *testing.T) {
-	clients := k8s.CreateOpenShiftClients()
-	regService := MakeRegistry(clients.CoreClient, "test-delete")
+func TestRegistry_EditDescriptionFailure_ConfigMap(t *testing.T) {
+	getError := k8sErrors.NewNotFound(schema.GroupResource{}, "configMap")
+	getError.ErrStatus.Message = configMapNotFoundMessage
 
-	ns, err := regService.Create("foo423", "bar")
-	if err != nil {
-		t.Fatal(err)
+	mockCoreClient := test.MockCoreClient{
+		MockNamespaceInterface: test.MockNamespaceInterface{
+			GetResult: &v1.Namespace{},
+		},
+		MockConfigMapInterface: test.MockConfigMapInterface{
+			GetError: getError,
+		},
 	}
+	regService := MakeRegistry(mockCoreClient, "test")
 
-	defer func() {
-		if err := clients.CoreClient.Namespaces().Delete(ns.Name, &metav1.DeleteOptions{}); err != nil {
-			t.Fatal(err)
-		}
-	}()
-
-	if err := clients.CoreClient.ConfigMaps(ns.Name).Delete(registryConfigMapName,
-		&metav1.DeleteOptions{}); err != nil {
-		t.Fatal(err)
-	}
-
-	err = regService.EditDescription(ns.Name, "desc")
+	err := regService.EditDescription("test", "desc")
 	if err == nil {
 		t.Fatal("no error on deleted config map")
 	}
@@ -492,5 +451,20 @@ func TestRegistry_EditDescription_Updating(t *testing.T) {
 
 	if errors.Cause(err) != mockError {
 		t.Fatal("wrong type of error returned")
+	}
+}
+
+func TestRegistry_Delete(t *testing.T) {
+	mockCoreClient := test.MockCoreClient{
+		MockNamespaceInterface: test.MockNamespaceInterface{
+			GetResult: &v1.Namespace{},
+		},
+		MockConfigMapInterface: test.MockConfigMapInterface{},
+	}
+	regService := MakeRegistry(mockCoreClient, "test")
+
+	err := regService.Delete("test")
+	if err != nil {
+		t.Fatal(err)
 	}
 }
