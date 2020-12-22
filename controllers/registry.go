@@ -7,6 +7,7 @@ import (
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/validation"
+	"github.com/pkg/errors"
 )
 
 const registryType = "registry"
@@ -55,46 +56,52 @@ func (r *CreateRegistry) Get() {
 	r.TplName = "registry/create.html"
 }
 
-func (r *CreateRegistry) Post() {
-	r.TplName = "registry/create.html"
-	r.Data["xsrfdata"] = r.XSRFToken()
-	r.Data["Type"] = registryType
+func (r *CreateRegistry) createRegistry(registry *models.Registry) (errorMap map[string][]*validation.Error,
+	err error) {
+	var valid validation.Validation
 
-	var (
-		err      error
-		registry models.Registry
-		valid    validation.Validation
-	)
-	defer func() {
-		if err != nil {
-			r.Ctx.ResponseWriter.WriteHeader(500)
-			r.Data["error"] = err.Error()
-		}
-		if valid.HasErrors() {
-			r.Ctx.ResponseWriter.WriteHeader(422)
-			r.Data["errorsMap"] = valid.ErrorMap()
-		}
-	}()
-
-	if err := r.ParseForm(&registry); err != nil {
-		return
+	dataValid, err := valid.Valid(registry)
+	if err != nil {
+		return nil, errors.Wrap(err, "something went wrong during validation")
 	}
-	r.Data["model"] = registry
 
-	b, err := valid.Valid(&registry)
-	if err != nil || !b {
-		return
+	if !dataValid {
+		return valid.ErrorMap(), nil
 	}
 
 	if _, err := r.RegistryService.Create(registry.Name, registry.Description); err != nil {
 		switch err.(type) {
 		case service.RegistryExistsError:
 			valid.AddError("Name.Required", err.Error())
-			err = nil
-			return
+			return valid.ErrorMap(), nil
 		default:
-			return
+			return nil, errors.Wrap(err, "something went wrong during registry creation")
 		}
+	}
+
+	return
+}
+
+func (r *CreateRegistry) Post() {
+	r.TplName = "registry/create.html"
+	r.Data["xsrfdata"] = r.XSRFToken()
+	r.Data["Type"] = registryType
+
+	var registry models.Registry
+	if err := r.ParseForm(&registry); err != nil {
+		return
+	}
+	r.Data["model"] = registry
+
+	validationErrors, err := r.createRegistry(&registry)
+	if err != nil {
+		r.Ctx.ResponseWriter.WriteHeader(500)
+		r.Data["error"] = err.Error()
+	}
+
+	if validationErrors != nil {
+		r.Ctx.ResponseWriter.WriteHeader(422)
+		r.Data["errorsMap"] = validationErrors
 	}
 
 	r.Redirect("/admin/edp/registry/overview", 303)
