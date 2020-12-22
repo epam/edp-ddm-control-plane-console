@@ -55,7 +55,7 @@ spec:
                   volumeMounts:
                       - mountPath: /var/lib/postgresql/data
                         name: {{ .Values.db.name }}
-            serviceAccount: {{ .Values.name }}
+            serviceAccount: {{ .Values.operator.serviceAccountName }}
             volumes:
                 - name: {{ .Values.db.name }}
                   persistentVolumeClaim:
