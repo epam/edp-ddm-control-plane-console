@@ -8,6 +8,9 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/astaxie/beego"
@@ -76,7 +79,7 @@ func TestCreatRegistry_Get(t *testing.T) {
 	}
 }
 
-func TestCreatRegistry_Post(t *testing.T) {
+func TestCreatRegistry_Post_ValidationError(t *testing.T) {
 	if err := test.InitBeego(); err != nil {
 		t.Fatal(err)
 	}
@@ -95,6 +98,39 @@ func TestCreatRegistry_Post(t *testing.T) {
 	if responseWriter.Code != 422 {
 		t.Log(responseWriter.Code)
 		t.Fatal("create registry not found")
+	}
+}
+
+func TestCreatRegistry_Post_Success(t *testing.T) {
+	if err := test.InitBeego(); err != nil {
+		t.Fatal(err)
+	}
+
+	k8sMock := test.MockCoreClient{
+		MockNamespaceInterface: test.MockNamespaceInterface{
+			GetError:     errors.New("namespace not found"),
+			CreateResult: &v1.Namespace{},
+		},
+		MockConfigMapInterface: test.MockConfigMapInterface{},
+	}
+	ctrl := MakeCreateRegistry(service.MakeRegistry(k8sMock, "test-env"))
+	beego.Router("/create-registry-success", ctrl)
+
+	formData := url.Values{
+		"name":        []string{"test"},
+		"description": []string{"test"},
+	}
+
+	request, _ := http.NewRequest("POST", "/create-registry-success", strings.NewReader(formData.Encode()))
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	request.Header.Add("Content-Length", strconv.Itoa(len(formData.Encode())))
+	responseWriter := httptest.NewRecorder()
+
+	beego.BeeApp.Handlers.ServeHTTP(responseWriter, request)
+
+	if responseWriter.Code != 303 {
+		t.Log(responseWriter.Code)
+		t.Fatal("wrong response code on namespace creation")
 	}
 }
 
