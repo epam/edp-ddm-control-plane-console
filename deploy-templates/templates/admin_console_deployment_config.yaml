@@ -33,7 +33,7 @@ spec:
                   apiVersion: v1
                   fieldPath: metadata.namespace
             - name: HOST
-              value: "https://{{if .Values.basePath}}{{ .Values.dnsWildCard }}{{else}}ddm-admin-console.{{ .Values.dnsWildCard }}{{end}}{{if .Values.basePath}}/{{ .Values.basePath }}{{end}}"
+              value: {{ .Values.host }}
             - name: BASE_PATH
               value: "{{if .Values.basePath}}/{{ .Values.basePath }}{{else}}{{end}}"
             - name: EDP_ADMIN_CONSOLE_VERSION
