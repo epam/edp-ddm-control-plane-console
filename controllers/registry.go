@@ -4,6 +4,7 @@ import (
 	"ddm-admin-console/console"
 	"ddm-admin-console/models"
 	"ddm-admin-console/service"
+	"fmt"
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/validation"
@@ -97,6 +98,7 @@ func (r *CreateRegistry) Post() {
 	if err != nil {
 		r.Ctx.ResponseWriter.WriteHeader(500)
 		r.Data["error"] = err.Error()
+		log.Error(fmt.Sprintf("%+v\n", err))
 	}
 
 	if validationErrors != nil {
