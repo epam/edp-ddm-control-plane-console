@@ -3,7 +3,7 @@ namespace: ""
 cdPipelineName: ""
 cdPipelineStageName: ""
 dnsWildcard: apps.cicd.mdtu-ddm.projects.epam.com
-host: "https://ddm-admin-console.apps.cicd.mdtu-ddm.projects.epam.com"
+host: "https://ddm-admin-console-mdtu-ddm-edp-cicd.apps.cicd.mdtu-ddm.projects.epam.com/"
 platform: "openshift"
 basePath: ""
 projectUrlMask: "/console/project/{namespace}/overview"
