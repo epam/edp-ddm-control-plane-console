@@ -33,6 +33,7 @@ import (
 	"fmt"
 
 	"github.com/astaxie/beego"
+	"github.com/beego/i18n"
 	"go.uber.org/zap"
 )
 
@@ -177,7 +178,7 @@ func init() {
 
 		beego.NSRouter("/registry/overview", controllers.MakeListRegistry(registryService)),
 		beego.NSRouter("/registry/create", controllers.MakeCreateRegistry(registryService)),
-		beego.NSRouter("/registry/edit/:name", &controllers.EditRegistry{}),
+		beego.NSRouter("/registry/edit/:name", controllers.MakeEditRegistry(registryService)),
 		beego.NSRouter("/registry/view/:name", &controllers.ViewRegistry{}),
 	)
 	beego.AddNamespace(adminEdpNamespace)
@@ -187,4 +188,11 @@ func init() {
 		beego.NSRouter("/repository/available", &controllers.RepositoryRestController{}, "post:IsGitRepoAvailable"),
 	)
 	beego.AddNamespace(apiV1Namespace)
+
+	if err := i18n.SetMessage("uk", "conf/locale_uk-UA.ini"); err != nil {
+		log.Fatal(err.Error())
+	}
+	if err := beego.AddFuncMap("i18n", i18n.Tr); err != nil {
+		log.Fatal(err.Error())
+	}
 }

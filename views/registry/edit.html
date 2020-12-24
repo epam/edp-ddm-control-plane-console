@@ -15,7 +15,8 @@
             <input type="hidden" name="_xsrf" value="{{ .xsrfdata }}" />
             <div class="rc-form-group">
                 <label for="description">Опис</label>
-                <textarea rows="3" name="description" id="description" maxlength="250"></textarea>
+                <textarea rows="3" name="description" id="description" maxlength="250">{{ .description }}</textarea>
+                <span>{{range $key, $val := .errorsMap.Description}}{{ $val }}{{end}}</span>
                 <p>Опис може містити офіційну назву реєстру чи його призначення.</p>
             </div>
 
