@@ -6,7 +6,9 @@ replace github.com/openshift/api => github.com/openshift/api v0.0.0-201808011710
 
 require (
 	github.com/Microsoft/go-winio v0.4.14 // indirect
+	github.com/Unknwon/goconfig v0.0.0-20200908083735-df7de6a44db8 // indirect
 	github.com/astaxie/beego v1.12.0
+	github.com/beego/i18n v0.0.0-20161101132742-e9308947f407
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/coreos/go-oidc v2.0.0+incompatible
 	github.com/docker/distribution v2.7.1+incompatible // indirect

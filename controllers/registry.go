@@ -13,12 +13,19 @@ import (
 
 const registryType = "registry"
 
-type ListRegistry struct {
-	beego.Controller
-	RegistryService *service.Registry
+type RegistryService interface {
+	List() ([]*models.Registry, error)
+	Create(name, description string) (*models.Registry, error)
+	Get(name string) (*models.Registry, error)
+	EditDescription(name, description string) error
 }
 
-func MakeListRegistry(registryService *service.Registry) *ListRegistry {
+type ListRegistry struct {
+	beego.Controller
+	RegistryService RegistryService
+}
+
+func MakeListRegistry(registryService RegistryService) *ListRegistry {
 	return &ListRegistry{
 		RegistryService: registryService,
 	}
@@ -32,8 +39,8 @@ func (r *ListRegistry) Get() {
 
 	registries, err := r.RegistryService.List()
 	if err != nil {
-		r.Data["error"] = err.Error()
-		r.Ctx.ResponseWriter.WriteHeader(500)
+		log.Error(fmt.Sprintf("%+v\n", err))
+		r.CustomAbort(500, err.Error())
 		return
 	}
 
@@ -42,16 +49,17 @@ func (r *ListRegistry) Get() {
 
 type CreateRegistry struct {
 	beego.Controller
-	RegistryService *service.Registry
+	RegistryService RegistryService
 }
 
-func MakeCreateRegistry(registryService *service.Registry) *CreateRegistry {
+func MakeCreateRegistry(registryService RegistryService) *CreateRegistry {
 	return &CreateRegistry{
 		RegistryService: registryService,
 	}
 }
 
 func (r *CreateRegistry) Get() {
+	r.Data["BasePath"] = console.BasePath
 	r.Data["xsrfdata"] = r.XSRFToken()
 	r.Data["Type"] = registryType
 	r.TplName = "registry/create.html"
@@ -84,26 +92,34 @@ func (r *CreateRegistry) createRegistry(registry *models.Registry) (errorMap map
 }
 
 func (r *CreateRegistry) Post() {
+	r.Data["BasePath"] = console.BasePath
 	r.TplName = "registry/create.html"
 	r.Data["xsrfdata"] = r.XSRFToken()
 	r.Data["Type"] = registryType
 
 	var registry models.Registry
 	if err := r.ParseForm(&registry); err != nil {
+		log.Error(fmt.Sprintf("%+v\n", err))
+		r.CustomAbort(500, err.Error())
 		return
 	}
 	r.Data["model"] = registry
 
 	validationErrors, err := r.createRegistry(&registry)
 	if err != nil {
-		r.Ctx.ResponseWriter.WriteHeader(500)
-		r.Data["error"] = err.Error()
 		log.Error(fmt.Sprintf("%+v\n", err))
+		r.CustomAbort(500, err.Error())
+		return
 	}
 
 	if validationErrors != nil {
-		r.Ctx.ResponseWriter.WriteHeader(422)
+		log.Error(fmt.Sprintf("%+v\n", validationErrors))
 		r.Data["errorsMap"] = validationErrors
+		r.Ctx.Output.Status = 422
+		if err := r.Render(); err != nil {
+			log.Error(err.Error())
+		}
+		return
 	}
 
 	r.Redirect("/admin/edp/registry/overview", 303)
@@ -111,12 +127,85 @@ func (r *CreateRegistry) Post() {
 
 type EditRegistry struct {
 	beego.Controller
+	RegistryService RegistryService
+}
+
+func MakeEditRegistry(registryService RegistryService) *EditRegistry {
+	return &EditRegistry{
+		RegistryService: registryService,
+	}
 }
 
 func (r *EditRegistry) Get() {
+	r.Data["BasePath"] = console.BasePath
 	r.Data["xsrfdata"] = r.XSRFToken()
 	r.Data["Type"] = registryType
 	r.TplName = "registry/edit.html"
+
+	registryName := r.Ctx.Input.Param(":name")
+	rg, err := r.RegistryService.Get(registryName)
+	if err != nil {
+		log.Error(fmt.Sprintf("%+v\n", err))
+		r.CustomAbort(500, err.Error())
+		return
+	}
+
+	r.Data["description"] = rg.Description
+}
+
+func (r *EditRegistry) editRegistry(registry *models.Registry) (errorMap map[string][]*validation.Error,
+	err error) {
+	var valid validation.Validation
+
+	dataValid, err := valid.Valid(registry)
+	if err != nil {
+		return nil, errors.Wrap(err, "something went wrong during validation")
+	}
+
+	if !dataValid {
+		return valid.ErrorMap(), nil
+	}
+
+	if err := r.RegistryService.EditDescription(registry.Name, registry.Description); err != nil {
+		return nil, errors.Wrap(err, "something went wrong during k8s registry edit")
+	}
+
+	return
+}
+
+func (r *EditRegistry) Post() {
+	r.Data["BasePath"] = console.BasePath
+	r.Data["xsrfdata"] = r.XSRFToken()
+	r.Data["Type"] = registryType
+	r.TplName = "registry/edit.html"
+
+	var parsedRegistry models.Registry
+	registryName := r.Ctx.Input.Param(":name")
+	if err := r.ParseForm(&parsedRegistry); err != nil {
+		log.Error(fmt.Sprintf("%+v\n", err))
+		r.CustomAbort(500, err.Error())
+		return
+	}
+	parsedRegistry.Name = registryName
+
+	validationErrors, err := r.editRegistry(&parsedRegistry)
+	if err != nil {
+		log.Error(fmt.Sprintf("%+v\n", err))
+		r.CustomAbort(500, err.Error())
+		return
+	}
+
+	if validationErrors != nil {
+		log.Error(fmt.Sprintf("%+v\n", validationErrors))
+		r.Data["errorsMap"] = validationErrors
+		r.Ctx.Output.Status = 422
+		if err := r.Render(); err != nil {
+			log.Error(err.Error())
+		}
+		return
+	}
+
+	r.Redirect("/admin/edp/registry/overview", 303)
 }
 
 type ViewRegistry struct {
@@ -124,6 +213,7 @@ type ViewRegistry struct {
 }
 
 func (r *ViewRegistry) Get() {
+	r.Data["BasePath"] = console.BasePath
 	r.Data["Type"] = registryType
 	r.TplName = "registry/view.html"
 }
