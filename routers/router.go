@@ -61,6 +61,7 @@ func init() {
 	if authEnabled {
 		console.InitAuth()
 		beego.Router(fmt.Sprintf("%s/auth/callback", console.BasePath), &auth.Controller{}, "get:Callback")
+		beego.InsertFilter(fmt.Sprintf("%s/*", console.BasePath), beego.BeforeRouter, filters.AuthFilter)
 		beego.InsertFilter(fmt.Sprintf("%s/admin/*", console.BasePath), beego.BeforeRouter, filters.AuthFilter)
 		beego.InsertFilter(fmt.Sprintf("%s/api/v1/*", console.BasePath), beego.BeforeRouter, filters.AuthRestFilter)
 		beego.InsertFilter(fmt.Sprintf("%s/admin/*", console.BasePath), beego.BeforeRouter, filters.RoleAccessControlFilter)
