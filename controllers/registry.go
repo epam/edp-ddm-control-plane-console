@@ -3,31 +3,32 @@ package controllers
 import (
 	"ddm-admin-console/console"
 	"ddm-admin-console/models"
-	"ddm-admin-console/service"
+	"ddm-admin-console/models/command"
+	edperror "ddm-admin-console/models/error"
+	"ddm-admin-console/models/query"
 	"fmt"
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/validation"
+	edpv1alpha1 "github.com/epmd-edp/codebase-operator/v2/pkg/apis/edp/v1alpha1"
 	"github.com/pkg/errors"
 )
 
 const registryType = "registry"
 
-type RegistryService interface {
-	List() ([]*models.Registry, error)
-	Create(name, description string) (*models.Registry, error)
-	Get(name string) (*models.Registry, error)
-	EditDescription(name, description string) error
+type CodebaseService interface {
+	CreateCodebase(codebase command.CreateCodebase) (*edpv1alpha1.Codebase, error)
+	GetCodebasesByCriteria(criteria query.CodebaseCriteria) ([]*query.Codebase, error)
 }
 
 type ListRegistry struct {
 	beego.Controller
-	RegistryService RegistryService
+	CodebaseService CodebaseService
 }
 
-func MakeListRegistry(registryService RegistryService) *ListRegistry {
+func MakeListRegistry(CodebaseService CodebaseService) *ListRegistry {
 	return &ListRegistry{
-		RegistryService: registryService,
+		CodebaseService: CodebaseService,
 	}
 }
 
@@ -37,24 +38,27 @@ func (r *ListRegistry) Get() {
 
 	r.TplName = "registry/list.html"
 
-	registries, err := r.RegistryService.List()
+	codebases, err := r.CodebaseService.GetCodebasesByCriteria(query.CodebaseCriteria{
+		Type: query.App,
+	})
+
 	if err != nil {
 		log.Error(fmt.Sprintf("%+v\n", err))
-		r.CustomAbort(500, err.Error())
+		r.CustomAbort(500, fmt.Sprintf("%+v\n", err))
 		return
 	}
 
-	r.Data["registries"] = registries
+	r.Data["registries"] = codebases
 }
 
 type CreateRegistry struct {
 	beego.Controller
-	RegistryService RegistryService
+	CodebaseService CodebaseService
 }
 
-func MakeCreateRegistry(registryService RegistryService) *CreateRegistry {
+func MakeCreateRegistry(codebaseService CodebaseService) *CreateRegistry {
 	return &CreateRegistry{
-		RegistryService: registryService,
+		CodebaseService: codebaseService,
 	}
 }
 
@@ -78,13 +82,19 @@ func (r *CreateRegistry) createRegistry(registry *models.Registry) (errorMap map
 		return valid.ErrorMap(), nil
 	}
 
-	if _, err := r.RegistryService.Create(registry.Name, registry.Description); err != nil {
+	_, err = r.CodebaseService.CreateCodebase(command.CreateCodebase{
+		Name:          registry.Name,
+		Type:          string(query.Registry),
+		Description:   &registry.Description,
+		DefaultBranch: "master",
+	})
+	if err != nil {
 		switch err.(type) {
-		case service.RegistryExistsError:
+		case *edperror.CodebaseAlreadyExistsError:
 			valid.AddError("Name.Required", err.Error())
 			return valid.ErrorMap(), nil
 		default:
-			return nil, errors.Wrap(err, "something went wrong during registry creation")
+			return nil, errors.Wrap(err, "something went wrong during codebase creation")
 		}
 	}
 
@@ -125,95 +135,95 @@ func (r *CreateRegistry) Post() {
 	r.Redirect("/admin/edp/registry/overview", 303)
 }
 
-type EditRegistry struct {
-	beego.Controller
-	RegistryService RegistryService
-}
+//type EditRegistry struct {
+//	beego.Controller
+//	RegistryService RegistryService
+//}
 
-func MakeEditRegistry(registryService RegistryService) *EditRegistry {
-	return &EditRegistry{
-		RegistryService: registryService,
-	}
-}
-
-func (r *EditRegistry) Get() {
-	r.Data["BasePath"] = console.BasePath
-	r.Data["xsrfdata"] = r.XSRFToken()
-	r.Data["Type"] = registryType
-	r.TplName = "registry/edit.html"
-
-	registryName := r.Ctx.Input.Param(":name")
-	rg, err := r.RegistryService.Get(registryName)
-	if err != nil {
-		log.Error(fmt.Sprintf("%+v\n", err))
-		r.CustomAbort(500, err.Error())
-		return
-	}
-
-	r.Data["description"] = rg.Description
-}
-
-func (r *EditRegistry) editRegistry(registry *models.Registry) (errorMap map[string][]*validation.Error,
-	err error) {
-	var valid validation.Validation
-
-	dataValid, err := valid.Valid(registry)
-	if err != nil {
-		return nil, errors.Wrap(err, "something went wrong during validation")
-	}
-
-	if !dataValid {
-		return valid.ErrorMap(), nil
-	}
-
-	if err := r.RegistryService.EditDescription(registry.Name, registry.Description); err != nil {
-		return nil, errors.Wrap(err, "something went wrong during k8s registry edit")
-	}
-
-	return
-}
-
-func (r *EditRegistry) Post() {
-	r.Data["BasePath"] = console.BasePath
-	r.Data["xsrfdata"] = r.XSRFToken()
-	r.Data["Type"] = registryType
-	r.TplName = "registry/edit.html"
-
-	var parsedRegistry models.Registry
-	registryName := r.Ctx.Input.Param(":name")
-	if err := r.ParseForm(&parsedRegistry); err != nil {
-		log.Error(fmt.Sprintf("%+v\n", err))
-		r.CustomAbort(500, err.Error())
-		return
-	}
-	parsedRegistry.Name = registryName
-
-	validationErrors, err := r.editRegistry(&parsedRegistry)
-	if err != nil {
-		log.Error(fmt.Sprintf("%+v\n", err))
-		r.CustomAbort(500, err.Error())
-		return
-	}
-
-	if validationErrors != nil {
-		log.Error(fmt.Sprintf("%+v\n", validationErrors))
-		r.Data["errorsMap"] = validationErrors
-		r.Ctx.Output.Status = 422
-		if err := r.Render(); err != nil {
-			log.Error(err.Error())
-		}
-		return
-	}
-
-	r.Redirect("/admin/edp/registry/overview", 303)
-}
-
-type ViewRegistry struct {
-	beego.Controller
-}
-
-func (r *ViewRegistry) Get() {
-	r.Data["BasePath"] = console.BasePath
-	r.Data["Type"] = registryType
-	r.TplName = "registry/view.html"
-}
+//func MakeEditRegistry(registryService RegistryService) *EditRegistry {
+//	return &EditRegistry{
+//		RegistryService: registryService,
+//	}
+//}
+//
+//func (r *EditRegistry) Get() {
+//	r.Data["BasePath"] = console.BasePath
+//	r.Data["xsrfdata"] = r.XSRFToken()
+//	r.Data["Type"] = registryType
+//	r.TplName = "registry/edit.html"
+//
+//	registryName := r.Ctx.Input.Param(":name")
+//	rg, err := r.RegistryService.Get(registryName)
+//	if err != nil {
+//		log.Error(fmt.Sprintf("%+v\n", err))
+//		r.CustomAbort(500, err.Error())
+//		return
+//	}
+//
+//	r.Data["description"] = rg.Description
+//}
+//
+//func (r *EditRegistry) editRegistry(registry *models.Registry) (errorMap map[string][]*validation.Error,
+//	err error) {
+//	var valid validation.Validation
+//
+//	dataValid, err := valid.Valid(registry)
+//	if err != nil {
+//		return nil, errors.Wrap(err, "something went wrong during validation")
+//	}
+//
+//	if !dataValid {
+//		return valid.ErrorMap(), nil
+//	}
+//
+//	if err := r.RegistryService.EditDescription(registry.Name, registry.Description); err != nil {
+//		return nil, errors.Wrap(err, "something went wrong during k8s registry edit")
+//	}
+//
+//	return
+//}
+//
+//func (r *EditRegistry) Post() {
+//	r.Data["BasePath"] = console.BasePath
+//	r.Data["xsrfdata"] = r.XSRFToken()
+//	r.Data["Type"] = registryType
+//	r.TplName = "registry/edit.html"
+//
+//	var parsedRegistry models.Registry
+//	registryName := r.Ctx.Input.Param(":name")
+//	if err := r.ParseForm(&parsedRegistry); err != nil {
+//		log.Error(fmt.Sprintf("%+v\n", err))
+//		r.CustomAbort(500, err.Error())
+//		return
+//	}
+//	parsedRegistry.Name = registryName
+//
+//	validationErrors, err := r.editRegistry(&parsedRegistry)
+//	if err != nil {
+//		log.Error(fmt.Sprintf("%+v\n", err))
+//		r.CustomAbort(500, err.Error())
+//		return
+//	}
+//
+//	if validationErrors != nil {
+//		log.Error(fmt.Sprintf("%+v\n", validationErrors))
+//		r.Data["errorsMap"] = validationErrors
+//		r.Ctx.Output.Status = 422
+//		if err := r.Render(); err != nil {
+//			log.Error(err.Error())
+//		}
+//		return
+//	}
+//
+//	r.Redirect("/admin/edp/registry/overview", 303)
+//}
+//
+//type ViewRegistry struct {
+//	beego.Controller
+//}
+//
+//func (r *ViewRegistry) Get() {
+//	r.Data["BasePath"] = console.BasePath
+//	r.Data["Type"] = registryType
+//	r.TplName = "registry/view.html"
+//}

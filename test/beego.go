@@ -1,8 +1,11 @@
 package test
 
 import (
+	"ddm-admin-console/console"
 	"io/ioutil"
 	"os"
+
+	"github.com/astaxie/beego/orm"
 
 	"github.com/astaxie/beego"
 	"github.com/beego/i18n"
@@ -45,8 +48,13 @@ func InitBeego() error {
 	}
 
 	beego.TestBeegoInit(".")
+	console.Tenant = "develop"
+	console.Namespace = "mdtuddm"
 	beego.BConfig.WebConfig.EnableXSRF = false
-	beego.BConfig.WebConfig.Session.SessionOn = false
+
+	if _, err := orm.GetDB("default"); err != nil {
+		console.InitDb()
+	}
 
 	return nil
 }

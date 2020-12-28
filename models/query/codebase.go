@@ -55,6 +55,7 @@ const (
 	App       CodebaseType = "application"
 	Autotests CodebaseType = "autotests"
 	Library   CodebaseType = "library"
+	Registry  CodebaseType = "registry-tenant"
 )
 
 var CodebaseTypes = map[string]CodebaseType{
