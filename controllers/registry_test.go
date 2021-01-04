@@ -3,6 +3,7 @@ package controllers
 import (
 	"bytes"
 	edperror "ddm-admin-console/models/error"
+	"ddm-admin-console/models/query"
 	_ "ddm-admin-console/templatefunction"
 	"ddm-admin-console/test"
 	"errors"
@@ -197,5 +198,152 @@ func TestCreatRegistry_Post_Success(t *testing.T) {
 	if responseWriter.Code != 303 {
 		t.Log(responseWriter.Code)
 		t.Fatal("wrong response code on namespace creation")
+	}
+}
+
+func TestEditRegistry_GetFailure(t *testing.T) {
+	if err := test.InitBeego(); err != nil {
+		t.Fatal(err)
+	}
+
+	codebaseService := test.MockCodebaseService{
+		GetCodebaseByNameError: errors.New("k8s fatal error"),
+	}
+	ctrl := MakeEditRegistry(codebaseService)
+
+	beego.Router("/edit-registry-get-failure/:name", ctrl)
+	request, _ := http.NewRequest("GET", "/edit-registry-get-failure/test", nil)
+	responseWriter := httptest.NewRecorder()
+
+	beego.BeeApp.Handlers.ServeHTTP(responseWriter, request)
+
+	if responseWriter.Code != 500 {
+		t.Log(responseWriter.Code)
+		t.Log(responseWriter.Body.String())
+		t.Fatal("wrong response code on registry edit failure")
+	}
+}
+
+func TestEditRegistry_PostFailure_k8sFatal(t *testing.T) {
+	if err := test.InitBeego(); err != nil {
+		t.Fatal(err)
+	}
+
+	cbMock := test.MockCodebaseService{
+		UpdateDescriptionError: errors.New("k8s fatal"),
+	}
+	ctrl := MakeEditRegistry(cbMock)
+
+	beego.Router("/edit-registry-failure/:name", ctrl)
+	request, _ := http.NewRequest("POST", "/edit-registry-failure/test", nil)
+	responseWriter := httptest.NewRecorder()
+
+	beego.BeeApp.Handlers.ServeHTTP(responseWriter, request)
+
+	if responseWriter.Code != 500 {
+		t.Log(responseWriter.Code)
+		t.Log(responseWriter.Body.String())
+		t.Fatal("wrong response code on registry edit failure")
+	}
+}
+
+func TestEditRegistry_PostFailure_LongDescription(t *testing.T) {
+	if err := test.InitBeego(); err != nil {
+		t.Fatal(err)
+	}
+
+	cbMock := test.MockCodebaseService{}
+	ctrl := MakeEditRegistry(cbMock)
+
+	formData := url.Values{
+		"description": []string{`test11111111111111111111111111111111111111111111111111111111111111111111111test1111111
+1111111111111111111111111111111111111111111111111111111111111111test11111111111111111111111111111111111111111111111111
+111111111111111111111test11111111111111111111111111111111111111111111111111111111111111111111111test1111111111111111111
+1111111111111111111111111111111111111111111111111111test11111111111111111111111111111111111111111111111111111111111111
+111111111test11111111111111111111111111111111111111111111111111111111111111111111111test111111111111111111111111111111
+11111111111111111111111111111111111111111test11111111111111111111111111111111111111111111111111111111111111111111111t
+est11111111111111111111111111111111111111111111111111111111111111111111111test111111111111111111111111111111111111111
+11111111111111111111111111111111`},
+	}
+
+	beego.Router("/edit-registry-failure-description/:name", ctrl)
+	request, _ := http.NewRequest("POST", "/edit-registry-failure-description/test", strings.NewReader(formData.Encode()))
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	request.Header.Add("Content-Length", strconv.Itoa(len(formData.Encode())))
+	responseWriter := httptest.NewRecorder()
+
+	beego.BeeApp.Handlers.ServeHTTP(responseWriter, request)
+
+	if responseWriter.Code != 422 {
+		t.Log(responseWriter.Code)
+		t.Log(responseWriter.Body.String())
+		t.Fatal("wrong response code on registry edit failure")
+	}
+}
+
+func TestEditRegistry_PostSuccess(t *testing.T) {
+	if err := test.InitBeego(); err != nil {
+		t.Fatal(err)
+	}
+
+	cbMock := test.MockCodebaseService{}
+	ctrl := MakeEditRegistry(cbMock)
+
+	formData := url.Values{
+		"description": []string{"test1"},
+	}
+
+	beego.Router("/edit-registry-success-description/:name", ctrl)
+	request, _ := http.NewRequest("POST", "/edit-registry-success-description/test", strings.NewReader(formData.Encode()))
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	request.Header.Add("Content-Length", strconv.Itoa(len(formData.Encode())))
+	responseWriter := httptest.NewRecorder()
+
+	beego.BeeApp.Handlers.ServeHTTP(responseWriter, request)
+
+	if responseWriter.Code != 303 {
+		t.Log(responseWriter.Code)
+		t.Log(responseWriter.Body.String())
+		t.Fatal("wrong response code on registry edit success")
+	}
+}
+
+func TestEditRegistry_GetSuccess(t *testing.T) {
+	if err := test.InitBeego(); err != nil {
+		t.Fatal(err)
+	}
+
+	cbMock := test.MockCodebaseService{
+		GetCodebaseByNameResult: &query.Codebase{},
+	}
+	ctrl := MakeEditRegistry(cbMock)
+
+	beego.Router("/edit-registry-success/:name", ctrl)
+	request, _ := http.NewRequest("GET", "/edit-registry-success/test", nil)
+	responseWriter := httptest.NewRecorder()
+
+	beego.BeeApp.Handlers.ServeHTTP(responseWriter, request)
+
+	if responseWriter.Code != 200 {
+		t.Log(responseWriter.Code)
+		t.Log(responseWriter.Body.String())
+		t.Fatal("wrong response code on registry edit")
+	}
+}
+
+func TestViewRegistry_Get(t *testing.T) {
+	if err := test.InitBeego(); err != nil {
+		t.Fatal(err)
+	}
+
+	beego.ErrorController(&ErrorController{})
+	beego.Router("/view-registry", &ViewRegistry{})
+	request, _ := http.NewRequest("GET", "/view-registry", nil)
+	responseWriter := httptest.NewRecorder()
+
+	beego.BeeApp.Handlers.ServeHTTP(responseWriter, request)
+
+	if responseWriter.Code != 200 {
+		t.Fatal("view registry not found")
 	}
 }

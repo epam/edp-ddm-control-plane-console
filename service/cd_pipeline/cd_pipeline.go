@@ -32,16 +32,16 @@ import (
 	"ddm-admin-console/util/consts"
 	dberror "ddm-admin-console/util/error/db-errors"
 	"fmt"
-	openshiftAPi "github.com/openshift/api/apps/v1"
-	v1 "k8s.io/api/apps/v1"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/astaxie/beego/orm"
 	edppipelinesv1alpha1 "github.com/epmd-edp/cd-pipeline-operator/v2/pkg/apis/edp/v1alpha1"
+	openshiftAPi "github.com/openshift/api/apps/v1"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+	v1 "k8s.io/api/apps/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
@@ -171,7 +171,7 @@ func (s *CDPipelineService) GetCDPipelineByName(pipelineName string) (*query.CDP
 	return cdPipeline, nil
 }
 
-func (s *CDPipelineService) CreateStages(edpRestClient *rest.RESTClient, cdPipeline command.CDPipelineCommand) ([]edppipelinesv1alpha1.Stage, error) {
+func (s *CDPipelineService) CreateStages(edpRestClient rest.Interface, cdPipeline command.CDPipelineCommand) ([]edppipelinesv1alpha1.Stage, error) {
 	log.Debug("start creating stages", zap.Any("stages", cdPipeline.Stages))
 	if err := checkStagesInK8s(edpRestClient, cdPipeline.Name, cdPipeline.Stages); err != nil {
 		return nil, errors.Wrap(err, "couldn't check stages in cluster")
@@ -458,7 +458,7 @@ func createCr(cdPipelineName string, stage command.CDStageCommand) edppipelinesv
 	}
 }
 
-func saveStagesIntoK8s(edpRestClient *rest.RESTClient, cdPipelineName string, stages []command.CDStageCommand, username string) ([]edppipelinesv1alpha1.Stage, error) {
+func saveStagesIntoK8s(edpRestClient rest.Interface, cdPipelineName string, stages []command.CDStageCommand, username string) ([]edppipelinesv1alpha1.Stage, error) {
 	var stagesCr []edppipelinesv1alpha1.Stage
 	for _, stage := range stages {
 		stage.Username = username
@@ -478,7 +478,7 @@ func saveStagesIntoK8s(edpRestClient *rest.RESTClient, cdPipelineName string, st
 	return stagesCr, nil
 }
 
-func checkStagesInK8s(edpRestClient *rest.RESTClient, cdPipelineName string, stages []command.CDStageCommand) error {
+func checkStagesInK8s(edpRestClient rest.Interface, cdPipelineName string, stages []command.CDStageCommand) error {
 	for _, stage := range stages {
 		stagesCr := &edppipelinesv1alpha1.Stage{}
 		stageName := fmt.Sprintf("%s-%s", cdPipelineName, stage.Name)

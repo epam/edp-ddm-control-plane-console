@@ -42,7 +42,7 @@ var SchemeGroupVersion = schema.GroupVersion{Group: "v2.edp.epam.com", Version: 
 type ClientSet struct {
 	CoreClient     CoreClient
 	StorageClient  *storageV1Client.StorageV1Client
-	EDPRestClient  *rest.RESTClient
+	EDPRestClient  rest.Interface
 	AppsV1Client   *appsV1Client.AppsV1Client
 	K8sAppV1Client v1.AppsV1Interface
 }

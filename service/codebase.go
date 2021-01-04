@@ -374,6 +374,21 @@ func setCodebaseBranchCr(vt string, username string, version *string, defaultBra
 	}
 }
 
+func (s *CodebaseService) UpdateDescription(name, description string) error {
+	c, err := util.GetCodebaseCR(s.Clients.EDPRestClient, name)
+	if err != nil {
+		return errors.Wrapf(err, "couldn't get codebase from cluster %v", name)
+	}
+
+	c.Spec.Description = &description
+
+	if err := s.executeUpdateRequest(c); err != nil {
+		return errors.Wrap(err, "unable to update codebase")
+	}
+
+	return nil
+}
+
 func (s *CodebaseService) Update(command command.UpdateCodebaseCommand) (*edpv1alpha1.Codebase, error) {
 	log.Debug("start executing Update method fort codebase", zap.String("name", command.Name))
 	c, err := util.GetCodebaseCR(s.Clients.EDPRestClient, command.Name)
