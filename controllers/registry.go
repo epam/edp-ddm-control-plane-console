@@ -17,7 +17,7 @@ import (
 const (
 	registryType     = "registry"
 	defaultBranch    = "master"
-	lang             = "Go"
+	lang             = "other"
 	strategy         = "clone"
 	deploymentScript = "openshift-template"
 	ciTool           = "Jenkins"
