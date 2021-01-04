@@ -166,10 +166,10 @@ func init() {
 
 	dc := controllers.DiagramController{
 		CodebaseService: codebaseService,
-		PipelineService: pipelineService,
+		PipelineService: pipelineService,/edp
 	}
 
-	adminEdpNamespace := beego.NewNamespace(fmt.Sprintf("%s/admin/edp", console.BasePath),
+	adminEdpNamespace := beego.NewNamespace(fmt.Sprintf("%s/admin", console.BasePath),
 		beego.NSRouter("/overview", &ec, "get:GetEDPComponents"),
 		beego.NSRouter("/service/overview", &tpsc, "get:GetServicePage"),
 		beego.NSRouter("/diagram/overview", &dc, "get:GetDiagramPage"),
