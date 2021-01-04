@@ -27,11 +27,11 @@ import (
 
 var log = logger.GetLogger()
 
-type Controller struct {
+type AuthController struct {
 	beego.Controller
 }
 
-func (ac *Controller) Callback() {
+func (ac *AuthController) Callback() {
 	authConfig := ctx.GetAuthConfig()
 	log.Info("Start callback flow...")
 	queryState := ac.Ctx.Input.Query("state")
@@ -63,7 +63,7 @@ func (ac *Controller) Callback() {
 	ac.Redirect(path, 302)
 }
 
-func (ac *Controller) getRedirectPath() string {
+func (ac *AuthController) getRedirectPath() string {
 	requestPath := ac.Ctx.Input.Session("request_path")
 	if requestPath == nil {
 		return fmt.Sprintf("%s/admin/edp/overview", ctx.BasePath)
