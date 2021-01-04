@@ -13,6 +13,11 @@ type MockCodebaseService struct {
 
 	GetByCriteriaResult []*query.Codebase
 	GetByCriteriaError  error
+
+	UpdateDescriptionError error
+
+	GetCodebaseByNameResult *query.Codebase
+	GetCodebaseByNameError  error
 }
 
 func (m MockCodebaseService) CreateCodebase(codebase command.CreateCodebase) (*edpv1alpha1.Codebase, error) {
@@ -21,4 +26,12 @@ func (m MockCodebaseService) CreateCodebase(codebase command.CreateCodebase) (*e
 
 func (m MockCodebaseService) GetCodebasesByCriteria(criteria query.CodebaseCriteria) ([]*query.Codebase, error) {
 	return m.GetByCriteriaResult, m.GetByCriteriaError
+}
+
+func (m MockCodebaseService) GetCodebaseByName(name string) (*query.Codebase, error) {
+	return m.GetCodebaseByNameResult, m.GetCodebaseByNameError
+}
+
+func (m MockCodebaseService) UpdateDescription(name, description string) error {
+	return m.UpdateDescriptionError
 }

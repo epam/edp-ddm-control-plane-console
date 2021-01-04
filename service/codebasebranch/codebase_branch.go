@@ -27,6 +27,9 @@ import (
 	"ddm-admin-console/util/consts"
 	dberror "ddm-admin-console/util/error/db-errors"
 	"fmt"
+	"strings"
+	"time"
+
 	edpv1alpha1 "github.com/epmd-edp/codebase-operator/v2/pkg/apis/edp/v1alpha1"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -34,8 +37,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
-	"strings"
-	"time"
 )
 
 var log = logger.GetLogger()
@@ -159,7 +160,7 @@ func (s *Service) GetCodebaseBranchesByCriteria(criteria query.CodebaseBranchCri
 	return codebaseBranches, nil
 }
 
-func getReleaseBranchCR(edpRestClient *rest.RESTClient, branchName string, appName string, namespace string) (*edpv1alpha1.CodebaseBranch, error) {
+func getReleaseBranchCR(edpRestClient rest.Interface, branchName string, appName string, namespace string) (*edpv1alpha1.CodebaseBranch, error) {
 	result := &edpv1alpha1.CodebaseBranch{}
 	err := edpRestClient.Get().Namespace(namespace).Resource("codebasebranches").Name(fmt.Sprintf("%s-%s", appName, branchName)).Do().Into(result)
 
