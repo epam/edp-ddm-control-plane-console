@@ -122,7 +122,7 @@ func init() {
 	}
 
 	beego.ErrorController(&controllers.ErrorController{})
-	beego.Router(fmt.Sprintf("%s/", console.BasePath), &ec, "get:GetEDPComponents")
+	beego.Router(fmt.Sprintf("%s/", console.BasePath), &controllers.MainController{EDPTenantService: edpService}, "get:Index")
 	beego.SetStaticPath(fmt.Sprintf("%s/static", console.BasePath), "static")
 
 	integrationStrategies := util.GetValuesFromConfig(integrationStrategies)
