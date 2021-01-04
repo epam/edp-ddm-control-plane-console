@@ -14,7 +14,14 @@ import (
 	"github.com/pkg/errors"
 )
 
-const registryType = "registry"
+const (
+	registryType     = "registry"
+	defaultBranch    = "master"
+	lang             = "Go"
+	strategy         = "clone"
+	deploymentScript = "openshift-template"
+	ciTool           = "Jenkins"
+)
 
 type CodebaseService interface {
 	CreateCodebase(codebase command.CreateCodebase) (*edpv1alpha1.Codebase, error)
@@ -83,10 +90,15 @@ func (r *CreateRegistry) createRegistry(registry *models.Registry) (errorMap map
 	}
 
 	_, err = r.CodebaseService.CreateCodebase(command.CreateCodebase{
-		Name:          registry.Name,
-		Type:          string(query.Registry),
-		Description:   &registry.Description,
-		DefaultBranch: "master",
+		Name:             registry.Name,
+		Type:             string(query.Registry),
+		Description:      &registry.Description,
+		DefaultBranch:    defaultBranch,
+		Lang:             lang,
+		BuildTool:        lang,
+		Strategy:         strategy,
+		DeploymentScript: deploymentScript,
+		CiTool:           ciTool,
 	})
 	if err != nil {
 		switch err.(type) {
