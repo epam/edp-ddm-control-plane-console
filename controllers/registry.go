@@ -89,8 +89,11 @@ func (r *CreateRegistry) createRegistry(registry *models.Registry) (errorMap map
 		return valid.ErrorMap(), nil
 	}
 
+	username, _ := r.Ctx.Input.Session("username").(string)
+
 	_, err = r.CodebaseService.CreateCodebase(command.CreateCodebase{
 		Name:             registry.Name,
+		Username:         username,
 		Type:             string(query.Registry),
 		Description:      &registry.Description,
 		DefaultBranch:    defaultBranch,
@@ -98,8 +101,13 @@ func (r *CreateRegistry) createRegistry(registry *models.Registry) (errorMap map
 		BuildTool:        lang,
 		Strategy:         strategy,
 		DeploymentScript: deploymentScript,
+		GitServer:        defaultGitServer,
 		CiTool:           ciTool,
+		Repository: &command.Repository{
+			URL: beego.AppConfig.String("defaultGitRepo"),
+		},
 	})
+
 	if err != nil {
 		switch err.(type) {
 		case *edperror.CodebaseAlreadyExistsError:
