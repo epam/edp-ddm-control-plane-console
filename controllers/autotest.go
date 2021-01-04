@@ -74,7 +74,7 @@ func (c *AutotestsController) checkError(err error, flash *beego.FlashData, name
 	case *edperror.CodebaseWithGitURLPathAlreadyExistsError:
 		flash.Error("Autotest %v with %v project path already exists.", name, *url)
 		flash.Store(&c.Controller)
-		c.Redirect(fmt.Sprintf("%s/admin/edp/autotest/create", console.BasePath), 302)
+		c.Redirect(fmt.Sprintf("%s/admin/autotest/create", console.BasePath), 302)
 	default:
 		log.Error("couldn't create codebase", zap.Error(err))
 		c.Abort("500")

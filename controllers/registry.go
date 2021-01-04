@@ -140,7 +140,7 @@ func (r *EditRegistry) Post() {
 		return
 	}
 
-	r.Redirect("/admin/edp/registry/overview", 303)
+	r.Redirect("/admin/registry/overview", 303)
 }
 
 type CreateRegistry struct {
@@ -237,7 +237,7 @@ func (r *CreateRegistry) Post() {
 		return
 	}
 
-	r.Redirect("/admin/edp/registry/overview", 303)
+	r.Redirect("/admin/registry/overview", 303)
 }
 
 type ViewRegistry struct {

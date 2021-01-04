@@ -66,7 +66,7 @@ func (ac *AuthController) Callback() {
 func (ac *AuthController) getRedirectPath() string {
 	requestPath := ac.Ctx.Input.Session("request_path")
 	if requestPath == nil {
-		return fmt.Sprintf("%s/admin/edp/overview", ctx.BasePath)
+		return fmt.Sprintf("%s/admin/registry/overview", ctx.BasePath)
 	}
 	ac.Ctx.Output.Session("request_path", nil)
 	return requestPath.(string)
