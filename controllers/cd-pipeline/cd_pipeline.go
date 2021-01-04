@@ -263,7 +263,7 @@ func (c *CDPipelineController) UpdateCDPipeline() {
 		case *ddmerror.NonValidRelatedBranchError:
 			flash.Error(fmt.Sprintf("one or more applications have non valid branches: %v", pipelineUpdateCommand.Applications))
 			flash.Store(&c.Controller)
-			c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/%s/update", console.BasePath, pipelineName), http.StatusBadRequest)
+			c.Redirect(fmt.Sprintf("%s/admin/cd-pipeline/%s/update", console.BasePath, pipelineName), http.StatusBadRequest)
 			return
 		default:
 			c.Abort("500")
@@ -273,7 +273,7 @@ func (c *CDPipelineController) UpdateCDPipeline() {
 
 	c.Data["EDPVersion"] = console.EDPVersion
 	c.Data["Username"] = c.Ctx.Input.Session("username")
-	c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/overview#cdPipelineEditSuccessModal", console.BasePath), 302)
+	c.Redirect(fmt.Sprintf("%s/admin/cd-pipeline/overview#cdPipelineEditSuccessModal", console.BasePath), 302)
 }
 
 func (c *CDPipelineController) CreateCDPipeline() {
@@ -297,7 +297,7 @@ func (c *CDPipelineController) CreateCDPipeline() {
 		log.Error("Request data is not valid", zap.String("err", errMsg.Message))
 		flash.Error(errMsg.Message)
 		flash.Store(&c.Controller)
-		c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/create", console.BasePath), 302)
+		c.Redirect(fmt.Sprintf("%s/admin/cd-pipeline/create", console.BasePath), 302)
 		return
 	}
 	log.Debug("Request data is received to create CD pipeline",
@@ -313,12 +313,12 @@ func (c *CDPipelineController) CreateCDPipeline() {
 		case *ddmerror.CDPipelineExistsError:
 			flash.Error(fmt.Sprintf("cd pipeline %v is already exists", cdPipelineCreateCommand.Name))
 			flash.Store(&c.Controller)
-			c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/create", console.BasePath), http.StatusFound)
+			c.Redirect(fmt.Sprintf("%s/admin/cd-pipeline/create", console.BasePath), http.StatusFound)
 			return
 		case *ddmerror.NonValidRelatedBranchError:
 			flash.Error(fmt.Sprintf("one or more applications have non valid branches: %v", cdPipelineCreateCommand.Applications))
 			flash.Store(&c.Controller)
-			c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/create", console.BasePath), http.StatusBadRequest)
+			c.Redirect(fmt.Sprintf("%s/admin/cd-pipeline/create", console.BasePath), http.StatusBadRequest)
 			return
 		default:
 			c.Abort("500")
@@ -329,7 +329,7 @@ func (c *CDPipelineController) CreateCDPipeline() {
 
 	c.Data["EDPVersion"] = console.EDPVersion
 	c.Data["Username"] = c.Ctx.Input.Session("username")
-	c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/overview?%s=%s#cdPipelineSuccessModal", console.BasePath, paramWaitingForCdPipeline, pipelineName), 302)
+	c.Redirect(fmt.Sprintf("%s/admin/cd-pipeline/overview?%s=%s#cdPipelineSuccessModal", console.BasePath, paramWaitingForCdPipeline, pipelineName), 302)
 }
 
 func (c *CDPipelineController) GetCDPipelineOverviewPage() {
@@ -659,7 +659,7 @@ func (c CDPipelineController) DeleteCDStage() {
 				flash.Error(perr.Message)
 				flash.Store(&c.Controller)
 				log.Error(perr.Message, zap.Error(err))
-				c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/overview?name=%v#cdPipelineIsUsedAsSource", console.BasePath, pn), 302)
+				c.Redirect(fmt.Sprintf("%s/admin/cd-pipeline/overview?name=%v#cdPipelineIsUsedAsSource", console.BasePath, pn), 302)
 				return
 			}
 			log.Error("cd pipeline delete process is failed", zap.Error(err))
@@ -669,7 +669,7 @@ func (c CDPipelineController) DeleteCDStage() {
 		log.Debug("delete cd stage method is finished",
 			zap.String("pipeline", pn),
 			zap.String("stage", sn))
-		c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/overview?name=%v#cdPipelineDeletedSuccessModal", console.BasePath, pn), 302)
+		c.Redirect(fmt.Sprintf("%s/admin/cd-pipeline/overview?name=%v#cdPipelineDeletedSuccessModal", console.BasePath, pn), 302)
 	}
 
 	if err := c.PipelineService.DeleteCDStage(pn, sn); err != nil {
@@ -678,7 +678,7 @@ func (c CDPipelineController) DeleteCDStage() {
 			flash.Error(serr.Message)
 			flash.Store(&c.Controller)
 			log.Error(serr.Message, zap.Error(err))
-			c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/%v/overview?stage=%v#stageIsUsedAsSource", console.BasePath, pn, sn), 302)
+			c.Redirect(fmt.Sprintf("%s/admin/cd-pipeline/%v/overview?stage=%v#stageIsUsedAsSource", console.BasePath, pn, sn), 302)
 			return
 		}
 		log.Error("cd stage delete process is failed", zap.Error(err))
@@ -688,7 +688,7 @@ func (c CDPipelineController) DeleteCDStage() {
 	log.Debug("delete cd stage method is finished",
 		zap.String("pipeline", pn),
 		zap.String("stage", sn))
-	c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/%v/overview?stage=%v#stageSuccessModal", console.BasePath, pn, sn), 302)
+	c.Redirect(fmt.Sprintf("%s/admin/cd-pipeline/%v/overview?stage=%v#stageSuccessModal", console.BasePath, pn, sn), 302)
 }
 
 func (c CDPipelineController) DeleteCDPipeline() {
@@ -701,7 +701,7 @@ func (c CDPipelineController) DeleteCDPipeline() {
 			flash.Error(perr.Message)
 			flash.Store(&c.Controller)
 			log.Error(perr.Message, zap.Error(err))
-			c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/overview?name=%v#cdPipelineIsUsedAsSource", console.BasePath, n), 302)
+			c.Redirect(fmt.Sprintf("%s/admin/cd-pipeline/overview?name=%v#cdPipelineIsUsedAsSource", console.BasePath, n), 302)
 			return
 		}
 		log.Error("cd pipeline delete process is failed", zap.Error(err))
@@ -709,5 +709,5 @@ func (c CDPipelineController) DeleteCDPipeline() {
 		return
 	}
 	log.Debug("delete cd pipeline method is finished", zap.String("name", n))
-	c.Redirect(fmt.Sprintf("%s/admin/edp/cd-pipeline/overview?name=%v#cdPipelineDeletedSuccessModal", console.BasePath, n), 302)
+	c.Redirect(fmt.Sprintf("%s/admin/cd-pipeline/overview?name=%v#cdPipelineDeletedSuccessModal", console.BasePath, n), 302)
 }

@@ -4,7 +4,7 @@
     <div class="registry">
         <div class="registry-header">
             <h1>Реєстри</h1>
-            <a href="{{ .BasePath }}/admin/edp/registry/create" class="registry-add">
+            <a href="{{ .BasePath }}/admin/registry/create" class="registry-add">
                 <img alt="add registry" src="{{ .BasePath }}/static/img/plus.png" />
                 <span>Створити новий</span>
             </a>
@@ -27,7 +27,7 @@
                             <img src="{{ $.BasePath }}/static/img/status-ok.png" alt="status ok" />
                         </td>
                         <td>
-                            <a href="{{ $.BasePath }}/admin/edp/registry/view/{{$registry.Name}}">{{$registry.Name}}</a>
+                            <a href="{{ $.BasePath }}/admin/registry/view/{{$registry.Name}}">{{$registry.Name}}</a>
                         </td>
                         <td>
                             {{$registry.Description}}
@@ -36,7 +36,7 @@
                             {{$registry.FormattedCreatedAt}}
                         </td>
                         <td>
-                            <a href="{{ $.BasePath }}/admin/edp/registry/edit/{{$registry.Name}}">
+                            <a href="{{ $.BasePath }}/admin/registry/edit/{{$registry.Name}}">
                                 <img src="{{ $.BasePath }}/static/img/action-edit.png" alt="edit registry" />
                             </a>
                         </td>
