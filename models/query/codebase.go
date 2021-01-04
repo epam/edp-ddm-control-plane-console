@@ -1,5 +1,7 @@
 package query
 
+const viewTimeFormat = "02.01.2006 15:04"
+
 type Codebase struct {
 	ID                   int               `json:"id" orm:"column(id)"`
 	Name                 string            `json:"name" orm:"column(name)"`
@@ -37,6 +39,14 @@ type Codebase struct {
 	CiTool               string            `json:"ciTool" orm:"ci_tool"`
 }
 
+func (c Codebase) FormattedCreatedAt() string {
+	if len(c.ActionLog) == 0 {
+		return ""
+	}
+
+	return c.ActionLog[0].LastTimeUpdate.Format(viewTimeFormat)
+}
+
 func (c *Codebase) TableName() string {
 	return "codebase"
 }
@@ -55,6 +65,7 @@ const (
 	App       CodebaseType = "application"
 	Autotests CodebaseType = "autotests"
 	Library   CodebaseType = "library"
+	Registry  CodebaseType = "registry-tenant"
 )
 
 var CodebaseTypes = map[string]CodebaseType{
