@@ -170,17 +170,15 @@ func init() {
 		PipelineService: pipelineService,
 	}
 
-	registryService := service.MakeRegistry(clients.CoreClient, registryNamespaceEnv)
-
 	adminEdpNamespace := beego.NewNamespace(fmt.Sprintf("%s/admin/edp", console.BasePath),
 		beego.NSRouter("/overview", &ec, "get:GetEDPComponents"),
 		beego.NSRouter("/service/overview", &tpsc, "get:GetServicePage"),
 		beego.NSRouter("/diagram/overview", &dc, "get:GetDiagramPage"),
 
-		beego.NSRouter("/registry/overview", controllers.MakeListRegistry(registryService)),
-		beego.NSRouter("/registry/create", controllers.MakeCreateRegistry(registryService)),
-		beego.NSRouter("/registry/edit/:name", controllers.MakeEditRegistry(registryService)),
-		beego.NSRouter("/registry/view/:name", &controllers.ViewRegistry{}),
+		beego.NSRouter("/registry/overview", controllers.MakeListRegistry(&codebaseService)),
+		beego.NSRouter("/registry/create", controllers.MakeCreateRegistry(&codebaseService)),
+		// beego.NSRouter("/registry/edit/:name", controllers.MakeEditRegistry(registryService)),
+		// beego.NSRouter("/registry/view/:name", &controllers.ViewRegistry{}),
 	)
 	beego.AddNamespace(adminEdpNamespace)
 
