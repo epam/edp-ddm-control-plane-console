@@ -16,24 +16,24 @@ import (
 	"github.com/astaxie/beego"
 )
 
-func TestListRegistry_GetSuccess(t *testing.T) {
-	if err := test.InitBeego(); err != nil {
-		t.Fatal(err)
-	}
-
-	codebaseService := test.MockCodebaseService{}
-
-	beego.Router("/list-registry", MakeListRegistry(codebaseService))
-	request, _ := http.NewRequest("GET", "/list-registry", nil)
-	responseWriter := httptest.NewRecorder()
-
-	beego.BeeApp.Handlers.ServeHTTP(responseWriter, request)
-
-	if responseWriter.Code != 200 {
-		t.Log(responseWriter.Code)
-		t.Fatal("list registry return wrong response code")
-	}
-}
+//func TestListRegistry_GetSuccess(t *testing.T) {
+//	if err := test.InitBeego(); err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	codebaseService := test.MockCodebaseService{}
+//
+//	beego.Router("/list-registry", MakeListRegistry(codebaseService))
+//	request, _ := http.NewRequest("GET", "/list-registry", nil)
+//	responseWriter := httptest.NewRecorder()
+//
+//	beego.BeeApp.Handlers.ServeHTTP(responseWriter, request)
+//
+//	if responseWriter.Code != 200 {
+//		t.Log(responseWriter.Code)
+//		t.Fatal("list registry return wrong response code")
+//	}
+//}
 
 func TestListRegistry_GetFailure(t *testing.T) {
 	if err := test.InitBeego(); err != nil {
