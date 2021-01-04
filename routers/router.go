@@ -166,7 +166,7 @@ func init() {
 
 	dc := controllers.DiagramController{
 		CodebaseService: codebaseService,
-		PipelineService: pipelineService,/edp
+		PipelineService: pipelineService,
 	}
 
 	adminEdpNamespace := beego.NewNamespace(fmt.Sprintf("%s/admin", console.BasePath),
