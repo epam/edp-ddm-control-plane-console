@@ -35,16 +35,16 @@ func init() {
 		"POST /admin/cd-pipeline/delete":          {administrator},
 		"GET /admin/diagram/overview":             {administrator, developer},
 
-		"GET /api/v1/vcs$":                               {administrator, developer},
-		"GET /api/v1/codebase":                           {administrator, developer},
-		"GET /api/v1/codebase/([^/]*)$":                  {administrator, developer},
-		"GET /api/v1/cd-pipeline/([^/]*)$":               {administrator, developer},
-		"GET /api/v1/cd-pipeline/([^/]*)/stage/([^/]*)$": {administrator, developer},
-		"POST /api/v1/codebase$":                         {administrator},
-		"POST /api/v1/cd-pipeline$":                      {administrator},
-		"PUT /api/v1/cd-pipeline/([^/]*)$":               {administrator},
-		"DELETE /api/v1/codebase$":                       {administrator},
-		"DELETE /api/v1/stage$":                          {administrator},
+		"GET /api/v1/edp/vcs$":                               {administrator, developer},
+		"GET /api/v1/edp/codebase":                           {administrator, developer},
+		"GET /api/v1/edp/codebase/([^/]*)$":                  {administrator, developer},
+		"GET /api/v1/edp/cd-pipeline/([^/]*)$":               {administrator, developer},
+		"GET /api/v1/edp/cd-pipeline/([^/]*)/stage/([^/]*)$": {administrator, developer},
+		"POST /api/v1/edp/codebase$":                         {administrator},
+		"POST /api/v1/edp/cd-pipeline$":                      {administrator},
+		"PUT /api/v1/edp/cd-pipeline/([^/]*)$":               {administrator},
+		"DELETE /api/v1/edp/codebase$":                       {administrator},
+		"DELETE /api/v1/edp/stage$":                          {administrator},
 	}
 }
 
