@@ -33,16 +33,22 @@ spec:
               value: reconciler
             - name: PLATFORM_TYPE
               value: openshift
-            - name: DB_HOST
-              value: edp-install-wizard-db
-            - name: DB_PORT
-              value: '5432'
-            - name: DB_NAME
-              value: edp-install-wizard-db
+            - name: PG_HOST
+              value: "{{ .Values.db.name }}"
+            - name: PG_PORT
+              value: "{{ .Values.db.port }}"
+            - name: PG_DATABASE
+              value: "{{ .Values.db.name }}"
             - name: DB_USER
-              value: "admin"
+              valueFrom:
+                secretKeyRef:
+                  name: ddm-console-db
+                  key: db_user
             - name: DB_PASS
-              value: "admin"
+              valueFrom:
+                secretKeyRef:
+                  name: ddm-console-db
+                  key: db_pass
             - name: DB_SSL_MODE
               value: disable
           securityContext:
