@@ -41,20 +41,7 @@ spec:
             - name: EDP_VERSION
               value: "{{ .Values.version }}"
             - name: AUTH_KEYCLOAK_ENABLED
-              value: "true"
-            - name: KEYCLOAK_CLIENT_ID
-              valueFrom:
-                secretKeyRef:
-                  name: admin-console-client
-                  key: username
-            - name: KEYCLOAK_CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: admin-console-client
-                  key: password
-            - name: KEYCLOAK_URL
-              value: >-
-                https://keycloak-edp-security.{{ .Values.dnsWildcard }}/auth/realms/mdtu-ddm-edp-cicd-main
+              value: "false"
             - name: DNS_WILDCARD
               value: "{{ .Values.dnsWildCard }}"
             - name: OPENSHIFT_CLUSTER_URL
