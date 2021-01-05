@@ -175,7 +175,7 @@ func (r *CreateRegistry) createRegistry(registry *models.Registry) (errorMap map
 	}
 
 	username, _ := r.Ctx.Input.Session("username").(string)
-	jobProvisioning  := "default"
+	jobProvisioning := "default"
 
 	_, err = r.CodebaseService.CreateCodebase(command.CreateCodebase{
 		Name:             registry.Name,

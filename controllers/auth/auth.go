@@ -21,17 +21,18 @@ import (
 	ctx "ddm-admin-console/console"
 	"ddm-admin-console/service/logger"
 	"fmt"
+
 	"github.com/astaxie/beego"
 	"go.uber.org/zap"
 )
 
 var log = logger.GetLogger()
 
-type AuthController struct {
+type Controller struct {
 	beego.Controller
 }
 
-func (ac *AuthController) Callback() {
+func (ac *Controller) Callback() {
 	authConfig := ctx.GetAuthConfig()
 	log.Info("Start callback flow...")
 	queryState := ac.Ctx.Input.Query("state")
@@ -63,7 +64,7 @@ func (ac *AuthController) Callback() {
 	ac.Redirect(path, 302)
 }
 
-func (ac *AuthController) getRedirectPath() string {
+func (ac *Controller) getRedirectPath() string {
 	requestPath := ac.Ctx.Input.Session("request_path")
 	if requestPath == nil {
 		return fmt.Sprintf("%s/admin/registry/overview", ctx.BasePath)

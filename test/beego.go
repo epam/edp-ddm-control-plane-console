@@ -5,8 +5,6 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/astaxie/beego/orm"
-
 	"github.com/astaxie/beego"
 	"github.com/beego/i18n"
 	"github.com/pkg/errors"
@@ -52,9 +50,9 @@ func InitBeego() error {
 	console.Namespace = "mdtuddm"
 	beego.BConfig.WebConfig.EnableXSRF = false
 
-	if _, err := orm.GetDB("default"); err != nil {
-		console.InitDb()
-	}
+	// if _, err := orm.GetDB("default"); err != nil {
+	//	console.InitDb()
+	//}
 
 	return nil
 }
