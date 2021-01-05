@@ -50,7 +50,7 @@ func (ac *Controller) Callback() {
 	token, err := authConfig.Oauth2Config.Exchange(context.Background(), authCode)
 
 	if err != nil {
-		log.Info("Failed to exchange token with code", zap.String("code", authCode))
+		log.Error("Failed to exchange token with code", zap.String("code", authCode), zap.Error(err))
 		ac.Abort("500")
 		return
 	}
