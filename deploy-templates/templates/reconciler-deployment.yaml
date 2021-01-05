@@ -33,11 +33,11 @@ spec:
               value: reconciler
             - name: PLATFORM_TYPE
               value: openshift
-            - name: PG_HOST
+            - name: DB_HOST
               value: "{{ .Values.db.name }}"
-            - name: PG_PORT
+            - name: DB_PORT
               value: "{{ .Values.db.port }}"
-            - name: PG_DATABASE
+            - name: DB_NAME
               value: "{{ .Values.db.name }}"
             - name: DB_USER
               value: admin
