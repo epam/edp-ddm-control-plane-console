@@ -176,6 +176,11 @@ func (r *CreateRegistry) createRegistry(registry *models.Registry) (errorMap map
 
 	username, _ := r.Ctx.Input.Session("username").(string)
 	jobProvisioning := "default"
+	startVersion := "0.0.1"
+	versioning := command.Versioning{
+		StartFrom: &startVersion,
+		Type:      "edp",
+	}
 
 	_, err = r.CodebaseService.CreateCodebase(command.CreateCodebase{
 		Name:             registry.Name,
@@ -190,7 +195,7 @@ func (r *CreateRegistry) createRegistry(registry *models.Registry) (errorMap map
 		GitServer:        defaultGitServer,
 		CiTool:           ciTool,
 		JobProvisioning:  &jobProvisioning,
-		Versioning: 	  command.Versioning{Type: "default"},
+		Versioning:       versioning,
 		Repository: &command.Repository{
 			URL: beego.AppConfig.String("defaultGitRepo"),
 		},
