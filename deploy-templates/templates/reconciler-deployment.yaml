@@ -40,15 +40,9 @@ spec:
             - name: PG_DATABASE
               value: "{{ .Values.db.name }}"
             - name: DB_USER
-              valueFrom:
-                secretKeyRef:
-                  name: ddm-console-db
-                  key: db_user
+              value: admin
             - name: DB_PASS
-              valueFrom:
-                secretKeyRef:
-                  name: ddm-console-db
-                  key: db_pass
+              value: admin
             - name: DB_SSL_MODE
               value: disable
           securityContext:
