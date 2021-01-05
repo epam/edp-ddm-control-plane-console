@@ -190,6 +190,7 @@ func (r *CreateRegistry) createRegistry(registry *models.Registry) (errorMap map
 		GitServer:        defaultGitServer,
 		CiTool:           ciTool,
 		JobProvisioning:  &jobProvisioning,
+		Versioning: 	  command.Versioning{Type: "default"},
 		Repository: &command.Repository{
 			URL: beego.AppConfig.String("defaultGitRepo"),
 		},
