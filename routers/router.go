@@ -181,7 +181,7 @@ func init() {
 	)
 	beego.AddNamespace(adminEdpNamespace)
 
-	apiV1EdpNamespace := beego.NewNamespace(fmt.Sprintf("%s/api/v1/edp", context.BasePath),
+	apiV1EdpNamespace := beego.NewNamespace(fmt.Sprintf("%s/api/v1/edp", console.BasePath),
 		beego.NSRouter("/codebase", &controllers.CodebaseRestController{CodebaseService: codebaseService}, "post:CreateCodebase"),
 		beego.NSRouter("/codebase", &controllers.CodebaseRestController{CodebaseService: codebaseService}, "get:GetCodebases"),
 		beego.NSRouter("/codebase/:codebaseName", &controllers.CodebaseRestController{CodebaseService: codebaseService}, "get:GetCodebase"),
