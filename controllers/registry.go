@@ -28,6 +28,7 @@ type CodebaseService interface {
 	GetCodebasesByCriteria(criteria query.CodebaseCriteria) ([]*query.Codebase, error)
 	GetCodebaseByName(name string) (*query.Codebase, error)
 	UpdateDescription(name, description string) error
+	ExistCodebaseAndBranch(cbName, brName string) bool
 }
 
 type ListRegistry struct {

@@ -19,18 +19,23 @@ package controllers
 import (
 	"ddm-admin-console/console"
 	"ddm-admin-console/models/query"
-	"ddm-admin-console/service"
-	pipelineService "ddm-admin-console/service/cd_pipeline"
 	"ddm-admin-console/util"
 	"encoding/json"
+
 	"github.com/astaxie/beego"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
+type PipelineService interface {
+	GetAllPipelines(criteria query.CDPipelineCriteria) ([]*query.CDPipeline, error)
+	GetAllCodebaseDockerStreams() ([]string, error)
+}
+
 type DiagramController struct {
 	beego.Controller
-	CodebaseService service.CodebaseService
-	PipelineService pipelineService.CDPipelineService
+	CodebaseService CodebaseService
+	PipelineService PipelineService
 }
 
 const diagramPageType = "diagram"
@@ -51,7 +56,7 @@ func (c *DiagramController) GetDiagramPage() {
 		return
 	}
 
-	sJSON, err := c.getCodebaseDokcerStreamsJSON()
+	sJSON, err := c.getCodebaseDockerStreamsJSON()
 	if err != nil {
 		log.Error("couldn't get codebase docker streams from db", zap.Error(err))
 		c.Abort("500")
@@ -72,11 +77,11 @@ func (c *DiagramController) GetDiagramPage() {
 func (c *DiagramController) getCodebasesJSON() (*string, error) {
 	codebases, err := c.CodebaseService.GetCodebasesByCriteria(query.CodebaseCriteria{})
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "unable to get codebases by criteria")
 	}
 	buf, err := json.Marshal(codebases)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "unable to json encode codebases")
 	}
 	return util.GetStringP(string(buf)), nil
 }
@@ -84,23 +89,23 @@ func (c *DiagramController) getCodebasesJSON() (*string, error) {
 func (c *DiagramController) getPipelinesJSON() (*string, error) {
 	pipelines, err := c.PipelineService.GetAllPipelines(query.CDPipelineCriteria{})
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "unable to get all pipelines from service")
 	}
 	buf, err := json.Marshal(pipelines)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "unable to json encode pipelines")
 	}
 	return util.GetStringP(string(buf)), nil
 }
 
-func (c *DiagramController) getCodebaseDokcerStreamsJSON() (*string, error) {
+func (c *DiagramController) getCodebaseDockerStreamsJSON() (*string, error) {
 	streams, err := c.PipelineService.GetAllCodebaseDockerStreams()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "unable to get docker streams from service")
 	}
 	buf, err := json.Marshal(streams)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "unable to json encode docker streams")
 	}
 	return util.GetStringP(string(buf)), nil
 }

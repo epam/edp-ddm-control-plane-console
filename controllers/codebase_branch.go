@@ -4,8 +4,6 @@ import (
 	"ddm-admin-console/console"
 	validation2 "ddm-admin-console/controllers/validation"
 	"ddm-admin-console/models/command"
-	"ddm-admin-console/service"
-	cbs "ddm-admin-console/service/codebasebranch"
 	"ddm-admin-console/util"
 	"ddm-admin-console/util/consts"
 	dberror "ddm-admin-console/util/error/db-errors"
@@ -16,13 +14,20 @@ import (
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/validation"
+	edpv1alpha1 "github.com/epmd-edp/codebase-operator/v2/pkg/apis/edp/v1alpha1"
 	"go.uber.org/zap"
 )
 
+type BranchService interface {
+	Delete(codebase, branch string) error
+	UpdateCodebaseBranch(appName, branchName string, version *string) error
+	CreateCodebaseBranch(branchInfo command.CreateCodebaseBranch, appName string) (*edpv1alpha1.CodebaseBranch, error)
+}
+
 type BranchController struct {
 	beego.Controller
-	CodebaseService service.CodebaseService
-	BranchService   cbs.Service
+	CodebaseService CodebaseService
+	BranchService   BranchService
 }
 
 func (c *BranchController) CreateCodebaseBranch() {
