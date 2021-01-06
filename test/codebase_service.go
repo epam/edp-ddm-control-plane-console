@@ -18,6 +18,8 @@ type MockCodebaseService struct {
 
 	GetCodebaseByNameResult *query.Codebase
 	GetCodebaseByNameError  error
+
+	ExistCodebaseAndBranchResult bool
 }
 
 func (m MockCodebaseService) CreateCodebase(codebase command.CreateCodebase) (*edpv1alpha1.Codebase, error) {
@@ -34,4 +36,8 @@ func (m MockCodebaseService) GetCodebaseByName(name string) (*query.Codebase, er
 
 func (m MockCodebaseService) UpdateDescription(name, description string) error {
 	return m.UpdateDescriptionError
+}
+
+func (m MockCodebaseService) ExistCodebaseAndBranch(cbName, brName string) bool {
+	return m.ExistCodebaseAndBranchResult
 }
