@@ -20,6 +20,12 @@ type MockCodebaseService struct {
 	GetCodebaseByNameError  error
 
 	ExistCodebaseAndBranchResult bool
+
+	DeleteError error
+}
+
+func (m MockCodebaseService) Delete(name, codebaseType string) error {
+	return m.DeleteError
 }
 
 func (m MockCodebaseService) CreateCodebase(codebase command.CreateCodebase) (*edpv1alpha1.Codebase, error) {

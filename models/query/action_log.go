@@ -14,3 +14,7 @@ type ActionLog struct {
 func (a *ActionLog) TableName() string {
 	return "action_log"
 }
+
+func (a ActionLog) FormattedLastTimeUpdate() string {
+	return a.LastTimeUpdate.Format(viewTimeFormat)
+}

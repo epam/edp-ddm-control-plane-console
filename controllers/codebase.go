@@ -23,18 +23,21 @@ import (
 	"ddm-admin-console/models/query"
 	"ddm-admin-console/service"
 	cbs "ddm-admin-console/service/codebasebranch"
-	ec "ddm-admin-console/service/edp-component"
 	"ddm-admin-console/util"
 	"ddm-admin-console/util/auth"
 	"ddm-admin-console/util/consts"
 	dberror "ddm-admin-console/util/error/db-errors"
-	"errors"
 	"fmt"
 	"html/template"
 
 	"github.com/astaxie/beego"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
+
+type EDPComponentService interface {
+	GetEDPComponent(componentType string) (*query.EDPComponent, error)
+}
 
 type CodebaseController struct {
 	beego.Controller
@@ -42,7 +45,7 @@ type CodebaseController struct {
 	EDPTenantService service.EDPTenantService
 	BranchService    cbs.Service
 	GitServerService service.GitServerService
-	EDPComponent     ec.EDPComponentService
+	EDPComponent     EDPComponentService
 }
 
 const (
@@ -67,7 +70,7 @@ func (c *CodebaseController) GetCodebaseOverviewPage() {
 		return
 	}
 
-	if err := c.createBranchLinks(*codebase, console.Tenant); err != nil {
+	if err := c.createBranchLinks(codebase, console.Tenant); err != nil {
 		log.Error("an error has occurred while creating link to Git provider", zap.Error(err))
 		c.Abort("500")
 		return
@@ -131,14 +134,15 @@ func addCodebaseBranchInProgressIfAny(branches []*query.CodebaseBranch, branchIn
 	return branches
 }
 
-func (c CodebaseController) createBranchLinks(codebase query.Codebase, tenant string) error {
+func (c CodebaseController) createBranchLinks(codebase *query.Codebase, tenant string) error {
 	if codebase.Strategy == consts.ImportStrategy {
-		return c.createLinksForGitProvider(codebase, tenant)
+		return c.createLinksForGitProvider(codebase)
 	}
-	return c.createLinksForGerritProvider(codebase, tenant)
+
+	return CreateLinksForGerritProvider(c.EDPComponent, codebase)
 }
 
-func (c CodebaseController) createLinksForGitProvider(codebase query.Codebase, tenant string) error {
+func (c CodebaseController) createLinksForGitProvider(codebase *query.Codebase) error {
 	g, err := c.GitServerService.GetGitServer(*codebase.GitServer)
 	if err != nil {
 		return err
@@ -165,17 +169,17 @@ func (c CodebaseController) createLinksForGitProvider(codebase query.Codebase, t
 	return nil
 }
 
-func getCiLink(codebase query.Codebase, jenkinsHost, branch, gitHost string) string {
+func getCiLink(codebase *query.Codebase, jenkinsHost, branch, gitHost string) string {
 	if consts.JenkinsCITool == codebase.CiTool {
 		return util.CreateCICDApplicationLink(jenkinsHost, codebase.Name, util.ProcessNameToKubernetesConvention(branch))
 	}
 	return util.CreateGitlabCILink(gitHost, *codebase.GitProjectPath)
 }
 
-func (c CodebaseController) createLinksForGerritProvider(codebase query.Codebase, tenant string) error {
-	cj, err := c.EDPComponent.GetEDPComponent(consts.Jenkins)
+func CreateLinksForGerritProvider(edpComponent EDPComponentService, codebase *query.Codebase) error {
+	cj, err := edpComponent.GetEDPComponent(consts.Jenkins)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "unable to get Jenkins edp component")
 	}
 
 	if cj == nil {
@@ -183,9 +187,9 @@ func (c CodebaseController) createLinksForGerritProvider(codebase query.Codebase
 			codebase.Name, consts.Jenkins)
 	}
 
-	cg, err := c.EDPComponent.GetEDPComponent(consts.Gerrit)
+	cg, err := edpComponent.GetEDPComponent(consts.Gerrit)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "unable to get Gerrit edp component")
 	}
 
 	if cg == nil {

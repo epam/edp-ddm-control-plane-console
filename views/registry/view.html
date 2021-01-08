@@ -25,19 +25,19 @@
         <div class="rg-info-block-body">
             <div class="rg-info-line-horizontal">
                 <span>Назва</span>
-                <span>business-pro</span>
+                <span>{{ .registry.Name }}</span>
             </div>
             <div class="rg-info-line-horizontal">
                 <span>Опис</span>
-                <span>business-process-administration-portal</span>
+                <span>{{ .registry.Description }}</span>
             </div>
             <div class="rg-info-line-horizontal">
                 <span>Час створення</span>
-                <span>12.05.2020 15:45</span>
+                <span>{{ .registry.FormattedCreatedAt }}</span>
             </div>
         </div>
     </div>
-
+    {{if .branches }}
     <div class="rg-info-block">
         <div class="rg-info-block-header">
             <span>Конфігурація</span>
@@ -57,32 +57,34 @@
                 </tr>
                 </thead>
                 <tbody>
+                {{range $index, $br := .branches}}
                 <tr>
                     <td>
-                        <img src="{{ .BasePath }}/static/img/status-ok.png" />
+                        <img alt="status" src="{{ $.BasePath }}/static/img/status-{{$br.Status}}.png" />
                     </td>
                     <td>
-                        mdtuddm-1277-2
+                        {{$br.Name}}
                     </td>
                     <td>
-                        <a href="#">
-                            <img alt="vcs" src="{{ .BasePath }}/static/img/action-link.png" />
+                        <a href="{{$br.VCSLink}}">
+                            <img alt="vcs" src="{{ $.BasePath }}/static/img/action-link.png" />
                         </a>
                     </td>
                     <td>
-                        <a href="#">
-                            <img alt="ci" src="{{ .BasePath }}/static/img/action-link.png" />
+                        <a href="{{$br.CICDLink}}">
+                            <img alt="ci" src="{{ $.BasePath }}/static/img/action-link.png" />
                         </a>
                     </td>
-                    <td>0.0.2-MDTUDDM-1277-2-SNAPSHOT</td>
-                    <td>23</td>
-                    <td>23</td>
+                    <td>{{$br.Version}}</td>
+                    <td>{{$br.Build}}</td>
+                    <td>{{$br.LastSuccessBuild}}</td>
                 </tr>
+                {{end}}
                 </tbody>
             </table>
         </div>
     </div>
-
+    {{end}}
     <div class="rg-info-block">
         <div class="rg-info-block-header">
             <span>Журнал подій</span>
@@ -100,20 +102,15 @@
                 </tr>
                 </thead>
                 <tbody>
+                {{range $index, $al := .registry.ActionLog}}
                 <tr>
-                    <td>00.00.0000 00:00:00</td>
-                    <td>system</td>
-                    <td>accept_codebase_branch_registration</td>
-                    <td>success</td>
-                    <td>Accept branch master for codebase bpms registration</td>
+                    <td>{{$al.FormattedLastTimeUpdate}}</td>
+                    <td>{{$al.UserName}}</td>
+                    <td>{{$al.Action}}</td>
+                    <td>{{$al.Result}}</td>
+                    <td>{{$al.Message}}</td>
                 </tr>
-                <tr>
-                    <td>00.00.0000 00:00:00</td>
-                    <td>system</td>
-                    <td>accept_codebase_branch_registration</td>
-                    <td>success</td>
-                    <td>Accept branch master for codebase bpms registration</td>
-                </tr>
+                {{end}}
                 </tbody>
             </table>
         </div>

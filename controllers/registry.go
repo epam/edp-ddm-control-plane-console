@@ -30,6 +30,7 @@ type CodebaseService interface {
 	GetCodebaseByName(name string) (*query.Codebase, error)
 	UpdateDescription(name, description string) error
 	ExistCodebaseAndBranch(cbName, brName string) bool
+	Delete(name, codebaseType string) error
 }
 
 type ListRegistry struct {
@@ -46,11 +47,12 @@ func MakeListRegistry(codebaseService CodebaseService) *ListRegistry {
 func (r *ListRegistry) Get() {
 	r.Data["BasePath"] = console.BasePath
 	r.Data["Type"] = registryType
+	r.Data["xsrfdata"] = r.XSRFToken()
 
 	r.TplName = "registry/list.html"
 
 	codebases, err := r.CodebaseService.GetCodebasesByCriteria(query.CodebaseCriteria{
-		Type: query.Library,// temporary needs, change to  query.Registry
+		Type: query.Library, // temporary needs, change to  query.Registry
 	})
 
 	if err != nil {
@@ -60,6 +62,24 @@ func (r *ListRegistry) Get() {
 	}
 
 	r.Data["registries"] = codebases
+}
+
+func (r *ListRegistry) Post() {
+	registryName := r.GetString("registry-name")
+	rg, err := r.CodebaseService.GetCodebaseByName(registryName)
+	if err != nil {
+		log.Error(fmt.Sprintf("%+v\n", err))
+		r.CustomAbort(500, fmt.Sprintf("%+v\n", err))
+		return
+	}
+
+	if err := r.CodebaseService.Delete(rg.Name, string(rg.Type)); err != nil {
+		log.Error(fmt.Sprintf("%+v\n", err))
+		r.CustomAbort(500, fmt.Sprintf("%+v\n", err))
+		return
+	}
+
+	r.Redirect("/admin/registry/overview", 303)
 }
 
 type EditRegistry struct {
@@ -187,7 +207,7 @@ func (r *CreateRegistry) createRegistry(registry *models.Registry) (errorMap map
 	_, err = r.CodebaseService.CreateCodebase(command.CreateCodebase{
 		Name:             registry.Name,
 		Username:         username,
-		Type:             string(query.Library),// temporary needs, change to  query.Registry
+		Type:             string(query.Library), // temporary needs, change to  query.Registry
 		Description:      &registry.Description,
 		DefaultBranch:    defaultBranch,
 		Lang:             lang,
@@ -252,10 +272,39 @@ func (r *CreateRegistry) Post() {
 
 type ViewRegistry struct {
 	beego.Controller
+	CodebaseService     CodebaseService
+	EDPComponentService EDPComponentService
+}
+
+func MakeViewRegistry(codebaseService CodebaseService, edpComponentService EDPComponentService) *ViewRegistry {
+	return &ViewRegistry{
+		CodebaseService:     codebaseService,
+		EDPComponentService: edpComponentService,
+	}
 }
 
 func (r *ViewRegistry) Get() {
 	r.Data["BasePath"] = console.BasePath
 	r.Data["Type"] = registryType
 	r.TplName = "registry/view.html"
+
+	registryName := r.Ctx.Input.Param(":name")
+	rg, err := r.CodebaseService.GetCodebaseByName(registryName)
+	if err != nil {
+		log.Error(fmt.Sprintf("%+v\n", err))
+		r.CustomAbort(500, fmt.Sprintf("%+v\n", err))
+		return
+	}
+
+	if len(rg.CodebaseBranch) > 0 {
+		if err := CreateLinksForGerritProvider(r.EDPComponentService, rg); err != nil {
+			log.Error(fmt.Sprintf("%+v\n", err))
+			r.CustomAbort(500, fmt.Sprintf("%+v\n", err))
+			return
+		}
+
+		r.Data["branches"] = rg.CodebaseBranch
+	}
+
+	r.Data["registry"] = rg
 }
