@@ -18,6 +18,7 @@ const (
 	registryType     = "registry"
 	defaultBranch    = "master"
 	lang             = "other"
+	buildTool		 = "gitops"
 	strategy         = "clone"
 	deploymentScript = "openshift-template"
 	ciTool           = "Jenkins"
@@ -190,7 +191,7 @@ func (r *CreateRegistry) createRegistry(registry *models.Registry) (errorMap map
 		Description:      &registry.Description,
 		DefaultBranch:    defaultBranch,
 		Lang:             lang,
-		BuildTool:        lang,
+		BuildTool:        buildTool,
 		Strategy:         strategy,
 		DeploymentScript: deploymentScript,
 		GitServer:        defaultGitServer,
