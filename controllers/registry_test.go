@@ -150,30 +150,6 @@ func TestCreatRegistry_Post_ValidationErrorName(t *testing.T) {
 }
 
 func TestCreatRegistry_Post_Success(t *testing.T) {
-	// clients := k8s.CreateOpenShiftClients()
-	// codebaseRepository := repository.CodebaseRepository{}
-	// pipelineRepository := repository.CDPipelineRepository{}
-	// branchRepository := repository.CodebaseBranchRepository{}
-	//
-	// branchService := cbs.Service{
-	//	Clients:                  clients,
-	//	IReleaseBranchRepository: branchRepository,
-	//	ICDPipelineRepository:    pipelineRepository,
-	//	ICodebaseRepository:      codebaseRepository,
-	//	CodebaseBranchValidation: map[string]func(string, string) ([]string, error){
-	//		"application": pipelineRepository.GetCDPipelinesUsingApplicationAndBranch,
-	//		"autotests":   pipelineRepository.GetCDPipelinesUsingAutotestAndBranch,
-	//		"library":     pipelineRepository.GetCDPipelinesUsingLibraryAndBranch,
-	//	},
-	//}
-	//
-	// codebaseService := service.CodebaseService{
-	//	Clients:               clients,
-	//	ICodebaseRepository:   codebaseRepository,
-	//	ICDPipelineRepository: pipelineRepository,
-	//	BranchService:         branchService,
-	//}
-
 	codebaseService := test.MockCodebaseService{}
 
 	if err := test.InitBeego(); err != nil {
@@ -331,19 +307,162 @@ func TestEditRegistry_GetSuccess(t *testing.T) {
 	}
 }
 
+func TestListRegistry_DeleteRegistry_FailureGetCodebase(t *testing.T) {
+	if err := test.InitBeego(); err != nil {
+		t.Fatal(err)
+	}
+
+	mockErr := errors.New("GetCodebaseByNameError fatal")
+	cbMock := test.MockCodebaseService{
+		GetCodebaseByNameError: mockErr,
+	}
+	listRegistryCtrl := MakeListRegistry(cbMock)
+
+	beego.Router("/delete-registry-FailureGetCodebase", listRegistryCtrl)
+	request, _ := http.NewRequest("POST", "/delete-registry-FailureGetCodebase", nil)
+	responseWriter := httptest.NewRecorder()
+
+	beego.BeeApp.Handlers.ServeHTTP(responseWriter, request)
+
+	if responseWriter.Code != 500 {
+		t.Log(responseWriter.Code)
+		t.Fatal("wrong response code on delete registry")
+	}
+
+	if !strings.Contains(responseWriter.Body.String(), mockErr.Error()) {
+		t.Fatal("no error in response body")
+	}
+}
+
+func TestListRegistry_DeleteRegistry_FailureDeleteCodebase(t *testing.T) {
+	if err := test.InitBeego(); err != nil {
+		t.Fatal(err)
+	}
+
+	mockErr := errors.New("DeleteCodebase fatal")
+	cbMock := test.MockCodebaseService{
+		GetCodebaseByNameResult: &query.Codebase{},
+		DeleteError:             mockErr,
+	}
+	listRegistryCtrl := MakeListRegistry(cbMock)
+
+	beego.Router("/delete-registry-DeleteCodebase", listRegistryCtrl)
+	request, _ := http.NewRequest("POST", "/delete-registry-DeleteCodebase", nil)
+	responseWriter := httptest.NewRecorder()
+
+	beego.BeeApp.Handlers.ServeHTTP(responseWriter, request)
+
+	if responseWriter.Code != 500 {
+		t.Log(responseWriter.Code)
+		t.Fatal("wrong response code on delete registry")
+	}
+
+	if !strings.Contains(responseWriter.Body.String(), mockErr.Error()) {
+		t.Fatal("no error in response body")
+	}
+}
+
+func TestListRegistry_DeleteRegistry(t *testing.T) {
+	rw, ctrl := initBeegoCtrl()
+	cbMock := test.MockCodebaseService{
+		GetCodebaseByNameResult: &query.Codebase{},
+	}
+	listRegistryCtrl := MakeListRegistry(cbMock)
+	ctrl.Ctx.Input.SetParam("registry-name", "test")
+	listRegistryCtrl.Controller = ctrl
+
+	listRegistryCtrl.Post()
+
+	if rw.Code != 303 {
+		t.Log(rw.Code)
+		t.Fatal("wrong response code on delete registry")
+	}
+}
+
 func TestViewRegistry_Get(t *testing.T) {
 	if err := test.InitBeego(); err != nil {
 		t.Fatal(err)
 	}
 
-	beego.ErrorController(&ErrorController{})
-	beego.Router("/view-registry", &ViewRegistry{})
+	cbMock := test.MockCodebaseService{
+		GetCodebaseByNameResult: &query.Codebase{
+			CodebaseBranch: []*query.CodebaseBranch{
+				{},
+			},
+		},
+	}
+	eds := test.MockEDPComponentService{
+		GetEDPComponentResult: &query.EDPComponent{},
+	}
+
+	beego.Router("/view-registry", MakeViewRegistry(cbMock, eds))
 	request, _ := http.NewRequest("GET", "/view-registry", nil)
 	responseWriter := httptest.NewRecorder()
 
 	beego.BeeApp.Handlers.ServeHTTP(responseWriter, request)
 
 	if responseWriter.Code != 200 {
-		t.Fatal("view registry not found")
+		t.Log(responseWriter.Code)
+		t.Fatal("wrong response code")
+	}
+}
+
+func TestViewRegistry_Get_FailureGetCodebaseByName(t *testing.T) {
+	if err := test.InitBeego(); err != nil {
+		t.Fatal(err)
+	}
+	mockErr := errors.New("GetCodebaseByName fatal")
+
+	cbMock := test.MockCodebaseService{
+		GetCodebaseByNameError: mockErr,
+	}
+	eds := test.MockEDPComponentService{}
+
+	beego.Router("/view-registry-FailureGetCodebaseByName", MakeViewRegistry(cbMock, eds))
+	request, _ := http.NewRequest("GET", "/view-registry-FailureGetCodebaseByName", nil)
+	responseWriter := httptest.NewRecorder()
+
+	beego.BeeApp.Handlers.ServeHTTP(responseWriter, request)
+
+	if responseWriter.Code != 500 {
+		t.Log(responseWriter.Code)
+		t.Fatal("wrong response code")
+	}
+
+	if !strings.Contains(responseWriter.Body.String(), mockErr.Error()) {
+		t.Fatal("wrong error return in response body")
+	}
+}
+
+func TestViewRegistry_Get_FailureCreateLinksForGerritProvider(t *testing.T) {
+	if err := test.InitBeego(); err != nil {
+		t.Fatal(err)
+	}
+	mockErr := errors.New("GetEDPComponentError fatal")
+
+	cbMock := test.MockCodebaseService{
+		GetCodebaseByNameResult: &query.Codebase{
+			CodebaseBranch: []*query.CodebaseBranch{
+				{},
+			},
+		},
+	}
+	eds := test.MockEDPComponentService{
+		GetEDPComponentError: mockErr,
+	}
+
+	beego.Router("/view-registry-FailureCreateLinksForGerritProvider", MakeViewRegistry(cbMock, eds))
+	request, _ := http.NewRequest("GET", "/view-registry-FailureCreateLinksForGerritProvider", nil)
+	responseWriter := httptest.NewRecorder()
+
+	beego.BeeApp.Handlers.ServeHTTP(responseWriter, request)
+
+	if responseWriter.Code != 500 {
+		t.Log(responseWriter.Code)
+		t.Fatal("wrong response code")
+	}
+
+	if !strings.Contains(responseWriter.Body.String(), mockErr.Error()) {
+		t.Fatal("wrong error return in response body")
 	}
 }

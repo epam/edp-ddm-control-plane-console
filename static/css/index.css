@@ -11479,6 +11479,7 @@ div#kubernetes-component {
     height: 40px;
     border: 1px solid #CED0DB;
     background: #FFFFFF;
+    padding: 8px;
 }
 
 .rc-form-group span {
@@ -11622,4 +11623,93 @@ div#kubernetes-component {
 
 .rc-global-error {
     color: red;
+}
+
+.popup-backdrop {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: #000000;
+    opacity: 0.5;
+    z-index: 1000;
+    top: 0;
+    left: 0;
+    display: none;
+}
+
+.popup-window {
+    display: none;
+    z-index: 1001;
+    position: absolute;
+    left: calc(50% - 248px);
+    width: 496px;
+    background: #FFFFFF;
+    opacity: 1;
+    top: 25%;
+
+    box-shadow: 0 6px 20px -5px rgba(34, 34, 34, 0.26);
+    border-radius: 4px;
+    padding: 8px;
+}
+
+.popup-header {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid #E1E3EB;
+    align-items: baseline;
+}
+
+.popup-header a {
+    display: block;
+    width: 14px;
+    height: 14px;
+    margin-right: 17px;
+}
+
+.popup-window img {
+    width: 14px;
+    height: 14px;
+    display: block;
+}
+
+.popup-header p {
+    font-family: 'Oswald', sans-serif;
+    font-size: 24px;
+    margin: 8px 0 15px 8px;
+}
+
+.popup-body {
+    padding: 16px 8px 16px 8px;
+    border-bottom: 1px solid #E1E3EB;
+}
+
+.popup-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 16px 8px 8px 8px;
+}
+
+.popup-footer a {
+    font-family: 'Oswald', sans-serif;
+    font-size: 18px;
+    text-transform: uppercase;
+    color: rgba(0, 0, 0, 0.5);
+    padding: 8px 16px 8px 16px;
+}
+
+.popup-footer button {
+    font-family: 'Oswald', sans-serif;
+    font-size: 18px;
+    text-transform: uppercase;
+    background: #E1E3EB;
+    border-radius: 4px;
+    color: #FFFFFF;
+    border: none;
+    padding: 8px 16px 8px 16px;
+    cursor: not-allowed;
+}
+
+.popup-footer.active button {
+    background: #D35D47;
+    cursor: pointer;
 }

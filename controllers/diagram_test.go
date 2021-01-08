@@ -123,6 +123,7 @@ func initBeegoCtrl() (*httptest.ResponseRecorder, beego.Controller) {
 			ResponseWriter: &context.Response{
 				ResponseWriter: rw,
 			},
+			Request: httptest.NewRequest("", "/", nil),
 		},
 	}
 }

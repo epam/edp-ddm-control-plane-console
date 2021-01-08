@@ -95,3 +95,9 @@ If you want to write a new migration please see `db/migrations` folder.
 - templatefunction - function helpers for html rendering
 - test - additional test utils and mocks
 - views - html templates
+
+## Go tests
+Calculate test coverage
+```
+go test -coverprofile=coverage.out && go tool cover -html=coverage.out
+```

@@ -24,10 +24,11 @@ import (
 	dberror "ddm-admin-console/util/error/db-errors"
 	"encoding/json"
 	"fmt"
+	"net/http"
+
 	"github.com/astaxie/beego"
 	uuid "github.com/satori/go.uuid"
 	"go.uber.org/zap"
-	"net/http"
 )
 
 type CDPipelineRestController struct {
@@ -166,9 +167,9 @@ func (c *CDPipelineRestController) DeleteCDStage() {
 		zap.String("stage", sc.Name))
 	if err := c.CDPipelineService.DeleteCDStage(sc.CDPipelineName, sc.Name); err != nil {
 		if dberror.StageErrorOccurred(err) {
-			serr := err.(dberror.RemoveStageRestriction)
-			log.Error(serr.Message, zap.Error(err))
-			http.Error(c.Ctx.ResponseWriter, serr.Message, http.StatusConflict)
+			errMessage := err.(dberror.RemoveStageRestriction).Message
+			log.Error(errMessage, zap.Error(err))
+			http.Error(c.Ctx.ResponseWriter, errMessage, http.StatusConflict)
 			return
 		}
 		log.Error("delete process is failed", zap.Error(err))
