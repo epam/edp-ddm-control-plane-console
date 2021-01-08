@@ -49,7 +49,7 @@ func (r *ListRegistry) Get() {
 	r.TplName = "registry/list.html"
 
 	codebases, err := r.CodebaseService.GetCodebasesByCriteria(query.CodebaseCriteria{
-		Type: query.App,// temporary needs, change to  query.Registry
+		Type: query.Library,// temporary needs, change to  query.Registry
 	})
 
 	if err != nil {
@@ -186,7 +186,7 @@ func (r *CreateRegistry) createRegistry(registry *models.Registry) (errorMap map
 	_, err = r.CodebaseService.CreateCodebase(command.CreateCodebase{
 		Name:             registry.Name,
 		Username:         username,
-		Type:             string(query.App),// temporary needs, change to  query.Registry
+		Type:             string(query.Library),// temporary needs, change to  query.Registry
 		Description:      &registry.Description,
 		DefaultBranch:    defaultBranch,
 		Lang:             lang,
