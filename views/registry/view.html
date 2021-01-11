@@ -9,8 +9,8 @@
         </a>
     </div>
     <div class="registry-header registry-header-view">
-        <h1>Реєстр "business-pro"</h1>
-        <a href="{{ .BasePath }}/admin/registry/edit/test" class="registry-add">
+        <h1>Реєстр "{{.registry.Name}}"</h1>
+        <a href="{{ .BasePath }}/admin/registry/edit/{{.registry.Name}}" class="registry-add">
             <img alt="add registry" src="{{ .BasePath }}/static/img/action-edit.png" />
             <span>Редагувати</span>
         </a>
@@ -66,12 +66,12 @@
                         {{$br.Name}}
                     </td>
                     <td>
-                        <a href="{{$br.VCSLink}}">
+                        <a href="{{$br.VCSLink}}" target="_blank">
                             <img alt="vcs" src="{{ $.BasePath }}/static/img/action-link.png" />
                         </a>
                     </td>
                     <td>
-                        <a href="{{$br.CICDLink}}">
+                        <a href="{{$br.CICDLink}}" target="_blank">
                             <img alt="ci" src="{{ $.BasePath }}/static/img/action-link.png" />
                         </a>
                     </td>
