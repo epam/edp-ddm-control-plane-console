@@ -15,13 +15,14 @@ import (
 )
 
 const (
-	registryType     = "registry"
-	defaultBranch    = "master"
-	lang             = "other"
-	buildTool        = "gitops"
-	strategy         = "clone"
-	deploymentScript = "openshift-template"
-	ciTool           = "Jenkins"
+	registryType        = "registry"
+	defaultBranch       = "master"
+	lang                = "other"
+	buildTool           = "gitops"
+	strategy            = "clone"
+	deploymentScript    = "openshift-template"
+	ciTool              = "Jenkins"
+	registryOverviewURL = "/admin/registry/overview"
 )
 
 type CodebaseService interface {
@@ -79,7 +80,7 @@ func (r *ListRegistry) Post() {
 		return
 	}
 
-	r.Redirect("/admin/registry/overview", 303)
+	r.Redirect(registryOverviewURL, 303)
 }
 
 type EditRegistry struct {
@@ -163,7 +164,7 @@ func (r *EditRegistry) Post() {
 		return
 	}
 
-	r.Redirect("/admin/registry/overview", 303)
+	r.Redirect(registryOverviewURL, 303)
 }
 
 type CreateRegistry struct {
@@ -268,7 +269,7 @@ func (r *CreateRegistry) Post() {
 		return
 	}
 
-	r.Redirect("/admin/registry/overview", 303)
+	r.Redirect(registryOverviewURL, 303)
 }
 
 type ViewRegistry struct {
