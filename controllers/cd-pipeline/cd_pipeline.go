@@ -62,6 +62,8 @@ const (
 	paramWaitingForCdPipeline = "waitingforcdpipeline"
 	scope                     = "cd"
 	deliveryType              = "delivery"
+	updateURL                 = "%s/admin/cd-pipeline/%s/update"
+	createURL                 = "%s/admin/cd-pipeline/create"
 )
 
 func (c *CDPipelineController) GetContinuousDeliveryPage() {
@@ -242,7 +244,7 @@ func (c *CDPipelineController) UpdateCDPipeline() {
 		log.Info("Request data is not valid", zap.String("err", errMsg.Message))
 		flash.Error(errMsg.Message)
 		flash.Store(&c.Controller)
-		c.Redirect(fmt.Sprintf("%s/admin/cd-pipeline/%s/update", console.BasePath, pipelineName), 302)
+		c.Redirect(fmt.Sprintf(updateURL, console.BasePath, pipelineName), 302)
 		return
 	}
 	log.Debug("Request data is received to update CD pipeline",
@@ -258,12 +260,12 @@ func (c *CDPipelineController) UpdateCDPipeline() {
 		case *ddmerror.CDPipelineDoesNotExistError:
 			flash.Error(fmt.Sprintf("cd pipeline %v doesn't exist", pipelineName))
 			flash.Store(&c.Controller)
-			c.Redirect(fmt.Sprintf("%s/admin/cd-pipeline/%s/update", console.BasePath, pipelineName), http.StatusFound)
+			c.Redirect(fmt.Sprintf(updateURL, console.BasePath, pipelineName), http.StatusFound)
 			return
 		case *ddmerror.NonValidRelatedBranchError:
 			flash.Error(fmt.Sprintf("one or more applications have non valid branches: %v", pipelineUpdateCommand.Applications))
 			flash.Store(&c.Controller)
-			c.Redirect(fmt.Sprintf("%s/admin/cd-pipeline/%s/update", console.BasePath, pipelineName), http.StatusBadRequest)
+			c.Redirect(fmt.Sprintf(updateURL, console.BasePath, pipelineName), http.StatusBadRequest)
 			return
 		default:
 			c.Abort("500")
@@ -297,7 +299,7 @@ func (c *CDPipelineController) CreateCDPipeline() {
 		log.Error("Request data is not valid", zap.String("err", errMsg.Message))
 		flash.Error(errMsg.Message)
 		flash.Store(&c.Controller)
-		c.Redirect(fmt.Sprintf("%s/admin/cd-pipeline/create", console.BasePath), 302)
+		c.Redirect(fmt.Sprintf(createURL, console.BasePath), 302)
 		return
 	}
 	log.Debug("Request data is received to create CD pipeline",
@@ -313,12 +315,12 @@ func (c *CDPipelineController) CreateCDPipeline() {
 		case *ddmerror.CDPipelineExistsError:
 			flash.Error(fmt.Sprintf("cd pipeline %v is already exists", cdPipelineCreateCommand.Name))
 			flash.Store(&c.Controller)
-			c.Redirect(fmt.Sprintf("%s/admin/cd-pipeline/create", console.BasePath), http.StatusFound)
+			c.Redirect(fmt.Sprintf(createURL, console.BasePath), http.StatusFound)
 			return
 		case *ddmerror.NonValidRelatedBranchError:
 			flash.Error(fmt.Sprintf("one or more applications have non valid branches: %v", cdPipelineCreateCommand.Applications))
 			flash.Store(&c.Controller)
-			c.Redirect(fmt.Sprintf("%s/admin/cd-pipeline/create", console.BasePath), http.StatusBadRequest)
+			c.Redirect(fmt.Sprintf(createURL, console.BasePath), http.StatusBadRequest)
 			return
 		default:
 			c.Abort("500")

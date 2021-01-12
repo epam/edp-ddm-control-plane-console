@@ -22,6 +22,8 @@ import (
 	"go.uber.org/zap"
 )
 
+const redirectURL = `%s/admin/autotest/create`
+
 type AutotestsController struct {
 	beego.Controller
 	CodebaseService  service.CodebaseService
@@ -48,7 +50,7 @@ func (c *AutotestsController) CreateAutotests() {
 		flash := beego.NewFlash()
 		flash.Error(errMsg.Message)
 		flash.Store(&c.Controller)
-		c.Redirect(fmt.Sprintf("%s/admin/autotest/create", console.BasePath), 302)
+		c.Redirect(fmt.Sprintf(redirectURL, console.BasePath), 302)
 		return
 	}
 	logAutotestsRequestData(codebase)
@@ -70,11 +72,11 @@ func (c *AutotestsController) checkError(err error, flash *beego.FlashData, name
 	case *edperror.CodebaseAlreadyExistsError:
 		flash.Error("Autotest %v already exists.", name)
 		flash.Store(&c.Controller)
-		c.Redirect(fmt.Sprintf("%s/admin/autotest/create", console.BasePath), 302)
+		c.Redirect(fmt.Sprintf(redirectURL, console.BasePath), 302)
 	case *edperror.CodebaseWithGitURLPathAlreadyExistsError:
 		flash.Error("Autotest %v with %v project path already exists.", name, *url)
 		flash.Store(&c.Controller)
-		c.Redirect(fmt.Sprintf("%s/admin/autotest/create", console.BasePath), 302)
+		c.Redirect(fmt.Sprintf(redirectURL, console.BasePath), 302)
 	default:
 		log.Error("couldn't create codebase", zap.Error(err))
 		c.Abort("500")

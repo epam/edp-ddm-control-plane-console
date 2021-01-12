@@ -22,7 +22,10 @@ import (
 	"go.uber.org/zap"
 )
 
-const otherLanguage = "other"
+const (
+	otherLanguage    = "other"
+	libraryCreateURL = "%s/admin/library/create"
+)
 
 type LibraryController struct {
 	beego.Controller
@@ -132,7 +135,7 @@ func (c *LibraryController) Create() {
 		log.Error("Failed to validate library request data", zap.String("err", errMsg.Message))
 		flash.Error(errMsg.Message)
 		flash.Store(&c.Controller)
-		c.Redirect(fmt.Sprintf("%s/admin/library/create", console.BasePath), 302)
+		c.Redirect(fmt.Sprintf(libraryCreateURL, console.BasePath), 302)
 		return
 	}
 	logLibraryRequestData(codebase)
@@ -154,11 +157,11 @@ func (c *LibraryController) checkError(err error, flash *beego.FlashData, name s
 	case *edperror.CodebaseAlreadyExistsError:
 		flash.Error("Library %v already exists.", name)
 		flash.Store(&c.Controller)
-		c.Redirect(fmt.Sprintf("%s/admin/library/create", console.BasePath), 302)
+		c.Redirect(fmt.Sprintf(libraryCreateURL, console.BasePath), 302)
 	case *edperror.CodebaseWithGitURLPathAlreadyExistsError:
 		flash.Error("Library %v with %v project path already exists.", name, *url)
 		flash.Store(&c.Controller)
-		c.Redirect(fmt.Sprintf("%s/admin/library/create", console.BasePath), 302)
+		c.Redirect(fmt.Sprintf(libraryCreateURL, console.BasePath), 302)
 	default:
 		log.Error("couldn't create codebase", zap.Error(err))
 		c.Abort("500")
