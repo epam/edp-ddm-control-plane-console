@@ -32,6 +32,8 @@ type CodebaseService interface {
 	UpdateDescription(name, description string) error
 	ExistCodebaseAndBranch(cbName, brName string) bool
 	Delete(name, codebaseType string) error
+	GetCodebasesByCriteriaK8s(criteria query.CodebaseCriteria) ([]*query.Codebase, error)
+	GetCodebaseByNameK8s(name string) (*query.Codebase, error)
 }
 
 type ListRegistry struct {
@@ -52,8 +54,8 @@ func (r *ListRegistry) Get() {
 
 	r.TplName = "registry/list.html"
 
-	codebases, err := r.CodebaseService.GetCodebasesByCriteria(query.CodebaseCriteria{
-		Type: query.Library, // temporary needs, change to  query.Registry
+	codebases, err := r.CodebaseService.GetCodebasesByCriteriaK8s(query.CodebaseCriteria{
+		Type: query.Registry,
 	})
 
 	if err != nil {
@@ -67,7 +69,7 @@ func (r *ListRegistry) Get() {
 
 func (r *ListRegistry) Post() {
 	registryName := r.GetString("registry-name")
-	rg, err := r.CodebaseService.GetCodebaseByName(registryName)
+	rg, err := r.CodebaseService.GetCodebaseByNameK8s(registryName)
 	if err != nil {
 		log.Error(fmt.Sprintf("%+v\n", err))
 		r.CustomAbort(500, fmt.Sprintf("%+v\n", err))
@@ -101,7 +103,7 @@ func (r *EditRegistry) Get() {
 	r.TplName = "registry/edit.html"
 
 	registryName := r.Ctx.Input.Param(":name")
-	rg, err := r.CodebaseService.GetCodebaseByName(registryName)
+	rg, err := r.CodebaseService.GetCodebaseByNameK8s(registryName)
 	if err != nil {
 		log.Error(fmt.Sprintf("%+v\n", err))
 		r.CustomAbort(500, fmt.Sprintf("%+v\n", err))
@@ -209,7 +211,7 @@ func (r *CreateRegistry) createRegistry(registry *models.Registry) (errorMap map
 	_, err = r.CodebaseService.CreateCodebase(command.CreateCodebase{
 		Name:             registry.Name,
 		Username:         username,
-		Type:             string(query.Library), // temporary needs, change to  query.Registry
+		Type:             string(query.Registry),
 		Description:      &registry.Description,
 		DefaultBranch:    defaultBranch,
 		Lang:             lang,
@@ -291,7 +293,7 @@ func (r *ViewRegistry) Get() {
 	r.TplName = "registry/view.html"
 
 	registryName := r.Ctx.Input.Param(":name")
-	rg, err := r.CodebaseService.GetCodebaseByName(registryName)
+	rg, err := r.CodebaseService.GetCodebaseByNameK8s(registryName)
 	if err != nil {
 		log.Error(fmt.Sprintf("%+v\n", err))
 		r.CustomAbort(500, fmt.Sprintf("%+v\n", err))

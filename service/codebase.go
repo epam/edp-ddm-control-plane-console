@@ -131,6 +131,38 @@ func (s *CodebaseService) GetCodebasesByCriteria(criteria query.CodebaseCriteria
 	return codebases, nil
 }
 
+func (s *CodebaseService) k8sCodebase2queryCodebase(cb *edpv1alpha1.Codebase) *query.Codebase {
+	description := ""
+	if cb.Spec.Description != nil {
+		description = *cb.Spec.Description
+	}
+
+	return &query.Codebase{
+		Name:        cb.Name,
+		Description: description,
+		CreatedAt:   &cb.ObjectMeta.CreationTimestamp.Time,
+	}
+}
+
+func (s *CodebaseService) GetCodebasesByCriteriaK8s(criteria query.CodebaseCriteria) ([]*query.Codebase, error) {
+	var edpCodebasesList edpv1alpha1.CodebaseList
+	if err := s.Clients.EDPRestClient.Get().Namespace(console.Namespace).Resource(consts.CodebasePlural).Do().
+		Into(&edpCodebasesList); err != nil {
+		return nil, errors.Wrap(err, "unable to get codebase list from k8s")
+	}
+
+	codebases := make([]*query.Codebase, 0, len(edpCodebasesList.Items))
+	for i, v := range edpCodebasesList.Items {
+		if v.Spec.Type != string(criteria.Type) {
+			continue
+		}
+
+		codebases = append(codebases, s.k8sCodebase2queryCodebase(&edpCodebasesList.Items[i]))
+	}
+
+	return codebases, nil
+}
+
 func (s CodebaseService) GetCodebaseByName(name string) (*query.Codebase, error) {
 	c, err := s.ICodebaseRepository.GetCodebaseByName(name)
 	if err != nil {
@@ -138,6 +170,15 @@ func (s CodebaseService) GetCodebaseByName(name string) (*query.Codebase, error)
 	}
 	clog.Info("codebase has been fetched from db", zap.String("name", c.Name))
 	return c, nil
+}
+
+func (s CodebaseService) GetCodebaseByNameK8s(name string) (*query.Codebase, error) {
+	var edpCodebase edpv1alpha1.Codebase
+	if err := s.Clients.EDPRestClient.Get().Namespace(console.Namespace).Resource(consts.CodebasePlural).Name(name).Do().Into(&edpCodebase); err != nil {
+		return nil, errors.Wrap(err, "unable to get codebase from k8s api")
+	}
+
+	return s.k8sCodebase2queryCodebase(&edpCodebase), nil
 }
 
 func (s *CodebaseService) findCodebaseByName(name string) bool {

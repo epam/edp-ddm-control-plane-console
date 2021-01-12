@@ -1,5 +1,7 @@
 package query
 
+import "time"
+
 const viewTimeFormat = "02.01.2006 15:04"
 
 type Codebase struct {
@@ -37,9 +39,14 @@ type Codebase struct {
 	CommitMessagePattern string            `json:"commitMessagePattern" orm:"commit_message_pattern"`
 	TicketNamePattern    string            `json:"ticketNamePattern" orm:"ticket_name_pattern"`
 	CiTool               string            `json:"ciTool" orm:"ci_tool"`
+	CreatedAt            *time.Time        `json:"-" orm:"-"`
 }
 
 func (c Codebase) FormattedCreatedAt() string {
+	if c.CreatedAt != nil {
+		return c.CreatedAt.Format(viewTimeFormat)
+	}
+
 	if len(c.ActionLog) == 0 {
 		return ""
 	}
@@ -65,7 +72,7 @@ const (
 	App       CodebaseType = "application"
 	Autotests CodebaseType = "autotests"
 	Library   CodebaseType = "library"
-	Registry  CodebaseType = "registry-tenant"
+	Registry  CodebaseType = "library" // temporary needs, change to registry-tenant
 )
 
 var CodebaseTypes = map[string]CodebaseType{

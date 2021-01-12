@@ -67,6 +67,36 @@ func TestCodebaseService_UpdateDescription(t *testing.T) {
 	}
 }
 
+func TestCodebaseService_GetCodebasesByCriteriaK8s(t *testing.T) {
+	// clientSet := k8s.CreateOpenShiftClients()
+
+	getResponse, _ := test.NewResponseShortcut(
+		fmt.Sprintf(
+			`{"items": [{"metadata": {"name": "test"}, "spec": {"description": "test", "type": "%s"}}]}`,
+			query.Registry))
+
+	getHTTPClient := test.MockHTTPClient{
+		DoResponse: getResponse,
+		DoError:    nil,
+	}
+
+	cs := CodebaseService{Clients: k8s.ClientSet{
+		EDPRestClient: test.MockRestInterface{
+			GetResponse: test.NewRequestShortcut(getHTTPClient),
+		},
+	}}
+	rsp, err := cs.GetCodebasesByCriteriaK8s(query.CodebaseCriteria{
+		Type: query.Registry,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(rsp) == 0 {
+		t.Fatal("no codebases returned")
+	}
+}
+
 func TestCodebaseService_UpdateDescription_FailureGetCodebase(t *testing.T) {
 	mockErr := errors.New("k8s fatal")
 	getResponse, _ := test.NewResponseShortcut(
