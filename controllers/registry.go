@@ -18,7 +18,7 @@ const (
 	registryType     = "registry"
 	defaultBranch    = "master"
 	lang             = "other"
-	buildTool		 = "gitops"
+	buildTool        = "gitops"
 	strategy         = "clone"
 	deploymentScript = "openshift-template"
 	ciTool           = "Jenkins"
@@ -107,7 +107,7 @@ func (r *EditRegistry) Get() {
 		return
 	}
 
-	r.Data["description"] = rg.Description
+	r.Data["registry"] = rg
 }
 
 func (r *EditRegistry) editRegistry(registry *models.Registry) (errorMap map[string][]*validation.Error,
@@ -153,6 +153,7 @@ func (r *EditRegistry) Post() {
 	}
 
 	if validationErrors != nil {
+		r.Data["registry"] = parsedRegistry
 		log.Error(fmt.Sprintf("%+v\n", validationErrors))
 		r.Data["errorsMap"] = validationErrors
 		r.Ctx.Output.Status = 422
