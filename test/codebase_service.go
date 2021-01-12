@@ -22,6 +22,20 @@ type MockCodebaseService struct {
 	ExistCodebaseAndBranchResult bool
 
 	DeleteError error
+
+	GetCodebasesByCriteriaK8sResult []*query.Codebase
+	GetCodebasesByCriteriaK8sError  error
+
+	GetCodebaseByNameK8sResult *query.Codebase
+	GetCodebaseByNameK8sError  error
+}
+
+func (m MockCodebaseService) GetCodebaseByNameK8s(name string) (*query.Codebase, error) {
+	return m.GetCodebaseByNameK8sResult, m.GetCodebaseByNameK8sError
+}
+
+func (m MockCodebaseService) GetCodebasesByCriteriaK8s(criteria query.CodebaseCriteria) ([]*query.Codebase, error) {
+	return m.GetCodebasesByCriteriaK8sResult, m.GetCodebasesByCriteriaK8sError
 }
 
 func (m MockCodebaseService) Delete(name, codebaseType string) error {

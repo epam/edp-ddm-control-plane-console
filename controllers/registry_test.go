@@ -42,7 +42,7 @@ func TestListRegistry_GetFailure(t *testing.T) {
 	}
 
 	codebaseService := test.MockCodebaseService{
-		GetByCriteriaError: errors.New("error on codebase list"),
+		GetCodebasesByCriteriaK8sError: errors.New("error on codebase list"),
 	}
 
 	beego.Router("/list-registry-failure", MakeListRegistry(codebaseService))
@@ -183,7 +183,7 @@ func TestEditRegistry_GetFailure(t *testing.T) {
 	}
 
 	codebaseService := test.MockCodebaseService{
-		GetCodebaseByNameError: errors.New("k8s fatal error"),
+		GetCodebaseByNameK8sError: errors.New("k8s fatal error"),
 	}
 	ctrl := MakeEditRegistry(codebaseService)
 
@@ -314,7 +314,7 @@ func TestListRegistry_DeleteRegistry_FailureGetCodebase(t *testing.T) {
 
 	mockErr := errors.New("GetCodebaseByNameError fatal")
 	cbMock := test.MockCodebaseService{
-		GetCodebaseByNameError: mockErr,
+		GetCodebaseByNameK8sError: mockErr,
 	}
 	listRegistryCtrl := MakeListRegistry(cbMock)
 
@@ -341,8 +341,8 @@ func TestListRegistry_DeleteRegistry_FailureDeleteCodebase(t *testing.T) {
 
 	mockErr := errors.New("DeleteCodebase fatal")
 	cbMock := test.MockCodebaseService{
-		GetCodebaseByNameResult: &query.Codebase{},
-		DeleteError:             mockErr,
+		GetCodebaseByNameK8sResult: &query.Codebase{},
+		DeleteError:                mockErr,
 	}
 	listRegistryCtrl := MakeListRegistry(cbMock)
 
@@ -365,7 +365,7 @@ func TestListRegistry_DeleteRegistry_FailureDeleteCodebase(t *testing.T) {
 func TestListRegistry_DeleteRegistry(t *testing.T) {
 	rw, ctrl := initBeegoCtrl()
 	cbMock := test.MockCodebaseService{
-		GetCodebaseByNameResult: &query.Codebase{},
+		GetCodebaseByNameK8sResult: &query.Codebase{},
 	}
 	listRegistryCtrl := MakeListRegistry(cbMock)
 	ctrl.Ctx.Input.SetParam("registry-name", "test")
@@ -385,7 +385,7 @@ func TestViewRegistry_Get(t *testing.T) {
 	}
 
 	cbMock := test.MockCodebaseService{
-		GetCodebaseByNameResult: &query.Codebase{
+		GetCodebaseByNameK8sResult: &query.Codebase{
 			CodebaseBranch: []*query.CodebaseBranch{
 				{},
 			},
@@ -414,7 +414,7 @@ func TestViewRegistry_Get_FailureGetCodebaseByName(t *testing.T) {
 	mockErr := errors.New("GetCodebaseByName fatal")
 
 	cbMock := test.MockCodebaseService{
-		GetCodebaseByNameError: mockErr,
+		GetCodebaseByNameK8sError: mockErr,
 	}
 	eds := test.MockEDPComponentService{}
 
@@ -441,7 +441,7 @@ func TestViewRegistry_Get_FailureCreateLinksForGerritProvider(t *testing.T) {
 	mockErr := errors.New("GetEDPComponentError fatal")
 
 	cbMock := test.MockCodebaseService{
-		GetCodebaseByNameResult: &query.Codebase{
+		GetCodebaseByNameK8sResult: &query.Codebase{
 			CodebaseBranch: []*query.CodebaseBranch{
 				{},
 			},
