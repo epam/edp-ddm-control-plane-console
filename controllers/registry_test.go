@@ -385,7 +385,7 @@ func TestViewRegistry_Get(t *testing.T) {
 	}
 
 	cbMock := test.MockCodebaseService{
-		GetCodebaseByNameK8sResult: &query.Codebase{
+		GetCodebaseByNameResult: &query.Codebase{
 			CodebaseBranch: []*query.CodebaseBranch{
 				{},
 			},
@@ -414,7 +414,7 @@ func TestViewRegistry_Get_FailureGetCodebaseByName(t *testing.T) {
 	mockErr := errors.New("GetCodebaseByName fatal")
 
 	cbMock := test.MockCodebaseService{
-		GetCodebaseByNameK8sError: mockErr,
+		GetCodebaseByNameError: mockErr,
 	}
 	eds := test.MockEDPComponentService{}
 
@@ -441,7 +441,7 @@ func TestViewRegistry_Get_FailureCreateLinksForGerritProvider(t *testing.T) {
 	mockErr := errors.New("GetEDPComponentError fatal")
 
 	cbMock := test.MockCodebaseService{
-		GetCodebaseByNameK8sResult: &query.Codebase{
+		GetCodebaseByNameResult: &query.Codebase{
 			CodebaseBranch: []*query.CodebaseBranch{
 				{},
 			},
