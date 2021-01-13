@@ -173,6 +173,7 @@ func init() {
 		beego.NSRouter("/overview", &ec, "get:GetEDPComponents"),
 		beego.NSRouter("/service/overview", &tpsc, "get:GetServicePage"),
 		beego.NSRouter("/diagram/overview", &dc, "get:GetDiagramPage"),
+		beego.NSRouter("/dashboard", controllers.MakeDashboardController()),
 
 		beego.NSRouter("/registry/overview", controllers.MakeListRegistry(&codebaseService)),
 		beego.NSRouter("/registry/create", controllers.MakeCreateRegistry(&codebaseService)),

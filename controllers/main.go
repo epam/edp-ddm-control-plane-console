@@ -19,6 +19,7 @@ package controllers
 import (
 	"ddm-admin-console/console"
 	"ddm-admin-console/service"
+
 	"github.com/astaxie/beego"
 )
 
@@ -31,4 +32,19 @@ func (c *MainController) Index() {
 	c.Data["EDPVersion"] = console.EDPVersion
 	c.Data["BasePath"] = console.BasePath
 	c.TplName = "index.html"
+}
+
+type DashboardController struct {
+	beego.Controller
+}
+
+func (c *DashboardController) Get() {
+	c.Data["GerritLink"] = beego.AppConfig.String("gerritGlobalLink")
+	c.Data["JenkinsLink"] = beego.AppConfig.String("jenkinsGlobalLink")
+	c.Data["Type"] = "dashboard"
+	c.TplName = "dashboard.html"
+}
+
+func MakeDashboardController() *DashboardController {
+	return &DashboardController{}
 }
