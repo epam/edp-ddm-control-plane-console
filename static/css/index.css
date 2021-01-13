@@ -11713,3 +11713,76 @@ div#kubernetes-component {
     background: #D35D47;
     cursor: pointer;
 }
+
+.main-index {
+    padding: 208px 0 0 240px;
+}
+
+.main-index h1 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 32px;
+    font-weight: normal;
+}
+
+.main-index p {
+    font-family: 'Source Sans Pro', sans-serif;
+    font-weight: 300;
+    font-size: 16px;
+    margin: 32px 0 16px 0;
+}
+
+.main-index a {
+    background: #6DA300;
+    border-radius: 4px;
+    font-size: 18px;
+    color: #FFFFFF;
+    padding: 8px 16px;
+    text-transform: uppercase;
+}
+
+.main-index div {
+    font-family: 'Source Sans Pro', sans-serif;
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.5);
+    margin: 24px 0 0 0;
+}
+
+.dashboard-panel {
+    margin: 16px;
+    box-shadow: 0 6px 20px -5px rgba(34, 34, 34, 0.26);
+    border-radius: 4px;
+}
+
+.dashboard-panel ul {
+    list-style: none;
+    padding: 16px;
+}
+
+.dashboard-panel li {
+    display: flex;
+    align-items: flex-start;
+}
+
+.dashboard-item-content {
+    margin: 0 0 0 32px;
+}
+
+.dashboard-item-content a {
+    color: #008ACE;
+    font-family: 'Source Sans Pro', sans-serif;
+    font-size: 16px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+}
+
+.dashboard-item-content img {
+    margin: 0 0 0 11px;
+}
+
+.dashboard-item-content p {
+    font-family: 'Source Sans Pro', sans-serif;
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.7);
+    width: 600px;
+}

@@ -1,21 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    {{template "template/head.html" .}}
-    <link rel="stylesheet" href="{{ .BasePath }}/static/css/index.css">
-</head>
-<body>
-<main>
-    {{template "template/header_template.html" .}}
-    <section class="content">
-        <div class="edp-landing-button">
-            <a href="{{ .BasePath }}/admin/registry/overview" class="btn btn-success btn-block">Start</a>
-        </div>
-    </section>
-    {{template "template/footer_template.html" .}}
-</main>
-<script src="{{ .BasePath }}/static/js/jquery-3.3.1.js"></script>
-<script src="{{ .BasePath }}/static/js/popper.js"></script>
-<script src="{{ .BasePath }}/static/js/bootstrap.js"></script>
-</body>
-</html>
+{{ template "layout.html" . }}
+
+{{ define "content" }}
+    <div class="main-index">
+        <h1>Вітаємо!</h1>
+        <p>Щоб увійти до адмін панелі, будь ласка, автентифікуйтесь.</p>
+        <a href="{{ .BasePath }}/admin/dashboard">Автентифікуватись</a>
+        <div>У разі проблем з входом звертайтесь до адміністратора.</div>
+    </div>
+{{end}}
