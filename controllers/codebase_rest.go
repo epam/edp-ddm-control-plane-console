@@ -26,11 +26,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/astaxie/beego"
-	"github.com/satori/go.uuid"
-	"go.uber.org/zap"
 	"net/http"
 	"path"
+
+	"github.com/astaxie/beego"
+	uuid "github.com/satori/go.uuid"
+	"go.uber.org/zap"
 )
 
 type CodebaseRestController struct {
