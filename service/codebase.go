@@ -131,17 +131,42 @@ func (s *CodebaseService) GetCodebasesByCriteria(criteria query.CodebaseCriteria
 	return codebases, nil
 }
 
-func (s *CodebaseService) k8sCodebase2queryCodebase(cb *edpv1alpha1.Codebase) *query.Codebase {
+func (s *CodebaseService) k8sCodebase2queryCodebase(
+	cb *edpv1alpha1.Codebase, loadBranches bool) (*query.Codebase, error) {
+
 	description := ""
 	if cb.Spec.Description != nil {
 		description = *cb.Spec.Description
 	}
 
-	return &query.Codebase{
+	qcb := query.Codebase{
 		Name:        cb.Name,
 		Description: description,
 		CreatedAt:   &cb.ObjectMeta.CreationTimestamp.Time,
 	}
+
+	if loadBranches {
+		var edpCodebaseBranchList edpv1alpha1.CodebaseBranchList
+		if err := s.Clients.EDPRestClient.Get().Namespace(console.Namespace).Resource(consts.CodebaseBranchPlural).Do().
+			Into(&edpCodebaseBranchList); err != nil {
+			return nil, errors.Wrap(err, "unable to get codebase branches from k8s")
+		}
+
+		qcb.CodebaseBranch = make([]*query.CodebaseBranch, 0, 2)
+		for _, v := range edpCodebaseBranchList.Items {
+			if v.Spec.CodebaseName == qcb.Name {
+				qcb.CodebaseBranch = append(qcb.CodebaseBranch, &query.CodebaseBranch{
+					Name:             v.Spec.BranchName,
+					Version:          v.Spec.Version,
+					Status:           v.Status.Value,
+					Build:            v.Status.Build,
+					LastSuccessBuild: v.Status.LastSuccessfulBuild,
+				})
+			}
+		}
+	}
+
+	return &qcb, nil
 }
 
 func (s *CodebaseService) GetCodebasesByCriteriaK8s(criteria query.CodebaseCriteria) ([]*query.Codebase, error) {
@@ -157,7 +182,11 @@ func (s *CodebaseService) GetCodebasesByCriteriaK8s(criteria query.CodebaseCrite
 			continue
 		}
 
-		codebases = append(codebases, s.k8sCodebase2queryCodebase(&edpCodebasesList.Items[i]))
+		qcb, err := s.k8sCodebase2queryCodebase(&edpCodebasesList.Items[i], false)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to convert k8s codebase to query codebase")
+		}
+		codebases = append(codebases, qcb)
 	}
 
 	return codebases, nil
@@ -168,17 +197,23 @@ func (s CodebaseService) GetCodebaseByName(name string) (*query.Codebase, error)
 	if err != nil {
 		return nil, errors.Wrapf(err, "an error has occurred while getting %v codebase from db", name)
 	}
-	clog.Info("codebase has been fetched from db", zap.String("name", c.Name))
+	clog.Info("codebase has been fetched from db", zap.String("name", name))
 	return c, nil
 }
 
 func (s CodebaseService) GetCodebaseByNameK8s(name string) (*query.Codebase, error) {
 	var edpCodebase edpv1alpha1.Codebase
-	if err := s.Clients.EDPRestClient.Get().Namespace(console.Namespace).Resource(consts.CodebasePlural).Name(name).Do().Into(&edpCodebase); err != nil {
+	if err := s.Clients.EDPRestClient.Get().Namespace(console.Namespace).Resource(consts.CodebasePlural).Name(name).
+		Do().Into(&edpCodebase); err != nil {
 		return nil, errors.Wrap(err, "unable to get codebase from k8s api")
 	}
 
-	return s.k8sCodebase2queryCodebase(&edpCodebase), nil
+	qcb, err := s.k8sCodebase2queryCodebase(&edpCodebase, true)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to convert k8s codebase to query codebase")
+	}
+
+	return qcb, nil
 }
 
 func (s *CodebaseService) findCodebaseByName(name string) bool {

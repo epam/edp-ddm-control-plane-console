@@ -293,7 +293,7 @@ func (r *ViewRegistry) Get() {
 	r.TplName = "registry/view.html"
 
 	registryName := r.Ctx.Input.Param(":name")
-	rg, err := r.CodebaseService.GetCodebaseByName(registryName)
+	rg, err := r.CodebaseService.GetCodebaseByNameK8s(registryName)
 	if err != nil {
 		log.Error(fmt.Sprintf("%+v\n", err))
 		r.CustomAbort(500, fmt.Sprintf("%+v\n", err))
@@ -308,6 +308,10 @@ func (r *ViewRegistry) Get() {
 		}
 
 		r.Data["branches"] = rg.CodebaseBranch
+	}
+
+	if len(rg.ActionLog) > 0 {
+		r.Data["actionLog"] = rg.ActionLog
 	}
 
 	r.Data["registry"] = rg
