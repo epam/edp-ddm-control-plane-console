@@ -1,14 +1,17 @@
 $(function (){
     let registryName;
+    let registryInput = $("#registry-name");
 
     let hidePopup = function (){
         $(".popup-backdrop").hide();
         $(".popup-window").hide();
+        registryInput.val('');
     };
 
     let showPopup = function (){
         $(".popup-backdrop").show();
         $(".popup-window").show();
+        registryInput.val('');
     };
 
     $(".popup-close").click(function (){
@@ -21,8 +24,6 @@ $(function (){
         hidePopup();
         return false;
     })
-
-    let registryInput = $("#registry-name");
 
     registryInput.val('');
     registryInput.keyup(function (e) {
