@@ -40,6 +40,7 @@ type Codebase struct {
 	TicketNamePattern    string            `json:"ticketNamePattern" orm:"ticket_name_pattern"`
 	CiTool               string            `json:"ciTool" orm:"ci_tool"`
 	CreatedAt            *time.Time        `json:"-" orm:"-"`
+	ForegroundDeletion   bool              `json:"-" orm:"-"`
 }
 
 func (c Codebase) FormattedCreatedAt() string {
@@ -52,6 +53,15 @@ func (c Codebase) FormattedCreatedAt() string {
 	}
 
 	return c.ActionLog[0].LastTimeUpdate.Format(viewTimeFormat)
+}
+
+func (c Codebase) StrStatus() string {
+	status := string(c.Status)
+	if status == "" {
+		status = "active"
+	}
+
+	return status
 }
 
 func (c *Codebase) TableName() string {

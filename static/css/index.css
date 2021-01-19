@@ -11398,7 +11398,8 @@ div#kubernetes-component {
     box-shadow: 0 6px 20px -5px rgba(34, 34, 34, 0.26);
     border-radius: 4px;
     margin: 0 0 32px 0;
-    padding: 0 8px 0 8px;
+    /*padding: 0 8px 8px 8px;*/
+    padding: 8px;
 }
 
 .registry-table {
@@ -11414,6 +11415,11 @@ div#kubernetes-component {
 
 .registry-table tr {
     border-bottom: 1px solid #E1E3EB;
+}
+
+.registry-table tr.disabled {
+    background-color: #eae9e9;
+    cursor: not-allowed;
 }
 
 .registry-table tr:last-of-type {
@@ -11786,3 +11792,11 @@ div#kubernetes-component {
     color: rgba(0, 0, 0, 0.7);
     width: 600px;
 }
+
+/*.dataTables_length {*/
+/*    display: none;*/
+/*}*/
+
+/*.dataTables_filter {*/
+/*    display: none;*/
+/*}*/

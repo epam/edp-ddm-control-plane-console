@@ -144,6 +144,11 @@ func (s *CodebaseService) k8sCodebase2queryCodebase(
 		Name:        cb.Name,
 		Description: description,
 		CreatedAt:   &cb.ObjectMeta.CreationTimestamp.Time,
+		Status:      query.Status(cb.Status.Value),
+	}
+
+	if cb.ObjectMeta.DeletionTimestamp != nil {
+		qcb.ForegroundDeletion = true
 	}
 
 	if loadBranches {
@@ -216,6 +221,10 @@ func (s CodebaseService) GetCodebaseByNameK8s(name string) (*query.Codebase, err
 		Do().Into(&edpCodebase); err != nil {
 		if errStatus, ok := err.(*errors2.StatusError); ok && errStatus.ErrStatus.Code == 404 {
 			return nil, errors.Wrap(RegistryNotFound{cause: errStatus}, "registry not found")
+		}
+
+		if edpCodebase.ObjectMeta.DeletionTimestamp != nil {
+			return nil, RegistryNotFound{}
 		}
 
 		return nil, errors.Wrap(err, "unable to get codebase from k8s api")

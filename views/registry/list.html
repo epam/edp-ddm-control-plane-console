@@ -11,20 +11,26 @@
         </div>
         <div class="registry-description">Перелік реєстрів та їх статусів.</div>
         <div class="registry-table-wrap">
-            <table class="registry-table">
+            <table id="registry-table" class="registry-table row-border">
                 <thead>
                     <tr>
                         <th>Статус</th>
                         <th>Назва</th>
                         <th>Опис</th>
-                        <th colspan="3">Час створення</th>
+                        <th>Час створення</th>
+                        <th></th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
                     {{range $key, $registry := .registries}}
-                    <tr>
+                    <tr {{if $registry.ForegroundDeletion}}class="disabled"{{end}}>
                         <td>
-                            <img src="{{ $.BasePath }}/static/img/status-ok.png" alt="status ok" />
+                            {{if $registry.ForegroundDeletion}}
+                                <img src="{{ $.BasePath }}/static/img/action-delete.png" alt="delete registry" />
+                            {{else}}
+                                <img src="{{ $.BasePath }}/static/img/status-{{$registry.StrStatus}}.png" alt="status {{$registry.StrStatus}}" />
+                            {{end}}
                         </td>
                         <td>
                             <a href="{{ $.BasePath }}/admin/registry/view/{{$registry.Name}}">{{$registry.Name}}</a>
@@ -36,15 +42,19 @@
                             {{$registry.FormattedCreatedAt}}
                         </td>
                         <td>
+                            {{if not $registry.ForegroundDeletion}}
                             <a href="{{ $.BasePath }}/admin/registry/edit/{{$registry.Name}}">
                                 <img src="{{ $.BasePath }}/static/img/action-edit.png" alt="edit registry" />
                             </a>
+                            {{end}}
                         </td>
                         <td>
+                            {{if not $registry.ForegroundDeletion}}
                             <a href="#" class="delete-registry" data-id="{{$registry.ID}}"
                                data-name="{{$registry.Name}}">
                                 <img src="{{ $.BasePath }}/static/img/action-delete.png" alt="delete registry" />
                             </a>
+                            {{end}}
                         </td>
                     </tr>
                     {{end}}
@@ -82,6 +92,11 @@
         
 {{ end }}
 
+{{define "css"}}
+    <link rel="stylesheet" type="text/css" href="{{.BasePath}}/static/css/datatables.custom.css" />
+{{end}}
+
 {{ define "js"}}
+    <script type="text/javascript" src="{{.BasePath}}/static/js/datatables.min.js"></script>
     <script type="text/javascript" src="{{.BasePath}}/static/js/registry.js"></script>
 {{ end }}
