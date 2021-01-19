@@ -5,9 +5,7 @@ metadata:
 spec:
   basePath: ''
   dbSpec:
-    enabled: true
-    hostname: {{ .Values.db.name }}
-    name: {{ .Values.db.name }}
+    enabled: false
     port: '5432'
   edpSpec:
     dnsWildcard: apps.cicd.mdtu-ddm.projects.epam.com
