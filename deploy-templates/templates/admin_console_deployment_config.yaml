@@ -70,18 +70,6 @@ spec:
                 configMapKeyRef:
                   key: edp_name
                   name: edp-config
-            - name: PG_USER
-              value: "admin"
-            - name: PG_PASSWORD
-              value: "admin"
-            - name: PG_HOST
-              value: "{{ .Values.db.name }}"
-            - name: PG_PORT
-              value: "{{ .Values.db.port }}"
-            - name: PG_DATABASE
-              value: "{{ .Values.db.name }}"
-            - name: DB_ENABLED
-              value: "{{.Values.db.deploy}}"
             - name: PROJECT_MASK_URL
               value: "{{.Values.projectUrlMask}}"
             - name: IMAGE_STREAM_MASK_URL
