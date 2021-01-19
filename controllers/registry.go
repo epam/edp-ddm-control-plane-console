@@ -6,6 +6,7 @@ import (
 	"ddm-admin-console/models/command"
 	edperror "ddm-admin-console/models/error"
 	"ddm-admin-console/models/query"
+	"ddm-admin-console/service"
 	"fmt"
 
 	"github.com/astaxie/beego"
@@ -72,6 +73,11 @@ func (r *ListRegistry) Post() {
 	rg, err := r.CodebaseService.GetCodebaseByNameK8s(registryName)
 	if err != nil {
 		log.Error(fmt.Sprintf("%+v\n", err))
+		if _, ok := errors.Cause(err).(service.RegistryNotFound); ok {
+			r.TplName = notFoundTemplatePath
+			return
+		}
+
 		r.CustomAbort(500, fmt.Sprintf("%+v\n", err))
 		return
 	}
@@ -106,6 +112,10 @@ func (r *EditRegistry) Get() {
 	rg, err := r.CodebaseService.GetCodebaseByNameK8s(registryName)
 	if err != nil {
 		log.Error(fmt.Sprintf("%+v\n", err))
+		if _, ok := errors.Cause(err).(service.RegistryNotFound); ok {
+			r.TplName = notFoundTemplatePath
+			return
+		}
 		r.CustomAbort(500, fmt.Sprintf("%+v\n", err))
 		return
 	}
@@ -296,6 +306,12 @@ func (r *ViewRegistry) Get() {
 	rg, err := r.CodebaseService.GetCodebaseByNameK8s(registryName)
 	if err != nil {
 		log.Error(fmt.Sprintf("%+v\n", err))
+
+		if _, ok := errors.Cause(err).(service.RegistryNotFound); ok {
+			r.TplName = notFoundTemplatePath
+			return
+		}
+
 		r.CustomAbort(500, fmt.Sprintf("%+v\n", err))
 		return
 	}

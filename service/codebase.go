@@ -37,6 +37,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	v1 "k8s.io/api/core/v1"
+	errors2 "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -201,10 +202,22 @@ func (s CodebaseService) GetCodebaseByName(name string) (*query.Codebase, error)
 	return c, nil
 }
 
+type RegistryNotFound struct {
+	cause error
+}
+
+func (r RegistryNotFound) Error() string {
+	return r.cause.Error()
+}
+
 func (s CodebaseService) GetCodebaseByNameK8s(name string) (*query.Codebase, error) {
 	var edpCodebase edpv1alpha1.Codebase
 	if err := s.Clients.EDPRestClient.Get().Namespace(console.Namespace).Resource(consts.CodebasePlural).Name(name).
 		Do().Into(&edpCodebase); err != nil {
+		if errStatus, ok := err.(*errors2.StatusError); ok && errStatus.ErrStatus.Code == 404 {
+			return nil, errors.Wrap(RegistryNotFound{cause: errStatus}, "registry not found")
+		}
+
 		return nil, errors.Wrap(err, "unable to get codebase from k8s api")
 	}
 

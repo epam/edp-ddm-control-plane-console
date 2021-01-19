@@ -4,15 +4,17 @@ import (
 	"bytes"
 	edperror "ddm-admin-console/models/error"
 	"ddm-admin-console/models/query"
+	"ddm-admin-console/service"
 	_ "ddm-admin-console/templatefunction"
 	"ddm-admin-console/test"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/pkg/errors"
 
 	"github.com/astaxie/beego"
 )
@@ -200,6 +202,33 @@ func TestEditRegistry_GetFailure(t *testing.T) {
 	}
 }
 
+func TestEditRegistry_GetFailure404(t *testing.T) {
+	if err := test.InitBeego(); err != nil {
+		t.Fatal(err)
+	}
+
+	codebaseService := test.MockCodebaseService{
+		GetCodebaseByNameK8sError: errors.Wrap(service.RegistryNotFound{}, ""),
+	}
+	ctrl := MakeEditRegistry(codebaseService)
+
+	beego.Router("/edit-registry-get-failure404/:name", ctrl)
+	request, _ := http.NewRequest("GET", "/edit-registry-get-failure404/test", nil)
+	responseWriter := httptest.NewRecorder()
+
+	beego.BeeApp.Handlers.ServeHTTP(responseWriter, request)
+
+	if responseWriter.Code != 200 {
+		t.Log(responseWriter.Code)
+		t.Log(responseWriter.Body.String())
+		t.Fatal("wrong response code on registry edit failure")
+	}
+
+	if !strings.Contains(responseWriter.Body.String(), "Sorry, page not found") {
+		t.Fatal("no error in response body")
+	}
+}
+
 func TestEditRegistry_PostFailure_k8sFatal(t *testing.T) {
 	if err := test.InitBeego(); err != nil {
 		t.Fatal(err)
@@ -334,6 +363,32 @@ func TestListRegistry_DeleteRegistry_FailureGetCodebase(t *testing.T) {
 	}
 }
 
+func TestListRegistry_DeleteRegistry_FailureGetCodebase404(t *testing.T) {
+	if err := test.InitBeego(); err != nil {
+		t.Fatal(err)
+	}
+
+	cbMock := test.MockCodebaseService{
+		GetCodebaseByNameK8sError: errors.Wrap(service.RegistryNotFound{}, ""),
+	}
+	listRegistryCtrl := MakeListRegistry(cbMock)
+
+	beego.Router("/delete-registry-FailureGetCodebase404", listRegistryCtrl)
+	request, _ := http.NewRequest("POST", "/delete-registry-FailureGetCodebase404", nil)
+	responseWriter := httptest.NewRecorder()
+
+	beego.BeeApp.Handlers.ServeHTTP(responseWriter, request)
+
+	if responseWriter.Code != 200 {
+		t.Log(responseWriter.Code)
+		t.Fatal("wrong response code on delete registry")
+	}
+
+	if !strings.Contains(responseWriter.Body.String(), "Sorry, page not found") {
+		t.Fatal("no error in response body")
+	}
+}
+
 func TestListRegistry_DeleteRegistry_FailureDeleteCodebase(t *testing.T) {
 	if err := test.InitBeego(); err != nil {
 		t.Fatal(err)
@@ -389,6 +444,9 @@ func TestViewRegistry_Get(t *testing.T) {
 			CodebaseBranch: []*query.CodebaseBranch{
 				{},
 			},
+			ActionLog: []*query.ActionLog{
+				{},
+			},
 		},
 	}
 	eds := test.MockEDPComponentService{
@@ -430,6 +488,32 @@ func TestViewRegistry_Get_FailureGetCodebaseByName(t *testing.T) {
 	}
 
 	if !strings.Contains(responseWriter.Body.String(), mockErr.Error()) {
+		t.Fatal("wrong error return in response body")
+	}
+}
+
+func TestViewRegistry_Get_FailureGetCodebaseByName404(t *testing.T) {
+	if err := test.InitBeego(); err != nil {
+		t.Fatal(err)
+	}
+
+	cbMock := test.MockCodebaseService{
+		GetCodebaseByNameK8sError: errors.Wrap(service.RegistryNotFound{}, ""),
+	}
+	eds := test.MockEDPComponentService{}
+
+	beego.Router("/view-registry-FailureGetCodebaseByName404", MakeViewRegistry(cbMock, eds))
+	request, _ := http.NewRequest("GET", "/view-registry-FailureGetCodebaseByName404", nil)
+	responseWriter := httptest.NewRecorder()
+
+	beego.BeeApp.Handlers.ServeHTTP(responseWriter, request)
+
+	if responseWriter.Code != 200 {
+		t.Log(responseWriter.Code)
+		t.Fatal("wrong response code")
+	}
+
+	if !strings.Contains(responseWriter.Body.String(), "Sorry, page not found") {
 		t.Fatal("wrong error return in response body")
 	}
 }

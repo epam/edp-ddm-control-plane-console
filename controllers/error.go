@@ -2,7 +2,12 @@ package controllers
 
 import (
 	"ddm-admin-console/console"
+
 	"github.com/astaxie/beego"
+)
+
+const (
+	notFoundTemplatePath = "error/error_404.html"
 )
 
 type ErrorController struct {
@@ -27,5 +32,5 @@ func (t *ErrorController) Error404() {
 	t.Data["EDPVersion"] = console.EDPVersion
 	t.Data["Username"] = t.Ctx.Input.Session("username")
 	t.Data["BasePath"] = console.BasePath
-	t.TplName = "error/error_404.html"
+	t.TplName = notFoundTemplatePath
 }
