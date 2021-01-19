@@ -7,6 +7,7 @@ import (
 	edperror "ddm-admin-console/models/error"
 	"ddm-admin-console/models/query"
 	"ddm-admin-console/service"
+	"ddm-admin-console/util"
 	"fmt"
 
 	"github.com/astaxie/beego"
@@ -24,6 +25,7 @@ const (
 	deploymentScript    = "openshift-template"
 	ciTool              = "Jenkins"
 	registryOverviewURL = "/admin/registry/overview"
+	jenkinsSlave        = "gitops"
 )
 
 type CodebaseService interface {
@@ -235,6 +237,7 @@ func (r *CreateRegistry) createRegistry(registry *models.Registry) (errorMap map
 		Repository: &command.Repository{
 			URL: beego.AppConfig.String("defaultGitRepo"),
 		},
+		JenkinsSlave: util.GetStringP(jenkinsSlave),
 	})
 
 	if err != nil {
