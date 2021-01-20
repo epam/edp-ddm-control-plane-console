@@ -54,7 +54,7 @@ type CDPipelineController struct {
 	EDPTenantService  service.EDPTenantService
 	BranchService     cbs.Service
 	ThirdPartyService service.ThirdPartyService
-	EDPComponent      ec.EDPComponentService
+	EDPComponent      ec.Service
 	JobProvisioning   service.JobProvisioning
 }
 
