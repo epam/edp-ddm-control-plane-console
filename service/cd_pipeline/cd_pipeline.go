@@ -52,7 +52,7 @@ type CDPipelineService struct {
 	ICDPipelineRepository repository.ICDPipelineRepository
 	CodebaseService       service.CodebaseService
 	BranchService         cbs.Service
-	EDPComponent          ec.EDPComponentService
+	EDPComponent          ec.Service
 }
 
 type ErrMsg struct {
