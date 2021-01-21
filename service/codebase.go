@@ -28,9 +28,7 @@ import (
 	"ddm-admin-console/service/logger"
 	"ddm-admin-console/util"
 	"ddm-admin-console/util/consts"
-	dberror "ddm-admin-console/util/error/db-errors"
 	"fmt"
-	"strings"
 	"time"
 
 	edpv1alpha1 "github.com/epmd-edp/codebase-operator/v2/pkg/apis/edp/v1alpha1"
@@ -385,22 +383,9 @@ func (s CodebaseService) selectApplicationNames(applicationsToPromote []*query.A
 
 func (s CodebaseService) Delete(name, codebaseType string) error {
 	clog.Debug("start executing service delete method", zap.String("codebase", name))
-	cdp, err := s.getCdPipelinesUsingCodebase(name, codebaseType)
-	if err != nil {
-		return err
-	}
-	if cdp != nil {
-		p := strings.Join(cdp, ",")
-		return dberror.CodebaseIsUsedByCDPipeline{
-			Status:   dberror.StatusReasonCodebaseIsUsedByCDPipeline,
-			Message:  fmt.Sprintf("%v %v is used by %v CD Pipeline(s). couldn't delete.", codebaseType, name, p),
-			Codebase: name,
-			Pipeline: p,
-		}
-	}
 
 	if err := s.deleteCodebase(name); err != nil {
-		return err
+		return errors.Wrap(err, "unable to delete codebase")
 	}
 	clog.Info("end executing service codebase delete method", zap.String("codebase", name))
 	return nil
