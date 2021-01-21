@@ -1,4 +1,4 @@
-package edp_component //nolint
+package edpcomponent
 
 import (
 	"ddm-admin-console/console"
@@ -7,19 +7,20 @@ import (
 	"ddm-admin-console/service/logger"
 	"ddm-admin-console/util"
 	"ddm-admin-console/util/consts"
-	"ddm-admin-console/util/error/db-errors"
+	dberrors "ddm-admin-console/util/error/db-errors"
+
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
 var log = logger.GetLogger()
 
-type EDPComponentService struct {
+type Service struct {
 	IEDPComponent ec.IEDPComponentRepository
 }
 
-// GetEDPComponent gets EDP component by type from DB
-func (s EDPComponentService) GetEDPComponent(componentType string) (*query.EDPComponent, error) {
+// Service gets EDP component by type from DB
+func (s Service) GetEDPComponent(componentType string) (*query.EDPComponent, error) {
 	log.Debug("start fetching EDP Component", zap.String("type", componentType))
 	c, err := s.IEDPComponent.GetEDPComponent(componentType)
 	if err != nil {
@@ -36,7 +37,7 @@ func (s EDPComponentService) GetEDPComponent(componentType string) (*query.EDPCo
 }
 
 // GetEDPComponents gets all EDP components from DB
-func (s EDPComponentService) GetEDPComponents() ([]*query.EDPComponent, error) {
+func (s Service) GetEDPComponents() ([]*query.EDPComponent, error) {
 	log.Debug("start fetching EDP Components...")
 	c, err := s.IEDPComponent.GetEDPComponents()
 	if err != nil {

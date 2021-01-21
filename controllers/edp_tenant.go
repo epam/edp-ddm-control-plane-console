@@ -20,15 +20,16 @@ import (
 	"ddm-admin-console/console"
 	"ddm-admin-console/service"
 	ec "ddm-admin-console/service/edp-component"
-	"github.com/astaxie/beego"
 	"net/http"
 	"strings"
+
+	"github.com/astaxie/beego"
 )
 
 type EDPTenantController struct {
 	beego.Controller
 	EDPTenantService service.EDPTenantService
-	EDPComponent     ec.EDPComponentService
+	EDPComponent     ec.Service
 }
 
 func (c *EDPTenantController) GetEDPComponents() {
