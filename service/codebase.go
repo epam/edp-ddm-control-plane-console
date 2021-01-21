@@ -64,17 +64,6 @@ func (s CodebaseService) CreateCodebase(codebase command.CreateCodebase) (*edpv1
 		return nil, edperror.NewCodebaseAlreadyExistsError()
 	}
 
-	if s.findCodebaseByName(codebase.Name) {
-		clog.Info("Codebase already exists in DB", zap.String("name", codebase.Name))
-		return nil, edperror.NewCodebaseAlreadyExistsError()
-	}
-
-	if s.findCodebaseByProjectPath(codebase.GitURLPath) {
-		clog.Info("Codebase with the same gitUrlPath already exists in DB",
-			zap.String("gitUrlPath", *codebase.GitURLPath))
-		return nil, edperror.NewCodebaseWithGitURLPathAlreadyExistsError()
-	}
-
 	edpClient := s.Clients.EDPRestClient
 	coreClient := s.Clients.CoreClient
 
