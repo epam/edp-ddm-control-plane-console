@@ -41,11 +41,17 @@ import (
 
 var clog = logger.GetLogger()
 
+const (
+	gerritCreatorUsername = "user"
+	gerritCreatorPassword = "password"
+)
+
 type CodebaseService struct {
-	Clients               k8s.ClientSet
-	ICodebaseRepository   repository.ICodebaseRepository
-	ICDPipelineRepository repository.ICDPipelineRepository
-	BranchService         cbs.Service
+	Clients                 k8s.ClientSet
+	ICodebaseRepository     repository.ICodebaseRepository
+	ICDPipelineRepository   repository.ICDPipelineRepository
+	BranchService           cbs.Service
+	GerritCreatorSecretName string
 }
 
 func (s CodebaseService) CreateCodebase(codebase command.CreateCodebase) (*edpv1alpha1.Codebase, error) {
@@ -63,7 +69,6 @@ func (s CodebaseService) CreateCodebase(codebase command.CreateCodebase) (*edpv1
 	}
 
 	edpClient := s.Clients.EDPRestClient
-	coreClient := s.Clients.CoreClient
 
 	c := &edpv1alpha1.Codebase{
 		TypeMeta: metav1.TypeMeta{
@@ -88,7 +93,7 @@ func (s CodebaseService) CreateCodebase(codebase command.CreateCodebase) (*edpv1
 	}
 	clog.Debug("CR was generated. Waiting to save ...", zap.String("name", c.Name))
 
-	if err := createTempSecrets(console.Namespace, codebase, coreClient); err != nil {
+	if err := s.createTempSecrets(codebase); err != nil {
 		return nil, err
 	}
 
@@ -253,12 +258,28 @@ func createSecret(namespace string, secret *v1.Secret, coreClient k8s.CoreClient
 	return createdSecret, nil
 }
 
-func createTempSecrets(namespace string, codebase command.CreateCodebase, coreClient k8s.CoreClient) error {
+func (s CodebaseService) createTempSecrets(codebase command.CreateCodebase) error {
+	if codebase.Repository != nil && (codebase.Repository.Login == "" && codebase.Repository.Password == "") {
+		secret, err := s.Clients.CoreClient.Secrets(console.Namespace).
+			Get(s.GerritCreatorSecretName, metav1.GetOptions{})
+		if err != nil {
+			return errors.Wrap(err, "unable to get gerrit creator secret")
+		}
+
+		if username, ok := secret.Data[gerritCreatorUsername]; ok {
+			codebase.Repository.Login = string(username)
+		}
+
+		if password, ok := secret.Data[gerritCreatorPassword]; ok {
+			codebase.Repository.Password = string(password)
+		}
+	}
+
 	if codebase.Repository != nil && (codebase.Repository.Login != "" && codebase.Repository.Password != "") {
 		repoSecretName := fmt.Sprintf("repository-codebase-%s-temp", codebase.Name)
 		tempRepoSecret := getSecret(repoSecretName, codebase.Repository.Login, codebase.Repository.Password)
 
-		if _, err := createSecret(namespace, tempRepoSecret, coreClient); err != nil {
+		if _, err := createSecret(console.Namespace, tempRepoSecret, s.Clients.CoreClient); err != nil {
 			clog.Error("an error has occurred while creating repository secret", zap.Error(err))
 			return err
 		}
@@ -269,7 +290,7 @@ func createTempSecrets(namespace string, codebase command.CreateCodebase, coreCl
 		vcsSecretName := fmt.Sprintf("vcs-autouser-codebase-%s-temp", codebase.Name)
 		tempVcsSecret := getSecret(vcsSecretName, codebase.Vcs.Login, codebase.Vcs.Password)
 
-		if _, err := createSecret(namespace, tempVcsSecret, coreClient); err != nil {
+		if _, err := createSecret(console.Namespace, tempVcsSecret, s.Clients.CoreClient); err != nil {
 			clog.Error("an error has occurred while creating vcs secret", zap.Error(err))
 			return err
 		}

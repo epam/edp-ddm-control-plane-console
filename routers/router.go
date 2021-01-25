@@ -102,10 +102,11 @@ func init() {
 		},
 	}
 	codebaseService := service.CodebaseService{
-		Clients:               clients,
-		ICodebaseRepository:   codebaseRepository,
-		ICDPipelineRepository: pipelineRepository,
-		BranchService:         branchService,
+		Clients:                 clients,
+		ICodebaseRepository:     codebaseRepository,
+		ICDPipelineRepository:   pipelineRepository,
+		BranchService:           branchService,
+		GerritCreatorSecretName: beego.AppConfig.String("gerritCreatorSecretName"),
 	}
 	pipelineService := cd_pipeline.CDPipelineService{
 		Clients:               clients,
