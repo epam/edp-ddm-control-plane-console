@@ -42,4 +42,21 @@
             </div>
         </form>
     </div>
+
+
 {{ end }}
+
+{{ define "js"}}
+    <script type="text/javascript">
+        $(function (){
+            $("#name").on('change invalid', function(){
+                let input = $(this).get(0);
+                input.setCustomValidity('');
+
+                if (!input.validity.valid) {
+                    input.setCustomValidity('Будь-ласка вкажіть назву у відповідному форматі');
+                }
+            });
+        });
+    </script>
+{{end}}
