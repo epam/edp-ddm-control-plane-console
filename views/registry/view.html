@@ -117,23 +117,21 @@
         </div>
     </div>
     {{end}}
-
+    {{ if .edpComponents}}
     <div class="dashboard-panel registry-dashboard-panel">
         <ul>
+            {{range $index, $ec := .edpComponents}}
             <li>
-                <img src="{{.BasePath}}/static/img/gerrit-logo.png" alt="gerrit logo" />
+                <img src="data:image/svg+xml;base64,{{$ec.Spec.Icon}}" alt="{{$ec.Spec.Type}} logo" />
                 <div class="dashboard-item-content">
-                    <a href="{{.GerritLink}}">Gerrit <img src="{{.BasePath}}/static/img/action-link.png" alt="gerrit link"></a>
+                    <a href="{{$ec.Spec.Url}}">{{$ec.Spec.Type}} <img src="{{$.BasePath}}/static/img/action-link.png"
+                                                                      alt="{{$ec.Spec.Type}} link"></a>
                 </div>
             </li>
-            <li>
-                <img src="{{.BasePath}}/static/img/jenkins-logo.png" alt="jenkins logo" />
-                <div class="dashboard-item-content">
-                    <a href="{{.JenkinsLink}}">Jenkins <img src="{{.BasePath}}/static/img/action-link.png" alt="gerrit link"></a>
-                </div>
-            </li>
+            {{end}}
         </ul>
     </div>
+    {{end}}
 </div>
 
 {{ end }}
