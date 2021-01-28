@@ -11,6 +11,7 @@ const (
 	Application = "application"
 	Autotest    = "autotests"
 
+	EDPComponentPlural   = "edpcomponents"
 	CodebasePlural       = "codebases"
 	CodebaseBranchPlural = "codebasebranches"
 	StagePlural          = "stages"

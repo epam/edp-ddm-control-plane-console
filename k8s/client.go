@@ -21,6 +21,7 @@ import (
 
 	edppipelinesv1alpha1 "github.com/epmd-edp/cd-pipeline-operator/v2/pkg/apis/edp/v1alpha1"
 	edpv1alpha1 "github.com/epmd-edp/codebase-operator/v2/pkg/apis/edp/v1alpha1"
+	"github.com/epmd-edp/edp-component-operator/pkg/apis/v1/v1alpha1"
 	appsV1Client "github.com/openshift/client-go/apps/clientset/versioned/typed/apps/v1"
 	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,16 +36,20 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-var log = logger.GetLogger()
-var k8sConfig clientcmd.ClientConfig
-var SchemeGroupVersion = schema.GroupVersion{Group: "v2.edp.epam.com", Version: "v1alpha1"}
+var (
+	log                  = logger.GetLogger()
+	k8sConfig            clientcmd.ClientConfig
+	SchemeGroupVersionV2 = schema.GroupVersion{Group: "v2.edp.epam.com", Version: "v1alpha1"}
+	SchemeGroupVersionV1 = schema.GroupVersion{Group: "v1.edp.epam.com", Version: "v1alpha1"}
+)
 
 type ClientSet struct {
-	CoreClient     CoreClient
-	StorageClient  *storageV1Client.StorageV1Client
-	EDPRestClient  rest.Interface
-	AppsV1Client   *appsV1Client.AppsV1Client
-	K8sAppV1Client v1.AppsV1Interface
+	CoreClient      CoreClient
+	StorageClient   *storageV1Client.StorageV1Client
+	EDPRestClient   rest.Interface // v2 version
+	EDPRestClientV1 rest.Interface
+	AppsV1Client    *appsV1Client.AppsV1Client
+	K8sAppV1Client  v1.AppsV1Interface
 }
 
 func init() {
@@ -61,7 +66,7 @@ func CreateOpenShiftClients() ClientSet {
 		panic(err)
 	}
 
-	crClient, err := getApplicationClient()
+	crClientV1, crClientV2, err := getApplicationClient()
 	if err != nil {
 		log.Error("An error has occurred while getting custom resource client", zap.Error(err))
 		panic(err)
@@ -86,11 +91,12 @@ func CreateOpenShiftClients() ClientSet {
 	}
 
 	return ClientSet{
-		CoreClient:     coreClient,
-		StorageClient:  storageClient,
-		EDPRestClient:  crClient,
-		AppsV1Client:   openshiftAppClient,
-		K8sAppV1Client: k8sAppClient,
+		CoreClient:      coreClient,
+		StorageClient:   storageClient,
+		EDPRestClient:   crClientV2,
+		EDPRestClientV1: crClientV1,
+		AppsV1Client:    openshiftAppClient,
+		K8sAppV1Client:  k8sAppClient,
 	}
 }
 
@@ -131,21 +137,25 @@ func getStorageClient() (*storageV1Client.StorageV1Client, error) {
 	return coreClient, nil
 }
 
-func getApplicationClient() (*rest.RESTClient, error) {
+func getApplicationClient() (v1Client *rest.RESTClient, v2Client *rest.RESTClient, err error) {
 	var config *rest.Config
-	var err error
-
 	config, err = k8sConfig.ClientConfig()
 
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	clientset, err := createCrdClient(config)
-	if err != nil {
-		return nil, err
+	clientV1, tErr := createCrdClient(config, &SchemeGroupVersionV1, addKnownTypesV1)
+	if tErr != nil {
+		return nil, nil, tErr
 	}
-	return clientset, nil
+
+	clientV2, tErr := createCrdClient(config, &SchemeGroupVersionV2, addKnownTypesV2)
+	if tErr != nil {
+		return nil, nil, tErr
+	}
+
+	return clientV1, clientV2, nil
 }
 
 func getOpenshiftApplicationClient() (*appsV1Client.AppsV1Client, error) {
@@ -165,14 +175,15 @@ func getOpenshiftApplicationClient() (*appsV1Client.AppsV1Client, error) {
 	return clientset, nil
 }
 
-func createCrdClient(cfg *rest.Config) (*rest.RESTClient, error) {
+func createCrdClient(cfg *rest.Config, groupVersion *schema.GroupVersion,
+	knownTypes func(*runtime.Scheme) error) (*rest.RESTClient, error) {
 	scheme := runtime.NewScheme()
-	SchemeBuilder := runtime.NewSchemeBuilder(addKnownTypes)
+	SchemeBuilder := runtime.NewSchemeBuilder(knownTypes)
 	if err := SchemeBuilder.AddToScheme(scheme); err != nil {
 		return nil, err
 	}
 	config := *cfg
-	config.GroupVersion = &SchemeGroupVersion
+	config.GroupVersion = groupVersion
 	config.APIPath = "/apis"
 	config.ContentType = runtime.ContentTypeJSON
 	config.NegotiatedSerializer = serializer.DirectCodecFactory{CodecFactory: serializer.NewCodecFactory(scheme)}
@@ -183,8 +194,18 @@ func createCrdClient(cfg *rest.Config) (*rest.RESTClient, error) {
 	return client, nil
 }
 
-func addKnownTypes(scheme *runtime.Scheme) error {
-	scheme.AddKnownTypes(SchemeGroupVersion,
+func addKnownTypesV1(scheme *runtime.Scheme) error {
+	scheme.AddKnownTypes(SchemeGroupVersionV1,
+		&v1alpha1.EDPComponent{},
+		&v1alpha1.EDPComponentList{},
+	)
+
+	metav1.AddToGroupVersion(scheme, SchemeGroupVersionV1)
+	return nil
+}
+
+func addKnownTypesV2(scheme *runtime.Scheme) error {
+	scheme.AddKnownTypes(SchemeGroupVersionV2,
 		&edpv1alpha1.Codebase{},
 		&edpv1alpha1.CodebaseList{},
 		&edpv1alpha1.CodebaseBranch{},
@@ -195,6 +216,6 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&edppipelinesv1alpha1.StageList{},
 	)
 
-	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
+	metav1.AddToGroupVersion(scheme, SchemeGroupVersionV2)
 	return nil
 }

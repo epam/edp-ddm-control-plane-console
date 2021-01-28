@@ -8,11 +8,13 @@ import (
 	"ddm-admin-console/models/query"
 	"ddm-admin-console/service"
 	"ddm-admin-console/util"
+	"ddm-admin-console/util/consts"
 	"fmt"
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/validation"
 	edpv1alpha1 "github.com/epmd-edp/codebase-operator/v2/pkg/apis/edp/v1alpha1"
+	"github.com/epmd-edp/edp-component-operator/pkg/apis/v1/v1alpha1"
 	"github.com/pkg/errors"
 )
 
@@ -37,6 +39,11 @@ type CodebaseService interface {
 	Delete(name, codebaseType string) error
 	GetCodebasesByCriteriaK8s(criteria query.CodebaseCriteria) ([]*query.Codebase, error)
 	GetCodebaseByNameK8s(name string) (*query.Codebase, error)
+}
+
+type EDPComponentServiceK8S interface {
+	GetAll(namespace string) ([]v1alpha1.EDPComponent, error)
+	Get(namespace, name string) (*v1alpha1.EDPComponent, error)
 }
 
 type ListRegistry struct {
@@ -289,48 +296,80 @@ func (r *CreateRegistry) Post() {
 
 type ViewRegistry struct {
 	beego.Controller
-	CodebaseService     CodebaseService
-	EDPComponentService EDPComponentService
+	CodebaseService        CodebaseService
+	EDPComponentServiceK8S EDPComponentServiceK8S
 }
 
-func MakeViewRegistry(codebaseService CodebaseService, edpComponentService EDPComponentService) *ViewRegistry {
+func MakeViewRegistry(codebaseService CodebaseService, edpComponentService EDPComponentServiceK8S) *ViewRegistry {
 	return &ViewRegistry{
-		CodebaseService:     codebaseService,
-		EDPComponentService: edpComponentService,
+		CodebaseService:        codebaseService,
+		EDPComponentServiceK8S: edpComponentService,
 	}
+}
+
+func (r *ViewRegistry) createLinksForGerritProvider(registry *query.Codebase) error {
+	cj, err := r.EDPComponentServiceK8S.Get(console.Namespace, consts.Jenkins)
+	if err != nil {
+		return errors.Wrap(err, "unable to get jenkins edp component resource")
+	}
+
+	cg, err := r.EDPComponentServiceK8S.Get(console.Namespace, consts.Gerrit)
+	if err != nil {
+		return errors.Wrap(err, "unable to get gerrit edp component resource")
+	}
+
+	for i, b := range registry.CodebaseBranch {
+		registry.CodebaseBranch[i].VCSLink = util.CreateGerritLink(cg.Spec.Url, registry.Name, b.Name)
+		registry.CodebaseBranch[i].CICDLink = util.CreateCICDApplicationLink(cj.Spec.Url, registry.Name,
+			util.ProcessNameToKubernetesConvention(b.Name))
+	}
+
+	return nil
 }
 
 func (r *ViewRegistry) Get() {
 	r.Data["BasePath"] = console.BasePath
 	r.Data["Type"] = registryType
 	r.TplName = "registry/view.html"
+	var gErr error
+	defer func() {
+		if gErr != nil {
+			log.Error(fmt.Sprintf("%+v\n", gErr))
+			r.CustomAbort(500, fmt.Sprintf("%+v\n", gErr))
+		}
+	}()
 
 	registryName := r.Ctx.Input.Param(":name")
 	rg, err := r.CodebaseService.GetCodebaseByNameK8s(registryName)
 	if err != nil {
-		log.Error(fmt.Sprintf("%+v\n", err))
-
 		if _, ok := errors.Cause(err).(service.RegistryNotFound); ok {
 			r.TplName = notFoundTemplatePath
 			return
 		}
 
-		r.CustomAbort(500, fmt.Sprintf("%+v\n", err))
+		gErr = err
 		return
 	}
 
 	if len(rg.CodebaseBranch) > 0 {
-		if err := CreateLinksForGerritProvider(r.EDPComponentService, rg); err != nil {
-			log.Error(fmt.Sprintf("%+v\n", err))
-			r.CustomAbort(500, fmt.Sprintf("%+v\n", err))
+		if err := r.createLinksForGerritProvider(rg); err != nil {
+			gErr = err
 			return
 		}
-
 		r.Data["branches"] = rg.CodebaseBranch
 	}
 
 	if len(rg.ActionLog) > 0 {
 		r.Data["actionLog"] = rg.ActionLog
+	}
+
+	ecs, err := r.EDPComponentServiceK8S.GetAll(rg.Name)
+	if err != nil {
+		gErr = err
+		return
+	}
+	if len(ecs) > 0 {
+		r.Data["edpComponents"] = ecs
 	}
 
 	r.Data["registry"] = rg

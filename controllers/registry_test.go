@@ -14,9 +14,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/pkg/errors"
-
 	"github.com/astaxie/beego"
+	"github.com/epmd-edp/edp-component-operator/pkg/apis/v1/v1alpha1"
+	"github.com/pkg/errors"
 )
 
 func TestListRegistry_GetSuccess(t *testing.T) {
@@ -449,8 +449,12 @@ func TestViewRegistry_Get(t *testing.T) {
 			},
 		},
 	}
-	eds := test.MockEDPComponentService{
-		GetEDPComponentResult: &query.EDPComponent{},
+
+	eds := test.MockEDPComponentServiceK8S{
+		GetResult: &v1alpha1.EDPComponent{},
+		GetAllResult: []v1alpha1.EDPComponent{
+			{},
+		},
 	}
 
 	beego.Router("/view-registry", MakeViewRegistry(cbMock, eds))
@@ -465,6 +469,45 @@ func TestViewRegistry_Get(t *testing.T) {
 	}
 }
 
+func TestViewRegistry_Get_FailureEdpComponents(t *testing.T) {
+	if err := test.InitBeego(); err != nil {
+		t.Fatal(err)
+	}
+
+	cbMock := test.MockCodebaseService{
+		GetCodebaseByNameK8sResult: &query.Codebase{
+			CodebaseBranch: []*query.CodebaseBranch{
+				{},
+			},
+			ActionLog: []*query.ActionLog{
+				{},
+			},
+		},
+	}
+
+	mockErr := errors.New("GetEDPComponents fatal")
+
+	eds := test.MockEDPComponentServiceK8S{
+		GetResult:   &v1alpha1.EDPComponent{},
+		GetAllError: mockErr,
+	}
+
+	beego.Router("/view-registry-failure-edp-comp", MakeViewRegistry(cbMock, eds))
+	request, _ := http.NewRequest("GET", "/view-registry-failure-edp-comp", nil)
+	responseWriter := httptest.NewRecorder()
+
+	beego.BeeApp.Handlers.ServeHTTP(responseWriter, request)
+
+	if responseWriter.Code != 500 {
+		t.Log(responseWriter.Code)
+		t.Fatal("wrong response code")
+	}
+
+	if !strings.Contains(responseWriter.Body.String(), mockErr.Error()) {
+		t.Fatal("wrong error return in response body")
+	}
+}
+
 func TestViewRegistry_Get_FailureGetCodebaseByName(t *testing.T) {
 	if err := test.InitBeego(); err != nil {
 		t.Fatal(err)
@@ -474,7 +517,7 @@ func TestViewRegistry_Get_FailureGetCodebaseByName(t *testing.T) {
 	cbMock := test.MockCodebaseService{
 		GetCodebaseByNameK8sError: mockErr,
 	}
-	eds := test.MockEDPComponentService{}
+	eds := test.MockEDPComponentServiceK8S{}
 
 	beego.Router("/view-registry-FailureGetCodebaseByName", MakeViewRegistry(cbMock, eds))
 	request, _ := http.NewRequest("GET", "/view-registry-FailureGetCodebaseByName", nil)
@@ -500,7 +543,7 @@ func TestViewRegistry_Get_FailureGetCodebaseByName404(t *testing.T) {
 	cbMock := test.MockCodebaseService{
 		GetCodebaseByNameK8sError: errors.Wrap(service.RegistryNotFound{}, ""),
 	}
-	eds := test.MockEDPComponentService{}
+	eds := test.MockEDPComponentServiceK8S{}
 
 	beego.Router("/view-registry-FailureGetCodebaseByName404", MakeViewRegistry(cbMock, eds))
 	request, _ := http.NewRequest("GET", "/view-registry-FailureGetCodebaseByName404", nil)
@@ -531,8 +574,9 @@ func TestViewRegistry_Get_FailureCreateLinksForGerritProvider(t *testing.T) {
 			},
 		},
 	}
-	eds := test.MockEDPComponentService{
-		GetEDPComponentError: mockErr,
+
+	eds := test.MockEDPComponentServiceK8S{
+		GetError: mockErr,
 	}
 
 	beego.Router("/view-registry-FailureCreateLinksForGerritProvider", MakeViewRegistry(cbMock, eds))

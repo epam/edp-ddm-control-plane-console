@@ -30,7 +30,6 @@ import (
 	edpComponentService "ddm-admin-console/service/edp-component"
 	"ddm-admin-console/service/logger"
 	"ddm-admin-console/util"
-	"ddm-admin-console/util/consts"
 	"fmt"
 
 	"github.com/astaxie/beego"
@@ -171,10 +170,7 @@ func init() {
 		PipelineService: &pipelineService,
 	}
 
-	ecsLocal := edpComponentService.MakeLocalLinks(map[string]string{
-		consts.Jenkins: beego.AppConfig.String("jenkinsGlobalLink"),
-		consts.Gerrit:  beego.AppConfig.String("gerritGlobalLink"),
-	})
+	k8sEDPComponentService := edpComponentService.MakeServiceK8S(clients.EDPRestClientV1)
 
 	adminEdpNamespace := beego.NewNamespace(fmt.Sprintf("%s/admin", console.BasePath),
 		beego.NSRouter("/overview", &ec, "get:GetEDPComponents"),
@@ -185,7 +181,7 @@ func init() {
 		beego.NSRouter("/registry/overview", controllers.MakeListRegistry(&codebaseService)),
 		beego.NSRouter("/registry/create", controllers.MakeCreateRegistry(&codebaseService)),
 		beego.NSRouter("/registry/edit/:name", controllers.MakeEditRegistry(&codebaseService)),
-		beego.NSRouter("/registry/view/:name", controllers.MakeViewRegistry(&codebaseService, ecsLocal)),
+		beego.NSRouter("/registry/view/:name", controllers.MakeViewRegistry(&codebaseService, k8sEDPComponentService)),
 	)
 	beego.AddNamespace(adminEdpNamespace)
 

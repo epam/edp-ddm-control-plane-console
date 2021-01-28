@@ -11794,6 +11794,15 @@ div#kubernetes-component {
     align-items: center;
 }
 
+.dashboard-item-content a:first-letter {
+    text-transform: capitalize
+}
+
+.dashboard-panel.registry-dashboard-panel li > img {
+    width: 60px;
+    height: 60px;
+}
+
 .dashboard-item-content img {
     margin: 0 0 0 11px;
 }
