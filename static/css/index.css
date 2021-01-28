@@ -11759,6 +11759,18 @@ div#kubernetes-component {
     border-radius: 4px;
 }
 
+.dashboard-panel.registry-dashboard-panel {
+    margin: 0;
+}
+
+.dashboard-panel.registry-dashboard-panel li {
+    margin-bottom: 16px;
+}
+
+.dashboard-panel.registry-dashboard-panel li:last-of-type {
+    margin-bottom: 0;
+}
+
 .dashboard-panel ul {
     list-style: none;
     padding: 16px;

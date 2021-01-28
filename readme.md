@@ -1,2 +1,0 @@
-# DDM Admin Console
-## Overview
