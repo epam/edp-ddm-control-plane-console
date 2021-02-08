@@ -11394,6 +11394,10 @@ div#kubernetes-component {
     margin: 16px 0 32px 0;
 }
 
+.registry-description.cluster {
+    width: 610px;
+}
+
 .registry-table-wrap {
     box-shadow: 0 6px 20px -5px rgba(34, 34, 34, 0.26);
     border-radius: 4px;
@@ -11545,6 +11549,10 @@ div#kubernetes-component {
 
 .registry-header-view {
     margin: 32px 0 0 0;
+}
+
+.registry-header-view.cluster {
+    margin: 0;
 }
 
 .rg-info-block {

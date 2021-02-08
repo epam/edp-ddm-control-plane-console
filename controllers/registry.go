@@ -307,13 +307,13 @@ func MakeViewRegistry(codebaseService CodebaseService, edpComponentService EDPCo
 	}
 }
 
-func (r *ViewRegistry) createLinksForGerritProvider(registry *query.Codebase) error {
-	cj, err := r.EDPComponentServiceK8S.Get(console.Namespace, consts.Jenkins)
+func CreateLinksForGerritProviderK8s(edpComponentServiceK8S EDPComponentServiceK8S, registry *query.Codebase) error {
+	cj, err := edpComponentServiceK8S.Get(console.Namespace, consts.Jenkins)
 	if err != nil {
 		return errors.Wrap(err, "unable to get jenkins edp component resource")
 	}
 
-	cg, err := r.EDPComponentServiceK8S.Get(console.Namespace, consts.Gerrit)
+	cg, err := edpComponentServiceK8S.Get(console.Namespace, consts.Gerrit)
 	if err != nil {
 		return errors.Wrap(err, "unable to get gerrit edp component resource")
 	}
@@ -352,7 +352,7 @@ func (r *ViewRegistry) Get() {
 	}
 
 	if len(rg.CodebaseBranch) > 0 {
-		if err := r.createLinksForGerritProvider(rg); err != nil {
+		if err := CreateLinksForGerritProviderK8s(r.EDPComponentServiceK8S, rg); err != nil {
 			gErr = err
 			return
 		}

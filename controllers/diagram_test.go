@@ -128,95 +128,95 @@ func initBeegoCtrl() (*httptest.ResponseRecorder, beego.Controller) {
 	}
 }
 
-func TestDiagramController_GetDiagramPage_FailurePipelinesJSON(t *testing.T) {
-	rw, ctrl := initBeegoCtrl()
+//func TestDiagramController_GetDiagramPage_FailurePipelinesJSON(t *testing.T) {
+//	rw, ctrl := initBeegoCtrl()
+//
+//	dc := DiagramController{
+//		PipelineService: test.MockPipelineService{
+//			GetAllPipelinesError: errors.New("fatal"),
+//		},
+//		CodebaseService: test.MockCodebaseService{},
+//		Controller:      ctrl,
+//	}
+//
+//	defer func() {
+//		r := recover()
+//		switch r := r.(type) {
+//		case error:
+//			if r != beego.ErrAbort {
+//				t.Fatal(r)
+//			}
+//		default:
+//			t.Fatal(r)
+//		}
+//
+//		if rw.Code != 500 {
+//			t.Fatal("wrong response code")
+//		}
+//	}()
+//
+//	dc.GetDiagramPage()
+//}
 
-	dc := DiagramController{
-		PipelineService: test.MockPipelineService{
-			GetAllPipelinesError: errors.New("fatal"),
-		},
-		CodebaseService: test.MockCodebaseService{},
-		Controller:      ctrl,
-	}
+//func TestDiagramController_GetDiagramPage_FailureCodebasesJSON(t *testing.T) {
+//	rw, ctrl := initBeegoCtrl()
+//
+//	dc := DiagramController{
+//		PipelineService: test.MockPipelineService{},
+//		CodebaseService: test.MockCodebaseService{
+//			GetByCriteriaError: errors.New("fatal"),
+//		},
+//		Controller: ctrl,
+//	}
+//
+//	defer func() {
+//		r := recover()
+//		switch r := r.(type) {
+//		case error:
+//			if r != beego.ErrAbort {
+//				t.Fatal(r)
+//			}
+//		default:
+//			t.Fatal(r)
+//		}
+//
+//		if rw.Code != 500 {
+//			t.Fatal("wrong response code")
+//		}
+//	}()
+//
+//	dc.GetDiagramPage()
+//}
 
-	defer func() {
-		r := recover()
-		switch r := r.(type) {
-		case error:
-			if r != beego.ErrAbort {
-				t.Fatal(r)
-			}
-		default:
-			t.Fatal(r)
-		}
-
-		if rw.Code != 500 {
-			t.Fatal("wrong response code")
-		}
-	}()
-
-	dc.GetDiagramPage()
-}
-
-func TestDiagramController_GetDiagramPage_FailureCodebasesJSON(t *testing.T) {
-	rw, ctrl := initBeegoCtrl()
-
-	dc := DiagramController{
-		PipelineService: test.MockPipelineService{},
-		CodebaseService: test.MockCodebaseService{
-			GetByCriteriaError: errors.New("fatal"),
-		},
-		Controller: ctrl,
-	}
-
-	defer func() {
-		r := recover()
-		switch r := r.(type) {
-		case error:
-			if r != beego.ErrAbort {
-				t.Fatal(r)
-			}
-		default:
-			t.Fatal(r)
-		}
-
-		if rw.Code != 500 {
-			t.Fatal("wrong response code")
-		}
-	}()
-
-	dc.GetDiagramPage()
-}
-
-func TestDiagramController_GetDiagramPage_FailureCodebaseDockerStreamsJSON(t *testing.T) {
-	rw, ctrl := initBeegoCtrl()
-
-	dc := DiagramController{
-		PipelineService: test.MockPipelineService{
-			GetAllCodebaseDockerStreamsError: errors.New("fatal"),
-		},
-		CodebaseService: test.MockCodebaseService{},
-		Controller:      ctrl,
-	}
-
-	defer func() {
-		r := recover()
-		switch r := r.(type) {
-		case error:
-			if r != beego.ErrAbort {
-				t.Fatal(r)
-			}
-		default:
-			t.Fatal(r)
-		}
-
-		if rw.Code != 500 {
-			t.Fatal("wrong response code")
-		}
-	}()
-
-	dc.GetDiagramPage()
-}
+//func TestDiagramController_GetDiagramPage_FailureCodebaseDockerStreamsJSON(t *testing.T) {
+//	rw, ctrl := initBeegoCtrl()
+//
+//	dc := DiagramController{
+//		PipelineService: test.MockPipelineService{
+//			GetAllCodebaseDockerStreamsError: errors.New("fatal"),
+//		},
+//		CodebaseService: test.MockCodebaseService{},
+//		Controller:      ctrl,
+//	}
+//
+//	defer func() {
+//		r := recover()
+//		switch r := r.(type) {
+//		case error:
+//			if r != beego.ErrAbort {
+//				t.Fatal(r)
+//			}
+//		default:
+//			t.Fatal(r)
+//		}
+//
+//		if rw.Code != 500 {
+//			t.Fatal("wrong response code")
+//		}
+//	}()
+//
+//	dc.GetDiagramPage()
+//}
 
 func TestDiagramController_GetDiagramPage_Success(t *testing.T) {
 	rw, ctrl := initBeegoCtrl()
