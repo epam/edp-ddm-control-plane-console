@@ -212,7 +212,7 @@ func (s CodebaseService) GetCodebaseByNameK8s(name string) (*query.Codebase, err
 	if err := s.Clients.EDPRestClient.Get().Namespace(console.Namespace).Resource(consts.CodebasePlural).Name(name).
 		Do().Into(&edpCodebase); err != nil {
 		if errStatus, ok := err.(*errors2.StatusError); ok && errStatus.ErrStatus.Code == 404 {
-			return nil, errors.Wrap(RegistryNotFound{cause: errStatus}, "registry not found")
+			return nil, RegistryNotFound{cause: errStatus}
 		}
 
 		if edpCodebase.ObjectMeta.DeletionTimestamp != nil {

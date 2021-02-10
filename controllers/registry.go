@@ -242,7 +242,7 @@ func (r *CreateRegistry) createRegistry(registry *models.Registry) (errorMap map
 		JobProvisioning:  &jobProvisioning,
 		Versioning:       versioning,
 		Repository: &command.Repository{
-			URL: beego.AppConfig.String("defaultGitRepo"),
+			URL: beego.AppConfig.String("registryGitRepo"),
 		},
 		JenkinsSlave: util.GetStringP(jenkinsSlave),
 	})
