@@ -28,9 +28,14 @@ type MockCodebaseService struct {
 
 	GetCodebaseByNameK8sResult *query.Codebase
 	GetCodebaseByNameK8sError  error
+
+	GetCodebaseByNameK8sMockFunc func(name string) (*query.Codebase, error)
 }
 
 func (m MockCodebaseService) GetCodebaseByNameK8s(name string) (*query.Codebase, error) {
+	if m.GetCodebaseByNameK8sMockFunc != nil {
+		return m.GetCodebaseByNameK8sMockFunc(name)
+	}
 	return m.GetCodebaseByNameK8sResult, m.GetCodebaseByNameK8sError
 }
 

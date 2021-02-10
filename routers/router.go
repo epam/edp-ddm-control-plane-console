@@ -184,7 +184,8 @@ func init() {
 		beego.NSRouter("/registry/view/:name", controllers.MakeViewRegistry(&codebaseService, k8sEDPComponentService)),
 		beego.NSRouter("/cluster/management", controllers.MakeClusterManagement(&codebaseService,
 			k8sEDPComponentService,
-			beego.AppConfig.DefaultString("clusterManagementCodebaseName", "cluster-management"))),
+			beego.AppConfig.DefaultString("clusterManagementCodebaseName", "cluster-management"),
+			beego.AppConfig.String("clusterManagementRepo"))),
 	)
 	beego.AddNamespace(adminEdpNamespace)
 
