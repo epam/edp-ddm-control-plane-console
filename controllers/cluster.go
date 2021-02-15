@@ -53,7 +53,7 @@ func (c *ClusterManagement) createClusterCodebase() (*query.Codebase, error) {
 		DefaultBranch:    defaultBranch,
 		Lang:             lang,
 		BuildTool:        buildTool,
-		Strategy:         strategy,
+		Strategy:         "import",
 		DeploymentScript: deploymentScript,
 		GitServer:        defaultGitServer,
 		CiTool:           ciTool,
