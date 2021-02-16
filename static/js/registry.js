@@ -29,7 +29,7 @@ $(function (){
     registryInput.keyup(function (e) {
         let popupFooter = $(".popup-footer");
         popupFooter.removeClass('active');
-        if (registryName === $(e.currentTarget).val()) {
+        if (registryName.toString() === $(e.currentTarget).val()) {
             popupFooter.addClass('active');
         }
     });
