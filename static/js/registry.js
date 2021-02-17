@@ -1,6 +1,7 @@
 $(function (){
     let registryName;
     let registryInput = $("#registry-name");
+    let popupFooter = $(".popup-footer");
 
     let hidePopup = function (){
         $(".popup-backdrop").hide();
@@ -11,6 +12,7 @@ $(function (){
     let showPopup = function (){
         $(".popup-backdrop").show();
         $(".popup-window").show();
+        popupFooter.removeClass('active');
         registryInput.val('');
     };
 
@@ -27,7 +29,6 @@ $(function (){
 
     registryInput.val('');
     registryInput.keyup(function (e) {
-        let popupFooter = $(".popup-footer");
         popupFooter.removeClass('active');
         if (registryName.toString() === $(e.currentTarget).val()) {
             popupFooter.addClass('active');
