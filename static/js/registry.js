@@ -42,7 +42,7 @@ $(function (){
     });
 
     $("#delete-form").submit(function () {
-        return registryName === registryInput.val()
+        return registryName.toString() === registryInput.val()
     });
 
 
