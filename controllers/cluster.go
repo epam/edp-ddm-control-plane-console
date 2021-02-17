@@ -7,6 +7,7 @@ import (
 	"ddm-admin-console/service"
 	"ddm-admin-console/util"
 	"fmt"
+	"strings"
 
 	"github.com/pkg/errors"
 
@@ -45,6 +46,12 @@ func (c *ClusterManagement) createClusterCodebase() (*query.Codebase, error) {
 		Type:      "edp",
 	}
 
+	if !strings.Contains(c.GitRepo, "//") || !strings.Contains(c.GitRepo, "/") {
+		return nil, errors.New("wrong git repo")
+	}
+
+	repoPath := strings.Join(strings.Split(strings.Split(c.GitRepo, "//")[1], "/")[1:], "/")
+
 	_, err := c.CodebaseService.CreateCodebase(command.CreateCodebase{
 		Name:             c.CodebaseName,
 		Username:         username,
@@ -56,6 +63,7 @@ func (c *ClusterManagement) createClusterCodebase() (*query.Codebase, error) {
 		Strategy:         "import",
 		DeploymentScript: deploymentScript,
 		GitServer:        defaultGitServer,
+		GitURLPath:       util.GetStringP(fmt.Sprintf("/%s", repoPath)),
 		CiTool:           ciTool,
 		JobProvisioning:  &jobProvisioning,
 		Versioning:       versioning,
