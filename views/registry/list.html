@@ -49,11 +49,13 @@
                             {{end}}
                         </td>
                         <td>
+                            {{if $registry.CanBeDeleted}}
                             {{if not $registry.ForegroundDeletion}}
                             <a href="#" class="delete-registry" data-id="{{$registry.ID}}"
                                data-name="{{$registry.Name}}">
                                 <img src="{{ $.BasePath }}/static/img/action-delete.png" alt="delete registry" />
                             </a>
+                            {{end}}
                             {{end}}
                         </td>
                     </tr>

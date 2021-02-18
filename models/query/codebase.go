@@ -64,6 +64,16 @@ func (c Codebase) StrStatus() string {
 	return status
 }
 
+func (c Codebase) CanBeDeleted() bool {
+	for _, cb := range c.CodebaseBranch {
+		if cb.Status != "active" {
+			return false
+		}
+	}
+
+	return string(c.Status) == "active"
+}
+
 func (c *Codebase) TableName() string {
 	return "codebase"
 }
