@@ -39,7 +39,8 @@ func TestClusterManagement_CreateCodebase(t *testing.T) {
 		GetResult: &v1alpha1.EDPComponent{},
 	}
 
-	beego.Router("/cluster-management-create", MakeClusterManagement(codebaseService, ecs, "cluster-management", ""))
+	beego.Router("/cluster-management-create", MakeClusterManagement(codebaseService, ecs,
+		"cluster-management", beego.AppConfig.String("clusterManagementRepo")))
 	request, _ := http.NewRequest("GET", "/cluster-management-create", nil)
 	responseWriter := httptest.NewRecorder()
 
@@ -67,7 +68,8 @@ func TestClusterManagement_GetSuccess(t *testing.T) {
 		GetResult: &v1alpha1.EDPComponent{},
 	}
 
-	beego.Router("/cluster-management", MakeClusterManagement(codebaseService, ecs, "cluster-management", ""))
+	beego.Router("/cluster-management", MakeClusterManagement(codebaseService, ecs,
+		"cluster-management", beego.AppConfig.String("clusterManagementRepo")))
 	request, _ := http.NewRequest("GET", "/cluster-management", nil)
 	responseWriter := httptest.NewRecorder()
 

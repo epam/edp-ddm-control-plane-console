@@ -6,7 +6,10 @@ import (
 	"ddm-admin-console/repository/mock"
 	"ddm-admin-console/test"
 	"fmt"
+	"net/http"
 	"testing"
+
+	"k8s.io/client-go/rest"
 
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -68,21 +71,27 @@ func TestCodebaseService_UpdateDescription(t *testing.T) {
 }
 
 func TestCodebaseService_GetCodebasesByCriteriaK8s(t *testing.T) {
-	// clientSet := k8s.CreateOpenShiftClients()
-
-	getResponse, _ := test.NewResponseShortcut(
-		fmt.Sprintf(
-			`{"items": [{"metadata": {"name": "test"}, "spec": {"description": "test", "type": "%s"}}]}`,
-			query.Registry))
-
 	getHTTPClient := test.MockHTTPClient{
-		DoResponse: getResponse,
-		DoError:    nil,
+		DoHandler: func(req *http.Request) (*http.Response, error) {
+			if req.URL.Path == "/codebases" {
+				getResponse, _ := test.NewResponseShortcut(
+					fmt.Sprintf(
+						`{"items": [{"metadata": {"name": "test"}, "spec": {"description": "test", "type": "%s"}}]}`,
+						query.Registry))
+				return getResponse, nil
+			}
+
+			getResponse, _ := test.NewResponseShortcut(
+				`{"items": [{"metadata": {"name": "test"}, "spec": {"branchName": "master"}}]}`)
+			return getResponse, nil
+		},
 	}
 
 	cs := CodebaseService{Clients: k8s.ClientSet{
 		EDPRestClient: test.MockRestInterface{
-			GetResponse: test.NewRequestShortcut(getHTTPClient),
+			GetResponseHandler: func() *rest.Request {
+				return test.NewRequestShortcut(getHTTPClient)
+			},
 		},
 	}}
 	rsp, err := cs.GetCodebasesByCriteriaK8s(query.CodebaseCriteria{

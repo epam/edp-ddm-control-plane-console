@@ -2,7 +2,10 @@ package query
 
 import "time"
 
-const viewTimeFormat = "02.01.2006 15:04"
+const (
+	viewTimeFormat = "02.01.2006 15:04"
+	statusActive   = "active"
+)
 
 type Codebase struct {
 	ID                   int               `json:"id" orm:"column(id)"`
@@ -66,12 +69,12 @@ func (c Codebase) StrStatus() string {
 
 func (c Codebase) CanBeDeleted() bool {
 	for _, cb := range c.CodebaseBranch {
-		if cb.Status != "active" {
+		if cb.Status != statusActive {
 			return false
 		}
 	}
 
-	return string(c.Status) == "active"
+	return string(c.Status) == statusActive
 }
 
 func (c *Codebase) TableName() string {

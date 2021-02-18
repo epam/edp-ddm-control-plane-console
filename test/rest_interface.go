@@ -29,11 +29,12 @@ type Interface interface {
 }
 
 type MockRestInterface struct {
-	PostResponse   *rest.Request
-	PutResponse    *rest.Request
-	PatchResponse  *rest.Request
-	GetResponse    *rest.Request
-	DeleteResponse *rest.Request
+	PostResponse       *rest.Request
+	PutResponse        *rest.Request
+	PatchResponse      *rest.Request
+	GetResponse        *rest.Request
+	GetResponseHandler func() *rest.Request
+	DeleteResponse     *rest.Request
 }
 
 func (MockRestInterface) GetRateLimiter() flowcontrol.RateLimiter {
@@ -57,6 +58,10 @@ func (m MockRestInterface) Patch(pt types.PatchType) *rest.Request {
 }
 
 func (m MockRestInterface) Get() *rest.Request {
+	if m.GetResponseHandler != nil {
+		return m.GetResponseHandler()
+	}
+
 	return m.GetResponse
 }
 
@@ -85,9 +90,14 @@ type HTTPClient interface {
 type MockHTTPClient struct {
 	DoResponse *http.Response
 	DoError    error
+	DoHandler  func(req *http.Request) (*http.Response, error)
 }
 
 func (m MockHTTPClient) Do(req *http.Request) (*http.Response, error) {
+	if m.DoHandler != nil {
+		return m.DoHandler(req)
+	}
+
 	return m.DoResponse, m.DoError
 }
 
