@@ -180,7 +180,7 @@ func (s *CodebaseService) GetCodebasesByCriteriaK8s(criteria query.CodebaseCrite
 			continue
 		}
 
-		qcb, err := s.k8sCodebase2queryCodebase(&edpCodebasesList.Items[i], false)
+		qcb, err := s.k8sCodebase2queryCodebase(&edpCodebasesList.Items[i], true)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to convert k8s codebase to query codebase")
 		}
