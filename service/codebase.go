@@ -137,6 +137,7 @@ func (s *CodebaseService) k8sCodebase2queryCodebase(
 		Description: description,
 		CreatedAt:   &cb.ObjectMeta.CreationTimestamp.Time,
 		Status:      query.Status(cb.Status.Value),
+		Available:   cb.Status.Available,
 	}
 
 	if cb.ObjectMeta.DeletionTimestamp != nil {

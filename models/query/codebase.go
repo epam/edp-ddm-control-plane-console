@@ -44,6 +44,7 @@ type Codebase struct {
 	CiTool               string            `json:"ciTool" orm:"ci_tool"`
 	CreatedAt            *time.Time        `json:"-" orm:"-"`
 	ForegroundDeletion   bool              `json:"-" orm:"-"`
+	Available            bool              `json:"-" orm:"-"`
 }
 
 func (c Codebase) FormattedCreatedAt() string {
@@ -74,7 +75,7 @@ func (c Codebase) CanBeDeleted() bool {
 		}
 	}
 
-	return string(c.Status) == statusActive
+	return c.Available && string(c.Status) == statusActive
 }
 
 func (c *Codebase) TableName() string {
