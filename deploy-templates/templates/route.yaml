@@ -3,14 +3,14 @@ apiVersion: route.openshift.io/v1
 metadata:
   annotations:
     meta.helm.sh/release-name: edp-install
-  name: ddm-admin-console
+  name: {{ .Values.name }}
   labels:
-    app: ddm-admin-console
+    app: {{ .Values.name }}
 spec:
-  host: ddm-admin-console-mdtu-ddm-edp-cicd.apps.cicd.mdtu-ddm.projects.epam.com
+  host: {{ .Values.host }}
   to:
     kind: Service
-    name: ddm-admin-console
+    name: {{ .Values.name }}
     weight: 100
   tls:
     termination: edge

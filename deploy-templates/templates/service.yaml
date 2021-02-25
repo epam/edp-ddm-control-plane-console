@@ -1,15 +1,15 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: ddm-admin-console
+  name: {{ .Values.name }}
   labels:
-    app: ddm-admin-console
+    app: {{ .Values.name }}
 spec:
   ports:
     - protocol: TCP
       port: 8080
       targetPort: 8080
   selector:
-    app: ddm-admin-console
+    app: {{ .Values.name }}
   type: ClusterIP
   sessionAffinity: None
