@@ -1,7 +1,7 @@
 apiVersion: v2.edp.epam.com/v1alpha1
 kind: AdminConsole
 metadata:
-  name: ddm-admin-console
+  name: {{ .Values.name }}
 spec:
   basePath: ''
   dbSpec:

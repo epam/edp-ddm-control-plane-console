@@ -84,7 +84,7 @@ spec:
             tcpSocket:
               port: 8080
             timeoutSeconds: 1
-          name: ddm-admin-console
+          name: {{ .Values.name }}
           ports:
             - containerPort: 8080
               protocol: TCP
