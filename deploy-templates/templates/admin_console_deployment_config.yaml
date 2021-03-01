@@ -43,9 +43,9 @@ spec:
             - name: GERRIT_GLOBAL_LINK
               value: "https://gerrit-{{ .Values.namespace }}.{{ .Values.dnsWildCard }}"
             - name: CLUSTER_REPO
-              value: "https://gerrit-{{ .Values.namespace }}.{{ .Values.dnsWildCard }}"
+              value: "https://gerrit-{{ .Values.namespace }}.{{ .Values.dnsWildCard }}/admin/repos/cluster-mgmt"
             - name: REGISTRY_REPO
-              value: "https://gerrit-{{ .Values.namespace }}.{{ .Values.dnsWildCard }}"
+              value: "https://gerrit-{{ .Values.namespace }}.{{ .Values.dnsWildCard }}/templates/registry-tenant-template"
             - name: JENKINS_GLOBAL_LINK
               value: "https://jenkins-{{ .Values.namespace }}.{{ .Values.dnsWildCard }}"
             - name: AUTH_KEYCLOAK_ENABLED
