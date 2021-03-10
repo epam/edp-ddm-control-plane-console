@@ -3,7 +3,7 @@ apiVersion: authorization.openshift.io/v1
 kind: ClusterRole
 metadata:
     annotations:
-        openshift.io/description: Role for {{ .Values.name }}-edp service account
+        openshift.io/description: Role for {{ .Values.operator.serviceAccountName }}-edp service account
         openshift.io/reconcile-protect: "false"
     name: edp-{{ .Values.name }}-clusterrole-{{ .Values.global.edpName }}
 rules:

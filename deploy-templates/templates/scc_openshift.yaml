@@ -17,8 +17,8 @@ metadata:
   annotations:
     "helm.sh/hook": "pre-install"
   labels:
-    app: edp-admin-console
-  name: edp-admin-console-{{.Values.global.edpName}}-edp
+    app: {{ .Values.operator.serviceAccountName }}
+  name: {{ .Values.operator.serviceAccountName }}-{{.Values.global.edpName}}
 priority: 1
 readOnlyRootFilesystem: false
 requiredDropCapabilities: []
@@ -30,7 +30,7 @@ seLinuxContext:
 supplementalGroups:
   type: RunAsAny
 users:
-  - system:serviceaccount:{{.Values.global.edpName}}:edp-admin-console
+  - system:serviceaccount:{{.Values.global.edpName}}:{{ .Values.operator.serviceAccountName }}
 volumes:
   - configMap
   - downwardAPI

@@ -8,4 +8,4 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 subjects:
   - kind: ServiceAccount
-    name: edp-admin-console
+    name: {{ .Values.operator.serviceAccountName }}

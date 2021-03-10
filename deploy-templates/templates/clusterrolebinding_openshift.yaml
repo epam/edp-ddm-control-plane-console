@@ -7,9 +7,9 @@ roleRef:
   name: edp-{{ .Values.name }}-clusterrole-{{ .Values.global.edpName }}
 subjects:
   - kind: ServiceAccount
-    name: "{{ .Values.name }}-edp"
+    name: "{{ .Values.operator.serviceAccountName }}-edp"
     namespace: {{ .Values.global.edpName }}
 userNames:
-  - system:serviceaccount:{{ .Values.global.edpName }}:{{ .Values.name }}-edp
+  - system:serviceaccount:{{ .Values.global.edpName }}:{{ .Values.operator.serviceAccountName }}-edp
 groupNames: []
 {{ end }}

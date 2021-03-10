@@ -2,14 +2,14 @@
 apiVersion: authorization.openshift.io/v1
 kind: RoleBinding
 metadata:
-  name: {{ .Values.name }}-edp-admin-{{ .Values.global.edpName }}
+  name: {{ .Values.operator.serviceAccountName }}-edp-admin-{{ .Values.global.edpName }}
 roleRef:
   name: admin
 subjects:
   - kind: ServiceAccount
-    name: {{ .Values.name }}-edp
+    name: {{ .Values.operator.serviceAccountName }}-edp
     namespace: {{ .Values.global.edpName }}
 userNames:
-  - system:serviceaccount:{{ .Values.global.edpName }}:{{ .Values.name }}-edp
+  - system:serviceaccount:{{ .Values.global.edpName }}:{{ .Values.operator.serviceAccountName }}-edp
 groupNames: []
 {{- end -}}
