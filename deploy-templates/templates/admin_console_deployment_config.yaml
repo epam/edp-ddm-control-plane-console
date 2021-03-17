@@ -41,19 +41,19 @@ spec:
             - name: EDP_VERSION
               value: "{{ .Values.version }}"
             - name: GERRIT_GLOBAL_LINK
-              value: "https://gerrit-{{ .Values.namespace }}.{{ .Values.dnsWildCard }}"
+              value: "https://gerrit-{{ .Values.namespace }}.{{ .Values.dnsWildcard }}"
             - name: CLUSTER_REPO
-              value: "https://gerrit-{{ .Values.namespace }}.{{ .Values.dnsWildCard }}/admin/repos/cluster-mgmt"
+              value: "https://gerrit-{{ .Values.namespace }}.{{ .Values.dnsWildcard }}/cluster-mgmt"
             - name: REGISTRY_REPO
-              value: "https://gerrit-{{ .Values.namespace }}.{{ .Values.dnsWildCard }}/templates/registry-tenant-template"
+              value: "https://gerrit-{{ .Values.namespace }}.{{ .Values.dnsWildcard }}/templates/registry-tenant-template"
             - name: JENKINS_GLOBAL_LINK
-              value: "https://jenkins-{{ .Values.namespace }}.{{ .Values.dnsWildCard }}"
+              value: "https://jenkins-{{ .Values.namespace }}.{{ .Values.dnsWildcard }}"
             - name: AUTH_KEYCLOAK_ENABLED
               value: "false"
             - name: DNS_WILDCARD
-              value: "{{ .Values.dnsWildCard }}"
+              value: "{{ .Values.dnsWildcard }}"
             - name: OPENSHIFT_CLUSTER_URL
-              value: "console-openshift-console.{{ .Values.dnsWildCard }}"
+              value: "console-openshift-console.{{ .Values.dnsWildcard }}"
             - name: INTEGRATION_STRATEGIES
               value: "Create,Import"
             - name: BUILD_TOOLS

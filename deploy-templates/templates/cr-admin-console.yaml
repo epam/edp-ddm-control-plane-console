@@ -8,7 +8,7 @@ spec:
     enabled: false
     port: '5432'
   edpSpec:
-    dnsWildcard: {{ .Values.dnsWildCard }}
+    dnsWildcard: {{ .Values.dnsWildcard }}
     integrationStrategies: 'Create,Clone,Import'
     name: {{ .Values.namespace }}
     testReportTools: Allure
