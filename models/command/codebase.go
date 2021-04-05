@@ -26,6 +26,7 @@ type CreateCodebase struct {
 	CommitMessageRegex  *string     `json:"commitMessagePattern"`
 	TicketNameRegex     *string     `json:"ticketNamePattern"`
 	CiTool              string      `json:"ciTool" valid:"Required"`
+	Admins              string      `json:"-"`
 }
 
 type Repository struct {
