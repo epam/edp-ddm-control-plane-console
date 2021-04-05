@@ -79,6 +79,7 @@ func (s CodebaseService) CreateCodebase(codebase command.CreateCodebase) (*edpv1
 			Name:       codebase.Name,
 			Namespace:  console.Namespace,
 			Finalizers: []string{"foregroundDeletion"},
+			Labels:     map[string]string{consts.AdminsLabel: codebase.Admins},
 		},
 		Spec: convertData(codebase),
 		Status: edpv1alpha1.CodebaseStatus{

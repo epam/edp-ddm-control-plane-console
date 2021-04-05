@@ -17,9 +17,9 @@ const (
 	StagePlural          = "stages"
 	CDPipelinePlural     = "cdpipelines"
 	CodebaseKind         = "Codebase"
-
-	ImportStrategy = "import"
-	LanguageJava   = "Java"
+	AdminsLabel          = "registry-parameters/administrators"
+	ImportStrategy       = "import"
+	LanguageJava         = "Java"
 
 	DefaultVersioningType = "default"
 

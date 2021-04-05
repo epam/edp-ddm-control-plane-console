@@ -29,7 +29,18 @@
                         {{i18n "uk" $val.Error}}
                     {{end}}
                 </span>
-                <p>Допустимі символи: “a-z”, “-”. Назва не може перевищувати довжину у 12 символів.</p>
+                <p>Допустимі символи: "a-z", "-". Назва не може перевищувати довжину у 12 символів.</p>
+            </div>
+            <div class="rc-form-group {{ if .errorsMap.Admins }}error{{end}}">
+                <label for="admins">Адміністратори</label>
+                <input type="text" id="admins" name="admins" pattern="^[a-zA-Z0-9@._-,]+$"
+                       value="{{.model.Admins}}" />
+                <span>
+                    {{range $key, $val := .errorsMap.Admins}}
+                        {{i18n "uk" $val.Error}}
+                    {{end}}
+                </span>
+                <p>Допустимі символи: "0-9", "a-z", "_", "-", "@", ".", ",".</p>
             </div>
             <div class="rc-form-group {{ if .errorsMap.Description }}error{{end}}">
                 <label for="description">Опис</label>

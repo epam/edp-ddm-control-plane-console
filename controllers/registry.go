@@ -245,6 +245,7 @@ func (r *CreateRegistry) createRegistry(registry *models.Registry) (errorMap map
 			URL: beego.AppConfig.String("registryGitRepo"),
 		},
 		JenkinsSlave: util.GetStringP(jenkinsSlave),
+		Admins:       registry.Admins,
 	})
 
 	if err != nil {
