@@ -71,9 +71,9 @@ func (s CodebaseService) CreateCodebase(codebase command.CreateCodebase) (*edpv1
 
 	edpClient := s.Clients.EDPRestClient
 
-	labels := make(map[string]string)
+	annotations := make(map[string]string)
 	if codebase.Admins != "" {
-		labels[consts.AdminsLabel] = base64.StdEncoding.EncodeToString([]byte(codebase.Admins))
+		annotations[consts.AdminsLabel] = base64.StdEncoding.EncodeToString([]byte(codebase.Admins))
 	}
 
 	c := &edpv1alpha1.Codebase{
@@ -82,10 +82,10 @@ func (s CodebaseService) CreateCodebase(codebase command.CreateCodebase) (*edpv1
 			Kind:       consts.CodebaseKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:       codebase.Name,
-			Namespace:  console.Namespace,
-			Finalizers: []string{"foregroundDeletion"},
-			Labels:     labels,
+			Name:        codebase.Name,
+			Namespace:   console.Namespace,
+			Finalizers:  []string{"foregroundDeletion"},
+			Annotations: annotations,
 		},
 		Spec: convertData(codebase),
 		Status: edpv1alpha1.CodebaseStatus{
