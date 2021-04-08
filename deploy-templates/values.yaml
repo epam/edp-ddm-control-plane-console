@@ -6,6 +6,7 @@ dnsWildcard: apps.cicd.mdtu-ddm.projects.epam.com
 host: "ddm-admin-console-mdtu-ddm-edp-cicd.apps.cicd.mdtu-ddm.projects.epam.com"
 global:
   platform: "openshift"
+  edpName: mdtu-ddm-edp-cicd-control-plane-dev
 basePath: ""
 projectUrlMask: "/console/project/{namespace}/overview"
 imageStreamUrlMask: "/console/project/{namespace}/browse/images/{stream}"
