@@ -23,3 +23,5 @@ image:
 operator:
   serviceAccountName: ddm-admin-console
   clusterRoleName: edp-admin-console-operator-clusterrole-mdtu-ddm-edp-cicd
+
+dockerProxyRegistry: 'nexus-docker-registry.apps.cicd2.mdtu-ddm.projects.epam.com'
