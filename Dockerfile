@@ -1,4 +1,4 @@
-FROM image-registry.openshift-image-registry.svc:5000/mdtu-ddm-edp-cicd/golang:1.13.15-stretch
+FROM golang:1.13.15-stretch
 
 ENV USER_UID=1001 \
     USER_NAME=admin-console \
