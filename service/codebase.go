@@ -28,6 +28,7 @@ import (
 	"ddm-admin-console/service/logger"
 	"ddm-admin-console/util"
 	"ddm-admin-console/util/consts"
+	"encoding/base64"
 	"fmt"
 	"time"
 
@@ -70,16 +71,21 @@ func (s CodebaseService) CreateCodebase(codebase command.CreateCodebase) (*edpv1
 
 	edpClient := s.Clients.EDPRestClient
 
+	annotations := make(map[string]string)
+	if codebase.Admins != "" {
+		annotations[consts.AdminsLabel] = base64.StdEncoding.EncodeToString([]byte(codebase.Admins))
+	}
+
 	c := &edpv1alpha1.Codebase{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v2.edp.epam.com/v1alpha1",
 			Kind:       consts.CodebaseKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:       codebase.Name,
-			Namespace:  console.Namespace,
-			Finalizers: []string{"foregroundDeletion"},
-			Labels:     map[string]string{consts.AdminsLabel: codebase.Admins},
+			Name:        codebase.Name,
+			Namespace:   console.Namespace,
+			Finalizers:  []string{"foregroundDeletion"},
+			Annotations: annotations,
 		},
 		Spec: convertData(codebase),
 		Status: edpv1alpha1.CodebaseStatus{
