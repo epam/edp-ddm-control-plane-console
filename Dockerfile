@@ -1,4 +1,4 @@
-FROM golang:1.13.15-stretch
+FROM nexus-docker-registry.apps.cicd2.mdtu-ddm.projects.epam.com/golang:1.13.15-stretch
 
 ENV USER_UID=1001 \
     USER_NAME=admin-console \
