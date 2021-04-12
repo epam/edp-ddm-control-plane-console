@@ -2,6 +2,7 @@ package service
 
 import (
 	"ddm-admin-console/k8s"
+	"ddm-admin-console/models"
 	"ddm-admin-console/models/query"
 	"ddm-admin-console/repository/mock"
 	"ddm-admin-console/test"
@@ -65,7 +66,9 @@ func TestCodebaseService_UpdateDescription(t *testing.T) {
 		},
 	}
 
-	if err := svc.UpdateDescription("foo", "bar"); err != nil {
+	reg := models.Registry{Name: "foo", Description: "bar"}
+
+	if err := svc.UpdateDescription(&reg); err != nil {
 		t.Fatal(fmt.Sprintf("%+v", err))
 	}
 }
@@ -123,7 +126,8 @@ func TestCodebaseService_UpdateDescription_FailureGetCodebase(t *testing.T) {
 		},
 	}
 
-	err := svc.UpdateDescription("foo", "bar")
+	reg := models.Registry{Name: "foo", Description: "bar"}
+	err := svc.UpdateDescription(&reg)
 	if err == nil {
 		t.Fatal("no error on k8s fatal")
 	}
@@ -159,7 +163,9 @@ func TestCodebaseService_UpdateDescription_FailureUpdateCodebase(t *testing.T) {
 		},
 	}
 
-	err := svc.UpdateDescription("foo", "bar")
+	reg := models.Registry{Name: "foo", Description: "bar"}
+
+	err := svc.UpdateDescription(&reg)
 	if err == nil {
 		t.Fatal("no error on k8s fatal")
 	}
