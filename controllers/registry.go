@@ -34,7 +34,7 @@ type CodebaseService interface {
 	CreateCodebase(codebase command.CreateCodebase) (*edpv1alpha1.Codebase, error)
 	GetCodebasesByCriteria(criteria query.CodebaseCriteria) ([]*query.Codebase, error)
 	GetCodebaseByName(name string) (*query.Codebase, error)
-	UpdateDescription(name, description string) error
+	UpdateDescription(reg *models.Registry) error
 	ExistCodebaseAndBranch(cbName, brName string) bool
 	Delete(name, codebaseType string) error
 	GetCodebasesByCriteriaK8s(criteria query.CodebaseCriteria) ([]*query.Codebase, error)
@@ -145,7 +145,7 @@ func (r *EditRegistry) editRegistry(registry *models.Registry) (errorMap map[str
 		return valid.ErrorMap(), nil
 	}
 
-	if err := r.CodebaseService.UpdateDescription(registry.Name, registry.Description); err != nil {
+	if err := r.CodebaseService.UpdateDescription(registry); err != nil {
 		return nil, errors.Wrap(err, "something went wrong during k8s registry edit")
 	}
 

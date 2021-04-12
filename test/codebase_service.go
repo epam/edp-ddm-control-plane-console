@@ -1,6 +1,7 @@
 package test
 
 import (
+	"ddm-admin-console/models"
 	"ddm-admin-console/models/command"
 	"ddm-admin-console/models/query"
 
@@ -59,7 +60,7 @@ func (m MockCodebaseService) GetCodebaseByName(name string) (*query.Codebase, er
 	return m.GetCodebaseByNameResult, m.GetCodebaseByNameError
 }
 
-func (m MockCodebaseService) UpdateDescription(name, description string) error {
+func (m MockCodebaseService) UpdateDescription(reg *models.Registry) error {
 	return m.UpdateDescriptionError
 }
 

@@ -45,6 +45,7 @@ type Codebase struct {
 	CreatedAt            *time.Time        `json:"-" orm:"-"`
 	ForegroundDeletion   bool              `json:"-" orm:"-"`
 	Available            bool              `json:"-" orm:"-"`
+	Admins               string            `json:"-"`
 }
 
 func (c Codebase) FormattedCreatedAt() string {

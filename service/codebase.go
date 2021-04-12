@@ -73,7 +73,7 @@ func (s CodebaseService) CreateCodebase(codebase command.CreateCodebase) (*edpv1
 
 	annotations := make(map[string]string)
 	if codebase.Admins != "" {
-		annotations[consts.AdminsLabel] = base64.StdEncoding.EncodeToString([]byte(codebase.Admins))
+		annotations[consts.AdminsAnnotation] = base64.StdEncoding.EncodeToString([]byte(codebase.Admins))
 	}
 
 	c := &edpv1alpha1.Codebase{
@@ -145,6 +145,15 @@ func (s *CodebaseService) k8sCodebase2queryCodebase(
 		CreatedAt:   &cb.ObjectMeta.CreationTimestamp.Time,
 		Status:      query.Status(cb.Status.Value),
 		Available:   cb.Status.Available,
+	}
+
+	if cb.Annotations != nil && cb.Annotations[consts.AdminsAnnotation] != "" {
+		admins, err := base64.StdEncoding.DecodeString(cb.Annotations[consts.AdminsAnnotation])
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to decode admin from annotation: %s, codebase: %s",
+				cb.Annotations[consts.AdminsAnnotation], cb.Name)
+		}
+		qcb.Admins = string(admins)
 	}
 
 	if cb.ObjectMeta.DeletionTimestamp != nil {
@@ -475,13 +484,17 @@ func setCodebaseBranchCr(vt string, username string, version *string, defaultBra
 	}
 }
 
-func (s *CodebaseService) UpdateDescription(name, description string) error {
-	c, err := util.GetCodebaseCR(s.Clients.EDPRestClient, name)
+func (s *CodebaseService) UpdateDescription(reg *models.Registry) error {
+	c, err := util.GetCodebaseCR(s.Clients.EDPRestClient, reg.Name)
 	if err != nil {
-		return errors.Wrapf(err, "couldn't get codebase from cluster %v", name)
+		return errors.Wrapf(err, "couldn't get codebase from cluster %v", reg.Name)
 	}
 
-	c.Spec.Description = &description
+	c.Spec.Description = &reg.Description
+	if c.Annotations == nil {
+		c.Annotations = make(map[string]string)
+	}
+	c.Annotations[consts.AdminsAnnotation] = base64.StdEncoding.EncodeToString([]byte(reg.Admins))
 
 	if err := s.executeUpdateRequest(c); err != nil {
 		return errors.Wrap(err, "unable to update codebase")
