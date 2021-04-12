@@ -19,6 +19,17 @@
                 <span>{{range $key, $val := .errorsMap.Description}}{{ $val }}{{end}}</span>
                 <p>Опис може містити офіційну назву реєстру чи його призначення.</p>
             </div>
+            <div class="rc-form-group {{ if .errorsMap.Admins }}error{{end}}">
+                <label for="admins">Адміністратори</label>
+                <input type="text" id="admins" name="admins" pattern="^[a-zA-Z0-9@._-,]+$"
+                       value="{{.registry.Admins}}" />
+                <span>
+                    {{range $key, $val := .errorsMap.Admins}}
+                        {{i18n "uk" $val.Error}}
+                    {{end}}
+                </span>
+                <p>Допустимі символи: "0-9", "a-z", "_", "-", "@", ".", ",".</p>
+            </div>
 
             <div class="rc-form-group">
                 <button type="submit" name="submit">Підтвердити</button>
