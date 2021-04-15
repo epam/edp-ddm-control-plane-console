@@ -36,7 +36,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	v1 "k8s.io/api/core/v1"
-	errors2 "k8s.io/apimachinery/pkg/api/errors"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -118,6 +118,35 @@ func (s CodebaseService) CreateCodebase(codebase command.CreateCodebase) (*edpv1
 		return &edpv1alpha1.Codebase{}, err
 	}
 	return result, nil
+}
+
+func (s *CodebaseService) CreateKeySecret(key6, caCert, casJSON []byte, signKeyIssuer, signKeyPwd,
+	registryName string) error {
+	secretName := fmt.Sprintf("system-digital-sign-%s", registryName)
+	_, err := s.Clients.CoreClient.Secrets(console.Namespace).Get(secretName, metav1.GetOptions{})
+	if err != nil && !k8sErrors.IsNotFound(err) {
+		return errors.Wrap(err, "unable to check registry keys secret")
+	}
+	if err == nil {
+		return errors.Errorf("keys secret already exists for registry: %s", registryName)
+	}
+
+	secret := v1.Secret{Data: map[string][]byte{
+		"Key-6.dat":                      key6,
+		"digital-signature-key-issuer":   []byte(signKeyIssuer),
+		"digital-signature-key-password": []byte(signKeyPwd),
+		"CACertificates.p7b":             caCert,
+		"CAs.json":                       casJSON,
+	}, ObjectMeta: metav1.ObjectMeta{
+		Name:      secretName,
+		Namespace: console.Namespace,
+	}}
+
+	if _, err := s.Clients.CoreClient.Secrets(console.Namespace).Create(&secret); err != nil {
+		return errors.Wrap(err, "unable to create registry key secret")
+	}
+
+	return nil
 }
 
 func (s *CodebaseService) GetCodebasesByCriteria(criteria query.CodebaseCriteria) ([]*query.Codebase, error) {
@@ -228,7 +257,7 @@ func (s CodebaseService) GetCodebaseByNameK8s(name string) (*query.Codebase, err
 	var edpCodebase edpv1alpha1.Codebase
 	if err := s.Clients.EDPRestClient.Get().Namespace(console.Namespace).Resource(consts.CodebasePlural).Name(name).
 		Do().Into(&edpCodebase); err != nil {
-		if errStatus, ok := err.(*errors2.StatusError); ok && errStatus.ErrStatus.Code == 404 {
+		if errStatus, ok := err.(*k8sErrors.StatusError); ok && errStatus.ErrStatus.Code == 404 {
 			return nil, RegistryNotFound{cause: errStatus}
 		}
 
