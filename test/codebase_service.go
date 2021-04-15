@@ -33,6 +33,10 @@ type MockCodebaseService struct {
 	GetCodebaseByNameK8sMockFunc func(name string) (*query.Codebase, error)
 }
 
+func (m MockCodebaseService) CreateKeySecret(key6, caCert, casJSON []byte, signKeyIssuer, signKeyPwd, registryName string) error {
+	panic("not implemented")
+}
+
 func (m MockCodebaseService) GetCodebaseByNameK8s(name string) (*query.Codebase, error) {
 	if m.GetCodebaseByNameK8sMockFunc != nil {
 		return m.GetCodebaseByNameK8sMockFunc(name)
