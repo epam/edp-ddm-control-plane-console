@@ -80,6 +80,14 @@ func (r *CreateRegistry) createRegistry(registry *models.Registry) (errorMap map
 		return valid.ErrorMap(), nil
 	}
 
+	if err = r.createRegistryKeys(registry, &valid); err != nil {
+		err = errors.Wrap(err, "unable to create registry keys")
+	}
+
+	if len(valid.ErrorMap()) > 0 {
+		return valid.ErrorMap(), nil
+	}
+
 	username, _ := r.Ctx.Input.Session("username").(string)
 	jobProvisioning := "default"
 	startVersion := "0.0.1"
@@ -119,10 +127,6 @@ func (r *CreateRegistry) createRegistry(registry *models.Registry) (errorMap map
 		}
 	}
 
-	if err := r.createRegistryKeys(registry, &valid); err != nil {
-		err = errors.Wrap(err, "unable to create registry keys")
-	}
-
 	return
 }
 
@@ -133,7 +137,7 @@ func (r *CreateRegistry) createRegistryKeys(registry *models.Registry, valid *va
 
 	key6, err := base64.StdEncoding.DecodeString(registry.Key6)
 	if err != nil {
-		return errors.Wrapf(err, "unable to decode key6 base64")
+		valid.AddError("Key6.Required", err.Error())
 	}
 
 	if registry.SignKeyIssuer == "" {
@@ -154,12 +158,12 @@ func (r *CreateRegistry) createRegistryKeys(registry *models.Registry, valid *va
 
 	caCert, err := base64.StdEncoding.DecodeString(registry.CACertificate)
 	if err != nil {
-		return errors.Wrapf(err, "unable to decode CACertificates.p7b base64")
+		valid.AddError("CACertificate.Required", err.Error())
 	}
 
 	casJSON, err := base64.StdEncoding.DecodeString(registry.CAsJSON)
 	if err != nil {
-		return errors.Wrapf(err, "unable to decode CAs.json base64")
+		valid.AddError("CAsJSON.Required", err.Error())
 	}
 
 	if err := r.CodebaseService.CreateKeySecret(key6, caCert, casJSON, registry.SignKeyIssuer, registry.SignKeyPwd,
