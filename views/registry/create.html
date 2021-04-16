@@ -50,7 +50,7 @@
             </div>
             <div class="rc-form-group {{ if .errorsMap.Key6 }}error{{end}}">
                 <label for="key6">Key-6.dat (обов'язково у форматі base64)</label>
-                <textarea rows="3" name="key6" id="key6">{{.model.key6}}</textarea>
+                <textarea rows="3" name="key6" id="key6">{{.model.Key6}}</textarea>
                 <span>
                     {{range $key, $val := .errorsMap.Key6}}
                         {{i18n "uk" $val.Error}}
