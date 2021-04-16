@@ -33,7 +33,7 @@ spec:
                   apiVersion: v1
                   fieldPath: metadata.namespace
             - name: HOST
-              value: "{{ .Values.name }}-{{ .Values.edpProject }}.{{ .Values.dnsWildcard }}"
+              value: "https://{{ .Values.name }}-{{ .Values.edpProject }}.{{ .Values.dnsWildcard }}"
             - name: BASE_PATH
               value: "{{if .Values.basePath}}/{{ .Values.basePath }}{{else}}{{end}}"
             - name: EDP_ADMIN_CONSOLE_VERSION
@@ -83,7 +83,7 @@ spec:
             - name: IMAGE_STREAM_MASK_URL
               value: "{{ .Values.imageStreamUrlMask }}"
           image: "{{ .Values.image.name }}:{{ .Values.image.version }}"
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           livenessProbe:
             failureThreshold: 5
             initialDelaySeconds: 180
