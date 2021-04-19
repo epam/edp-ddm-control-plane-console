@@ -131,29 +131,9 @@ func (r *CreateRegistry) createRegistry(registry *models.Registry) (errorMap map
 }
 
 func (r *CreateRegistry) createRegistryKeys(registry *models.Registry, valid *validation.Validation) error {
-	if registry.Key6 == "" {
-		return nil
-	}
-
 	key6, err := base64.StdEncoding.DecodeString(registry.Key6)
 	if err != nil {
 		valid.AddError("Key6.Required", err.Error())
-	}
-
-	if registry.SignKeyIssuer == "" {
-		valid.AddError("SignKeyIssuer.Required", "digital-signature-key-issuer is required")
-	}
-
-	if registry.SignKeyPwd == "" {
-		valid.AddError("SignKeyPwd.Required", "digital-signature-key-password is required")
-	}
-
-	if registry.CACertificate == "" {
-		valid.AddError("CACertificate.Required", "CACertificates.p7b is required")
-	}
-
-	if registry.CAsJSON == "" {
-		valid.AddError("CAsJSON.Required", "CAs.json is required")
 	}
 
 	caCert, err := base64.StdEncoding.DecodeString(registry.CACertificate)

@@ -34,7 +34,7 @@ type MockCodebaseService struct {
 }
 
 func (m MockCodebaseService) CreateKeySecret(key6, caCert, casJSON []byte, signKeyIssuer, signKeyPwd, registryName string) error {
-	panic("not implemented")
+	return nil
 }
 
 func (m MockCodebaseService) GetCodebaseByNameK8s(name string) (*query.Codebase, error) {
