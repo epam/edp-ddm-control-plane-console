@@ -7,6 +7,7 @@ import (
 	"ddm-admin-console/service"
 	_ "ddm-admin-console/templatefunction"
 	"ddm-admin-console/test"
+	"encoding/base64"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -162,8 +163,13 @@ func TestCreatRegistry_Post_Success(t *testing.T) {
 	beego.Router("/create-registry-success", ctrl)
 
 	formData := url.Values{
-		"name":        []string{"test"},
-		"description": []string{"test"},
+		"name":            []string{"test"},
+		"description":     []string{"test"},
+		"key6":            []string{base64.StdEncoding.EncodeToString([]byte("test"))},
+		"sign-key-issuer": []string{"test"},
+		"sign-key-pwd":    []string{"test"},
+		"ca-cert":         []string{base64.StdEncoding.EncodeToString([]byte("test"))},
+		"ca-json":         []string{base64.StdEncoding.EncodeToString([]byte("test"))},
 	}
 
 	request, _ := http.NewRequest("POST", "/create-registry-success", strings.NewReader(formData.Encode()))

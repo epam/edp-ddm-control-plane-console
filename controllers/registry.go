@@ -27,6 +27,7 @@ const (
 	ciTool              = "Jenkins"
 	registryOverviewURL = "/admin/registry/overview"
 	jenkinsSlave        = "gitops"
+	empty               = "-empty-"
 )
 
 type CodebaseService interface {
@@ -158,16 +159,17 @@ func (r *EditRegistry) Post() {
 	r.Data["Type"] = registryType
 	r.TplName = "registry/edit.html"
 
-	var parsedRegistry models.Registry
+	editRegistry := models.Registry{Key6: empty, SignKeyPwd: empty, CAsJSON: empty, SignKeyIssuer: empty,
+		CACertificate: empty}
 	registryName := r.Ctx.Input.Param(":name")
-	if err := r.ParseForm(&parsedRegistry); err != nil {
+	if err := r.ParseForm(&editRegistry); err != nil {
 		log.Error(fmt.Sprintf("%+v\n", err))
 		r.CustomAbort(500, fmt.Sprintf("%+v\n", err))
 		return
 	}
-	parsedRegistry.Name = registryName
+	editRegistry.Name = registryName
 
-	validationErrors, err := r.editRegistry(&parsedRegistry)
+	validationErrors, err := r.editRegistry(&editRegistry)
 	if err != nil {
 		log.Error(fmt.Sprintf("%+v\n", err))
 		r.CustomAbort(500, err.Error())
@@ -175,7 +177,7 @@ func (r *EditRegistry) Post() {
 	}
 
 	if validationErrors != nil {
-		r.Data["registry"] = parsedRegistry
+		r.Data["registry"] = editRegistry
 		log.Error(fmt.Sprintf("%+v\n", validationErrors))
 		r.Data["errorsMap"] = validationErrors
 		r.Ctx.Output.Status = 422
