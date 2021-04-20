@@ -122,27 +122,24 @@ func (s CodebaseService) CreateCodebase(codebase command.CreateCodebase) (*edpv1
 
 func (s *CodebaseService) CreateKeySecret(key6, caCert, casJSON []byte, signKeyIssuer, signKeyPwd,
 	registryName string) error {
-	secretName := fmt.Sprintf("system-digital-sign-%s", registryName)
-	_, err := s.Clients.CoreClient.Secrets(console.Namespace).Get(secretName, metav1.GetOptions{})
-	if err != nil && !k8sErrors.IsNotFound(err) {
-		return errors.Wrap(err, "unable to check registry keys secret")
-	}
-	if err == nil {
-		return errors.Errorf("keys secret already exists for registry: %s", registryName)
-	}
-
-	secret := v1.Secret{Data: map[string][]byte{
+	if _, err := s.Clients.CoreClient.Secrets(console.Namespace).Create(&v1.Secret{Data: map[string][]byte{
 		"Key-6.dat":                      key6,
 		"digital-signature-key-issuer":   []byte(signKeyIssuer),
 		"digital-signature-key-password": []byte(signKeyPwd),
-		"CACertificates.p7b":             caCert,
-		"CAs.json":                       casJSON,
 	}, ObjectMeta: metav1.ObjectMeta{
-		Name:      secretName,
+		Name:      fmt.Sprintf("system-digital-sign-%s-key", registryName),
 		Namespace: console.Namespace,
-	}}
+	}}); err != nil {
+		return errors.Wrap(err, "unable to create registry key secret")
+	}
 
-	if _, err := s.Clients.CoreClient.Secrets(console.Namespace).Create(&secret); err != nil {
+	if _, err := s.Clients.CoreClient.Secrets(console.Namespace).Create(&v1.Secret{Data: map[string][]byte{
+		"CACertificates.p7b": caCert,
+		"CAs.json":           casJSON,
+	}, ObjectMeta: metav1.ObjectMeta{
+		Name:      fmt.Sprintf("system-digital-sign-%s-ca", registryName),
+		Namespace: console.Namespace,
+	}}); err != nil {
 		return errors.Wrap(err, "unable to create registry key secret")
 	}
 
