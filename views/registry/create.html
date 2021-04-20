@@ -76,7 +76,7 @@
                 </span>
             </div>
             <div class="rc-form-group {{ if .errorsMap.CACertificate }}error{{end}}">
-                <label for="ca-cert">CACertificates.p7b</label>
+                <label for="ca-cert">CACertificates.p7b (обов'язково у форматі base64)</label>
                 <textarea rows="3" name="ca-cert" id="ca-cert">{{.model.CACertificate}}</textarea>
                 <span>
                     {{range $key, $val := .errorsMap.CACertificate}}
@@ -85,7 +85,7 @@
                 </span>
             </div>
             <div class="rc-form-group {{ if .errorsMap.CAsJSON }}error{{end}}">
-                <label for="ca-json">CAs.json</label>
+                <label for="ca-json">CAs.json (обов'язково у форматі base64)</label>
                 <textarea rows="3" name="ca-json" id="ca-json">{{.model.CAsJSON}}</textarea>
                 <span>
                     {{range $key, $val := .errorsMap.CAsJSON}}
