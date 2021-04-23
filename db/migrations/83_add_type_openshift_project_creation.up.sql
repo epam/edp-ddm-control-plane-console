@@ -1,1 +1,0 @@
-alter type "action" add value 'openshift_project_creation';

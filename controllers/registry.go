@@ -6,6 +6,7 @@ import (
 	"ddm-admin-console/models/command"
 	"ddm-admin-console/models/query"
 	"ddm-admin-console/service"
+	"ddm-admin-console/service/logger"
 	"ddm-admin-console/util"
 	"ddm-admin-console/util/consts"
 	"fmt"
@@ -16,6 +17,8 @@ import (
 	"github.com/epmd-edp/edp-component-operator/pkg/apis/v1/v1alpha1"
 	"github.com/pkg/errors"
 )
+
+var log = logger.GetLogger()
 
 const (
 	registryType        = "registry"

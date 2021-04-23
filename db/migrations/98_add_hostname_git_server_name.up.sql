@@ -1,1 +1,0 @@
-alter table git_server add hostname text;

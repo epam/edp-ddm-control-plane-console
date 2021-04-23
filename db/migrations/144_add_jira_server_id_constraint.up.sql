@@ -1,1 +1,0 @@
-alter table codebase add jira_server_id integer constraint jira_server_fk references jira_server;

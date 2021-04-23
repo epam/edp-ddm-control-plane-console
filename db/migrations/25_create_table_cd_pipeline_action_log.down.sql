@@ -1,1 +1,0 @@
-drop table if exists cd_pipeline_action_log;

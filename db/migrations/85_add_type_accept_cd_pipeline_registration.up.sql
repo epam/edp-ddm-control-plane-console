@@ -1,1 +1,0 @@
-alter type "action" add value 'accept_cd_pipeline_registration';

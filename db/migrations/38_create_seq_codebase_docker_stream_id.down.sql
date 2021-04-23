@@ -1,1 +1,0 @@
-drop sequence if exists codebase_docker_stream_id_seq;

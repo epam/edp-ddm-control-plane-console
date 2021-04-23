@@ -1,1 +1,0 @@
-alter type "framework" add value 'python-3.8';

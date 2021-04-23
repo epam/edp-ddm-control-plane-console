@@ -1,1 +1,0 @@
-alter type "action" add value 'put_codebase_image_stream';

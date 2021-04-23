@@ -1,1 +1,0 @@
-alter table codebase drop column jira_server_name;

@@ -1,1 +1,0 @@
-create sequence if not exists action_log_id_seq;

@@ -25,7 +25,6 @@ import (
 	"ddm-admin-console/repository"
 	edpComponentRepo "ddm-admin-console/repository/edp-component"
 	"ddm-admin-console/service"
-	"ddm-admin-console/service/cd_pipeline"
 	cbs "ddm-admin-console/service/codebasebranch"
 	edpComponentService "ddm-admin-console/service/edp-component"
 	"ddm-admin-console/service/logger"
@@ -82,39 +81,22 @@ func init() {
 	clients := k8s.CreateOpenShiftClients()
 	codebaseRepository := repository.CodebaseRepository{}
 	branchRepository := repository.CodebaseBranchRepository{}
-	pipelineRepository := repository.CDPipelineRepository{}
-	serviceRepository := repository.ServiceCatalogRepository{}
 	ecr := edpComponentRepo.EDPComponent{}
 
 	ecs := edpComponentService.Service{IEDPComponent: ecr}
 	edpService := service.EDPTenantService{Clients: clients}
-	clusterService := service.ClusterService{Clients: clients}
 	branchService := cbs.Service{
 		Clients:                  clients,
 		IReleaseBranchRepository: branchRepository,
-		ICDPipelineRepository:    pipelineRepository,
 		ICodebaseRepository:      codebaseRepository,
-		CodebaseBranchValidation: map[string]func(string, string) ([]string, error){
-			"application": pipelineRepository.GetCDPipelinesUsingApplicationAndBranch,
-			"autotests":   pipelineRepository.GetCDPipelinesUsingAutotestAndBranch,
-			"library":     pipelineRepository.GetCDPipelinesUsingLibraryAndBranch,
-		},
+		CodebaseBranchValidation: map[string]func(string, string) ([]string, error){},
 	}
 	codebaseService := service.CodebaseService{
 		Clients:                 clients,
 		ICodebaseRepository:     codebaseRepository,
-		ICDPipelineRepository:   pipelineRepository,
 		BranchService:           branchService,
 		GerritCreatorSecretName: beego.AppConfig.String("gerritCreatorSecretName"),
 	}
-	pipelineService := cd_pipeline.CDPipelineService{
-		Clients:               clients,
-		ICDPipelineRepository: pipelineRepository,
-		CodebaseService:       codebaseService,
-		BranchService:         branchService,
-		EDPComponent:          ecs,
-	}
-	thirdPartyService := service.ThirdPartyService{IServiceCatalogRepository: serviceRepository}
 
 	ec := controllers.EDPTenantController{
 		EDPTenantService: edpService,
@@ -161,21 +143,10 @@ func init() {
 	autis := make([]string, len(integrationStrategies))
 	copy(autis, integrationStrategies)
 
-	tpsc := controllers.ThirdPartyServiceController{
-		ThirdPartyService: thirdPartyService,
-	}
-
-	dc := controllers.DiagramController{
-		CodebaseService: &codebaseService,
-		PipelineService: &pipelineService,
-	}
-
 	k8sEDPComponentService := edpComponentService.MakeServiceK8S(clients.EDPRestClientV1)
 
 	adminEdpNamespace := beego.NewNamespace(fmt.Sprintf("%s/admin", console.BasePath),
 		beego.NSRouter("/overview", &ec, "get:GetEDPComponents"),
-		beego.NSRouter("/service/overview", &tpsc, "get:GetServicePage"),
-		beego.NSRouter("/diagram/overview", &dc, "get:GetDiagramPage"),
 		beego.NSRouter("/dashboard", controllers.MakeDashboardController()),
 
 		beego.NSRouter("/registry/overview", controllers.MakeListRegistry(&codebaseService)),
@@ -188,26 +159,6 @@ func init() {
 			beego.AppConfig.String("clusterManagementRepo"))),
 	)
 	beego.AddNamespace(adminEdpNamespace)
-
-	apiV1EdpNamespace := beego.NewNamespace(fmt.Sprintf("%s/api/v1/edp", console.BasePath),
-		beego.NSRouter("/codebase", &controllers.CodebaseRestController{CodebaseService: codebaseService}, "post:CreateCodebase"),
-		beego.NSRouter("/codebase", &controllers.CodebaseRestController{CodebaseService: codebaseService}, "get:GetCodebases"),
-		beego.NSRouter("/codebase/:codebaseName", &controllers.CodebaseRestController{CodebaseService: codebaseService}, "get:GetCodebase"),
-		beego.NSRouter("/vcs", &ec, "get:GetVcsIntegrationValue"),
-		beego.NSRouter("/cd-pipeline/:name", &controllers.CDPipelineRestController{CDPipelineService: pipelineService}, "get:GetCDPipelineByName"),
-		beego.NSRouter("/cd-pipeline/:pipelineName/stage/:stageName", &controllers.CDPipelineRestController{CDPipelineService: pipelineService}, "get:GetStage"),
-		beego.NSRouter("/cd-pipeline", &controllers.CDPipelineRestController{CDPipelineService: pipelineService}, "post:CreateCDPipeline"),
-		beego.NSRouter("/cd-pipeline/:name", &controllers.CDPipelineRestController{CDPipelineService: pipelineService}, "put:UpdateCDPipeline"),
-		beego.NSRouter("/codebase", &controllers.CodebaseRestController{CodebaseService: codebaseService}, "delete:Delete"),
-		beego.NSRouter("/stage", &controllers.CDPipelineRestController{CDPipelineService: pipelineService}, "delete:DeleteCDStage"),
-	)
-	beego.AddNamespace(apiV1EdpNamespace)
-
-	apiV1Namespace := beego.NewNamespace(fmt.Sprintf("%s/api/v1", console.BasePath),
-		beego.NSRouter("/storage-class", &controllers.OpenshiftRestController{ClusterService: clusterService}, "get:GetAllStorageClasses"),
-		beego.NSRouter("/repository/available", &controllers.RepositoryRestController{}, "post:IsGitRepoAvailable"),
-	)
-	beego.AddNamespace(apiV1Namespace)
 
 	if err := i18n.SetMessage("uk", "conf/locale_uk-UA.ini"); err != nil {
 		log.Fatal(err.Error())

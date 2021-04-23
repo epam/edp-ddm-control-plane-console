@@ -9,12 +9,31 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/astaxie/beego/context"
+	"github.com/astaxie/beego/session"
+
 	v1alpha12 "github.com/epmd-edp/codebase-operator/v2/pkg/apis/edp/v1alpha1"
 
 	"github.com/astaxie/beego"
 	"github.com/epmd-edp/edp-component-operator/pkg/apis/v1/v1alpha1"
 	"github.com/pkg/errors"
 )
+
+func initBeegoCtrl() (*httptest.ResponseRecorder, beego.Controller) {
+	rw := httptest.NewRecorder()
+	return rw, beego.Controller{
+		Data: map[interface{}]interface{}{},
+		Ctx: &context.Context{
+			Input: &context.BeegoInput{
+				CruSession: &session.MemSessionStore{},
+			},
+			ResponseWriter: &context.Response{
+				ResponseWriter: rw,
+			},
+			Request: httptest.NewRequest("", "/", nil),
+		},
+	}
+}
 
 func TestClusterManagement_CreateCodebase(t *testing.T) {
 	if err := test.InitBeego(); err != nil {

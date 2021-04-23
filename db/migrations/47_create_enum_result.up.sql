@@ -1,1 +1,0 @@
-create type result as enum ('success', 'error');

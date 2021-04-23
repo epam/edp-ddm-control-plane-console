@@ -1,1 +1,0 @@
-alter table codebase alter column framework set not null;

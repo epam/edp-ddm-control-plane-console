@@ -1,1 +1,0 @@
-create type strategy as enum ('create', 'clone');

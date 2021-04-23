@@ -50,7 +50,6 @@ const (
 type CodebaseService struct {
 	Clients                 k8s.ClientSet
 	ICodebaseRepository     repository.ICodebaseRepository
-	ICDPipelineRepository   repository.ICDPipelineRepository
 	BranchService           cbs.Service
 	GerritCreatorSecretName string
 }
@@ -453,29 +452,6 @@ func (s CodebaseService) Delete(name, codebaseType string) error {
 	}
 	clog.Info("end executing service codebase delete method", zap.String("codebase", name))
 	return nil
-}
-
-func (s CodebaseService) getCdPipelinesUsingCodebase(name, codebaseType string) ([]string, error) {
-	switch codebaseType {
-	case consts.Application:
-		cdp, err := s.ICDPipelineRepository.GetCDPipelinesUsingApplication(name)
-		if err != nil {
-			return nil, err
-		}
-		return cdp, nil
-	case consts.Autotest:
-		cdp, err := s.ICDPipelineRepository.GetCDPipelinesUsingAutotest(name)
-		if err != nil {
-			return nil, err
-		}
-		return cdp, nil
-	default:
-		cdp, err := s.ICDPipelineRepository.GetCDPipelinesUsingLibrary(name)
-		if err != nil {
-			return nil, err
-		}
-		return cdp, nil
-	}
 }
 
 func (s CodebaseService) deleteCodebase(name string) error {

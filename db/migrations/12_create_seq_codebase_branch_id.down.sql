@@ -1,1 +1,0 @@
-drop sequence if exists codebase_branch_id_seq;
