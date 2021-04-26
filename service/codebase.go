@@ -408,21 +408,6 @@ func convertData(codebase command.CreateCodebase) edpv1alpha1.CodebaseSpec {
 	return cs
 }
 
-func (s CodebaseService) CheckBranch(apps []models.CDPipelineApplicationCommand) (bool, error) {
-	for _, app := range apps {
-		exist, err := s.ICodebaseRepository.ExistActiveBranch(app.InputDockerStream)
-		if err != nil {
-			clog.Error("an error has occurred while checking status of branch", zap.Error(err))
-			return false, err
-		}
-
-		if !exist {
-			return false, nil
-		}
-	}
-	return true, nil
-}
-
 func (s CodebaseService) GetApplicationsToPromote(cdPipelineID int) ([]string, error) {
 	appsToPromote, err := s.ICodebaseRepository.SelectApplicationToPromote(cdPipelineID)
 	if err != nil {

@@ -68,16 +68,6 @@ func init() {
 		beego.InsertFilter(fmt.Sprintf("%s/*", console.BasePath), beego.BeforeRouter, filters.StubAuthFilter)
 	}
 
-	dbEnable, err := beego.AppConfig.Bool("dbEnabled")
-	if err != nil {
-		log.Error("Cannot read property dbEnabled. Set default: true", zap.Error(err))
-		dbEnable = true
-	}
-
-	if dbEnable {
-		console.InitDb()
-	}
-
 	clients := k8s.CreateOpenShiftClients()
 	codebaseRepository := repository.CodebaseRepository{}
 	branchRepository := repository.CodebaseBranchRepository{}
