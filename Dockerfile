@@ -13,7 +13,6 @@ COPY ddm-admin-console .
 COPY static static
 COPY views views
 COPY conf conf
-COPY db db
 
 USER ${USER_UID}
 
