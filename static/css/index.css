@@ -11464,6 +11464,10 @@ div#kubernetes-component {
     margin: 0 0 24px 0;
 }
 
+.registry-create-form h3 {
+    font-size: 18px;
+}
+
 .rc-title {
     font-size: 12px;
     margin: 0 0 24px 0;
