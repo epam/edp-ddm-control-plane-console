@@ -1,1 +1,0 @@
-drop index if exists cd_stage_id_uindex;

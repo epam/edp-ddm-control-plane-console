@@ -44,7 +44,6 @@ var log = logger.GetLogger()
 type Service struct {
 	Clients                  k8s.ClientSet
 	IReleaseBranchRepository repository.ICodebaseBranchRepository
-	ICDPipelineRepository    repository.ICDPipelineRepository
 	ICodebaseRepository      repository.ICodebaseRepository
 	CodebaseBranchValidation map[string]func(string, string) ([]string, error)
 }

@@ -1,1 +1,0 @@
-alter table edp_component add if not exists visible bool;

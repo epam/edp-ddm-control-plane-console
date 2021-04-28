@@ -1,1 +1,0 @@
-drop sequence if exists quality_gate_id_seq;

@@ -50,7 +50,6 @@ const (
 type CodebaseService struct {
 	Clients                 k8s.ClientSet
 	ICodebaseRepository     repository.ICodebaseRepository
-	ICDPipelineRepository   repository.ICDPipelineRepository
 	BranchService           cbs.Service
 	GerritCreatorSecretName string
 }
@@ -120,12 +119,56 @@ func (s CodebaseService) CreateCodebase(codebase command.CreateCodebase) (*edpv1
 	return result, nil
 }
 
+const (
+	key6SecretKey                        = "Key-6.dat"
+	digitalSignatureKeyIssuerSecretKey   = "digital-signature-key-issuer"
+	digitalSignatureKeyPasswordSecretKey = "digital-signature-key-password"
+	caCertificatesSecretKey              = "CACertificates.p7b"
+	CAsJSONSecretKey                     = "CAs.json"
+)
+
+func (s *CodebaseService) UpdateKeySecret(key6, caCert, casJSON []byte, signKeyIssuer, signKeyPwd,
+	registryName string) error {
+	keySecret, err := s.Clients.CoreClient.Secrets(console.Namespace).Get(
+		fmt.Sprintf("system-digital-sign-%s-key", registryName), metav1.GetOptions{})
+	if err != nil {
+		return errors.Wrap(err, "unable to get secret")
+	}
+
+	keySecret.Data = map[string][]byte{
+		key6SecretKey:                        key6,
+		digitalSignatureKeyIssuerSecretKey:   []byte(signKeyIssuer),
+		digitalSignatureKeyPasswordSecretKey: []byte(signKeyPwd),
+	}
+
+	if _, err := s.Clients.CoreClient.Secrets(console.Namespace).Update(keySecret); err != nil {
+		return errors.Wrap(err, "unable to update secret")
+	}
+
+	caSecret, err := s.Clients.CoreClient.Secrets(console.Namespace).Get(
+		fmt.Sprintf("system-digital-sign-%s-ca", registryName), metav1.GetOptions{})
+	if err != nil {
+		return errors.Wrap(err, "unable to get secret")
+	}
+
+	caSecret.Data = map[string][]byte{
+		caCertificatesSecretKey: caCert,
+		CAsJSONSecretKey:        casJSON,
+	}
+
+	if _, err := s.Clients.CoreClient.Secrets(console.Namespace).Update(caSecret); err != nil {
+		return errors.Wrap(err, "unable to update secret")
+	}
+
+	return nil
+}
+
 func (s *CodebaseService) CreateKeySecret(key6, caCert, casJSON []byte, signKeyIssuer, signKeyPwd,
 	registryName string) error {
 	if _, err := s.Clients.CoreClient.Secrets(console.Namespace).Create(&v1.Secret{Data: map[string][]byte{
-		"Key-6.dat":                      key6,
-		"digital-signature-key-issuer":   []byte(signKeyIssuer),
-		"digital-signature-key-password": []byte(signKeyPwd),
+		key6SecretKey:                        key6,
+		digitalSignatureKeyIssuerSecretKey:   []byte(signKeyIssuer),
+		digitalSignatureKeyPasswordSecretKey: []byte(signKeyPwd),
 	}, ObjectMeta: metav1.ObjectMeta{
 		Name:      fmt.Sprintf("system-digital-sign-%s-key", registryName),
 		Namespace: console.Namespace,
@@ -134,8 +177,8 @@ func (s *CodebaseService) CreateKeySecret(key6, caCert, casJSON []byte, signKeyI
 	}
 
 	if _, err := s.Clients.CoreClient.Secrets(console.Namespace).Create(&v1.Secret{Data: map[string][]byte{
-		"CACertificates.p7b": caCert,
-		"CAs.json":           casJSON,
+		caCertificatesSecretKey: caCert,
+		CAsJSONSecretKey:        casJSON,
 	}, ObjectMeta: metav1.ObjectMeta{
 		Name:      fmt.Sprintf("system-digital-sign-%s-ca", registryName),
 		Namespace: console.Namespace,
@@ -409,21 +452,6 @@ func convertData(codebase command.CreateCodebase) edpv1alpha1.CodebaseSpec {
 	return cs
 }
 
-func (s CodebaseService) CheckBranch(apps []models.CDPipelineApplicationCommand) (bool, error) {
-	for _, app := range apps {
-		exist, err := s.ICodebaseRepository.ExistActiveBranch(app.InputDockerStream)
-		if err != nil {
-			clog.Error("an error has occurred while checking status of branch", zap.Error(err))
-			return false, err
-		}
-
-		if !exist {
-			return false, nil
-		}
-	}
-	return true, nil
-}
-
 func (s CodebaseService) GetApplicationsToPromote(cdPipelineID int) ([]string, error) {
 	appsToPromote, err := s.ICodebaseRepository.SelectApplicationToPromote(cdPipelineID)
 	if err != nil {
@@ -453,29 +481,6 @@ func (s CodebaseService) Delete(name, codebaseType string) error {
 	}
 	clog.Info("end executing service codebase delete method", zap.String("codebase", name))
 	return nil
-}
-
-func (s CodebaseService) getCdPipelinesUsingCodebase(name, codebaseType string) ([]string, error) {
-	switch codebaseType {
-	case consts.Application:
-		cdp, err := s.ICDPipelineRepository.GetCDPipelinesUsingApplication(name)
-		if err != nil {
-			return nil, err
-		}
-		return cdp, nil
-	case consts.Autotest:
-		cdp, err := s.ICDPipelineRepository.GetCDPipelinesUsingAutotest(name)
-		if err != nil {
-			return nil, err
-		}
-		return cdp, nil
-	default:
-		cdp, err := s.ICDPipelineRepository.GetCDPipelinesUsingLibrary(name)
-		if err != nil {
-			return nil, err
-		}
-		return cdp, nil
-	}
 }
 
 func (s CodebaseService) deleteCodebase(name string) error {

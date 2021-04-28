@@ -1,1 +1,0 @@
-alter type "action" add value 'put_gitlab_ci_file';

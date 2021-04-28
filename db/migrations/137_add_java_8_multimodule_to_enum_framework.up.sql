@@ -1,1 +1,0 @@
-alter type "framework" add value 'java8-multimodule';

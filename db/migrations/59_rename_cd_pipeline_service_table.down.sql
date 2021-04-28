@@ -1,1 +1,0 @@
-alter table if exists cd_pipeline_third_party_service rename to cd_pipeline_service;

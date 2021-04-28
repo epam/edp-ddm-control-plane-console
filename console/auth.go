@@ -18,6 +18,8 @@ package console
 
 import (
 	"context"
+	"ddm-admin-console/service/logger"
+
 	"github.com/astaxie/beego"
 	"github.com/coreos/go-oidc"
 	"go.uber.org/zap"
@@ -39,7 +41,10 @@ type AuthConfig struct {
 	StateAuthKey string
 }
 
-var authConfig AuthConfig
+var (
+	authConfig AuthConfig
+	log        = logger.GetLogger()
+)
 
 func InitAuth() {
 	parameters := getParameters()

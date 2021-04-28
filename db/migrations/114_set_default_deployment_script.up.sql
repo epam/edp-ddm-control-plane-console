@@ -1,1 +1,0 @@
-update codebase set deployment_script = 'openshift-template';

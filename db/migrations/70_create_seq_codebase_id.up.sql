@@ -1,1 +1,0 @@
-create sequence if not exists quality_gate_id_seq;

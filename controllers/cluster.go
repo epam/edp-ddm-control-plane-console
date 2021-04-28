@@ -17,6 +17,7 @@ import (
 const (
 	clusterType         = "cluster"
 	codebaseDescription = "Керування інфрастуктурними компонентами кластеру"
+	defaultGitServer    = "gerrit"
 )
 
 type ClusterManagement struct {

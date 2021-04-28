@@ -50,9 +50,5 @@ func InitBeego() error {
 	console.Namespace = "mdtuddm"
 	beego.BConfig.WebConfig.EnableXSRF = false
 
-	// if _, err := orm.GetDB("default"); err != nil {
-	//	console.InitDb()
-	//}
-
 	return nil
 }

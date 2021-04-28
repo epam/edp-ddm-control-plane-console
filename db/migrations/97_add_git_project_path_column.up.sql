@@ -1,1 +1,0 @@
-alter table codebase add git_project_path text;

@@ -1,1 +1,0 @@
-create type framework as enum ('springboot', 'react', 'netcore');

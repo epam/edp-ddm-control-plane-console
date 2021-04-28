@@ -1,1 +1,0 @@
-drop sequence if exists action_log_id_seq;

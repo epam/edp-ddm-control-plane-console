@@ -1,1 +1,0 @@
-alter table cd_stage drop column quality_gate;

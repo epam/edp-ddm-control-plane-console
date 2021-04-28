@@ -27,10 +27,18 @@
                 <span>Назва</span>
                 <span>{{ .registry.Name }}</span>
             </div>
+            {{if .registry.Description}}
             <div class="rg-info-line-horizontal">
                 <span>Опис</span>
                 <span>{{ .registry.Description }}</span>
             </div>
+            {{end}}
+            {{if .registry.Admins}}
+                <div class="rg-info-line-horizontal">
+                    <span>Адміністратори</span>
+                    <span>{{ .registry.Admins }}</span>
+                </div>
+            {{end}}
             <div class="rg-info-line-horizontal">
                 <span>Час створення</span>
                 <span>{{ .registry.FormattedCreatedAt }}</span>
