@@ -30,7 +30,6 @@ const (
 	ciTool              = "Jenkins"
 	registryOverviewURL = "/admin/registry/overview"
 	jenkinsSlave        = "gitops"
-	empty               = "-empty-"
 )
 
 type CodebaseService interface {
@@ -43,6 +42,7 @@ type CodebaseService interface {
 	GetCodebasesByCriteriaK8s(criteria query.CodebaseCriteria) ([]*query.Codebase, error)
 	GetCodebaseByNameK8s(name string) (*query.Codebase, error)
 	CreateKeySecret(key6, caCert, casJSON []byte, signKeyIssuer, signKeyPwd, registryName string) error
+	UpdateKeySecret(key6, caCert, casJSON []byte, signKeyIssuer, signKeyPwd, registryName string) error
 }
 
 type EDPComponentServiceK8S interface {
@@ -149,6 +149,15 @@ func (r *EditRegistry) editRegistry(registry *models.Registry) (errorMap map[str
 		return valid.ErrorMap(), nil
 	}
 
+	if err = createRegistryKeys(
+		registry, &valid, r.Ctx.Request, false, r.CodebaseService.UpdateKeySecret); err != nil {
+		err = errors.Wrap(err, "unable to create registry keys")
+	}
+
+	if len(valid.ErrorMap()) > 0 {
+		return valid.ErrorMap(), nil
+	}
+
 	if err := r.CodebaseService.UpdateDescription(registry); err != nil {
 		return nil, errors.Wrap(err, "something went wrong during k8s registry edit")
 	}
@@ -162,8 +171,7 @@ func (r *EditRegistry) Post() {
 	r.Data["Type"] = registryType
 	r.TplName = "registry/edit.html"
 
-	editRegistry := models.Registry{Key6: empty, SignKeyPwd: empty, CAsJSON: empty, SignKeyIssuer: empty,
-		CACertificate: empty}
+	var editRegistry models.Registry
 	registryName := r.Ctx.Input.Param(":name")
 	if err := r.ParseForm(&editRegistry); err != nil {
 		log.Error(fmt.Sprintf("%+v\n", err))

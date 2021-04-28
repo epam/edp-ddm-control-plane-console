@@ -2,9 +2,6 @@ package controllers
 
 import (
 	"bytes"
-	edperror "ddm-admin-console/models/error"
-	"ddm-admin-console/models/query"
-	"ddm-admin-console/service"
 	_ "ddm-admin-console/templatefunction"
 	"ddm-admin-console/test"
 	"encoding/base64"
@@ -27,7 +24,7 @@ func TestListRegistry_GetSuccess(t *testing.T) {
 
 	codebaseService := test.MockCodebaseService{}
 
-	beego.Router("/list-registry", MakeListRegistry(codebaseService))
+	beego.Router("/list-registry", MakeListRegistry(&codebaseService))
 	request, _ := http.NewRequest("GET", "/list-registry", nil)
 	responseWriter := httptest.NewRecorder()
 
@@ -45,10 +42,10 @@ func TestListRegistry_GetFailure(t *testing.T) {
 	}
 
 	codebaseService := test.MockCodebaseService{
-		GetCodebasesByCriteriaK8sError: errors.New("error on codebase list"),
+		//GetCodebasesByCriteriaK8sError: errors.New("error on codebase list"),
 	}
 
-	beego.Router("/list-registry-failure", MakeListRegistry(codebaseService))
+	beego.Router("/list-registry-failure", MakeListRegistry(&codebaseService))
 	request, _ := http.NewRequest("GET", "/list-registry-failure", nil)
 	responseWriter := httptest.NewRecorder()
 
@@ -66,7 +63,7 @@ func TestCreatRegistry_Get(t *testing.T) {
 	}
 
 	codebaseService := test.MockCodebaseService{}
-	beego.Router("/create-registry-get", MakeCreateRegistry(codebaseService))
+	beego.Router("/create-registry-get", MakeCreateRegistry(&codebaseService))
 	request, _ := http.NewRequest("GET", "/create-registry-get", nil)
 	responseWriter := httptest.NewRecorder()
 
@@ -84,7 +81,7 @@ func TestCreatRegistry_Post_ValidationError(t *testing.T) {
 	}
 
 	codebaseService := test.MockCodebaseService{}
-	ctrl := MakeCreateRegistry(codebaseService)
+	ctrl := MakeCreateRegistry(&codebaseService)
 	beego.Router("/create-registry-failure", ctrl)
 	request, _ := http.NewRequest("POST", "/create-registry-failure", bytes.NewReader([]byte{}))
 	responseWriter := httptest.NewRecorder()
@@ -103,9 +100,9 @@ func TestCreatRegistry_Post_CodebaseExists(t *testing.T) {
 	}
 
 	codebaseService := test.MockCodebaseService{
-		CreateError: edperror.NewCodebaseAlreadyExistsError(),
+		//CreateError: edperror.NewCodebaseAlreadyExistsError(),
 	}
-	ctrl := MakeCreateRegistry(codebaseService)
+	ctrl := MakeCreateRegistry(&codebaseService)
 	beego.Router("/create-registry-k8s-error", ctrl)
 
 	formData := url.Values{
@@ -131,7 +128,7 @@ func TestCreatRegistry_Post_ValidationErrorName(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ctrl := MakeCreateRegistry(test.MockCodebaseService{})
+	ctrl := MakeCreateRegistry(&test.MockCodebaseService{})
 	beego.Router("/create-registry-error-name", ctrl)
 
 	formData := url.Values{
@@ -159,7 +156,7 @@ func TestCreatRegistry_Post_Success(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ctrl := MakeCreateRegistry(codebaseService)
+	ctrl := MakeCreateRegistry(&codebaseService)
 	beego.Router("/create-registry-success", ctrl)
 
 	formData := url.Values{
@@ -191,9 +188,9 @@ func TestEditRegistry_GetFailure(t *testing.T) {
 	}
 
 	codebaseService := test.MockCodebaseService{
-		GetCodebaseByNameK8sError: errors.New("k8s fatal error"),
+		//GetCodebaseByNameK8sError: errors.New("k8s fatal error"),
 	}
-	ctrl := MakeEditRegistry(codebaseService)
+	ctrl := MakeEditRegistry(&codebaseService)
 
 	beego.Router("/edit-registry-get-failure/:name", ctrl)
 	request, _ := http.NewRequest("GET", "/edit-registry-get-failure/test", nil)
@@ -214,9 +211,9 @@ func TestEditRegistry_GetFailure404(t *testing.T) {
 	}
 
 	codebaseService := test.MockCodebaseService{
-		GetCodebaseByNameK8sError: errors.Wrap(service.RegistryNotFound{}, ""),
+		//GetCodebaseByNameK8sError: errors.Wrap(service.RegistryNotFound{}, ""),
 	}
-	ctrl := MakeEditRegistry(codebaseService)
+	ctrl := MakeEditRegistry(&codebaseService)
 
 	beego.Router("/edit-registry-get-failure404/:name", ctrl)
 	request, _ := http.NewRequest("GET", "/edit-registry-get-failure404/test", nil)
@@ -241,9 +238,9 @@ func TestEditRegistry_PostFailure_k8sFatal(t *testing.T) {
 	}
 
 	cbMock := test.MockCodebaseService{
-		UpdateDescriptionError: errors.New("k8s fatal"),
+		//UpdateDescriptionError: errors.New("k8s fatal"),
 	}
-	ctrl := MakeEditRegistry(cbMock)
+	ctrl := MakeEditRegistry(&cbMock)
 
 	beego.Router("/edit-registry-failure/:name", ctrl)
 	request, _ := http.NewRequest("POST", "/edit-registry-failure/test", nil)
@@ -264,7 +261,7 @@ func TestEditRegistry_PostFailure_LongDescription(t *testing.T) {
 	}
 
 	cbMock := test.MockCodebaseService{}
-	ctrl := MakeEditRegistry(cbMock)
+	ctrl := MakeEditRegistry(&cbMock)
 
 	formData := url.Values{
 		"description": []string{`test11111111111111111111111111111111111111111111111111111111111111111111111test1111111
@@ -298,7 +295,7 @@ func TestEditRegistry_PostSuccess(t *testing.T) {
 	}
 
 	cbMock := test.MockCodebaseService{}
-	ctrl := MakeEditRegistry(cbMock)
+	ctrl := MakeEditRegistry(&cbMock)
 
 	formData := url.Values{
 		"description": []string{"test1"},
@@ -325,9 +322,9 @@ func TestEditRegistry_GetSuccess(t *testing.T) {
 	}
 
 	cbMock := test.MockCodebaseService{
-		GetCodebaseByNameResult: &query.Codebase{},
+		//GetCodebaseByNameResult: &query.Codebase{},
 	}
-	ctrl := MakeEditRegistry(cbMock)
+	ctrl := MakeEditRegistry(&cbMock)
 
 	beego.Router("/edit-registry-success/:name", ctrl)
 	request, _ := http.NewRequest("GET", "/edit-registry-success/test", nil)
@@ -349,9 +346,9 @@ func TestListRegistry_DeleteRegistry_FailureGetCodebase(t *testing.T) {
 
 	mockErr := errors.New("GetCodebaseByNameError fatal")
 	cbMock := test.MockCodebaseService{
-		GetCodebaseByNameK8sError: mockErr,
+		//GetCodebaseByNameK8sError: mockErr,
 	}
-	listRegistryCtrl := MakeListRegistry(cbMock)
+	listRegistryCtrl := MakeListRegistry(&cbMock)
 
 	beego.Router("/delete-registry-FailureGetCodebase", listRegistryCtrl)
 	request, _ := http.NewRequest("POST", "/delete-registry-FailureGetCodebase", nil)
@@ -375,9 +372,9 @@ func TestListRegistry_DeleteRegistry_FailureGetCodebase404(t *testing.T) {
 	}
 
 	cbMock := test.MockCodebaseService{
-		GetCodebaseByNameK8sError: errors.Wrap(service.RegistryNotFound{}, ""),
+		//GetCodebaseByNameK8sError: errors.Wrap(service.RegistryNotFound{}, ""),
 	}
-	listRegistryCtrl := MakeListRegistry(cbMock)
+	listRegistryCtrl := MakeListRegistry(&cbMock)
 
 	beego.Router("/delete-registry-FailureGetCodebase404", listRegistryCtrl)
 	request, _ := http.NewRequest("POST", "/delete-registry-FailureGetCodebase404", nil)
@@ -402,10 +399,10 @@ func TestListRegistry_DeleteRegistry_FailureDeleteCodebase(t *testing.T) {
 
 	mockErr := errors.New("DeleteCodebase fatal")
 	cbMock := test.MockCodebaseService{
-		GetCodebaseByNameK8sResult: &query.Codebase{},
-		DeleteError:                mockErr,
+		//GetCodebaseByNameK8sResult: &query.Codebase{},
+		//DeleteError:                mockErr,
 	}
-	listRegistryCtrl := MakeListRegistry(cbMock)
+	listRegistryCtrl := MakeListRegistry(&cbMock)
 
 	beego.Router("/delete-registry-DeleteCodebase", listRegistryCtrl)
 	request, _ := http.NewRequest("POST", "/delete-registry-DeleteCodebase", nil)
@@ -426,9 +423,9 @@ func TestListRegistry_DeleteRegistry_FailureDeleteCodebase(t *testing.T) {
 func TestListRegistry_DeleteRegistry(t *testing.T) {
 	rw, ctrl := initBeegoCtrl()
 	cbMock := test.MockCodebaseService{
-		GetCodebaseByNameK8sResult: &query.Codebase{},
+		//GetCodebaseByNameK8sResult: &query.Codebase{},
 	}
-	listRegistryCtrl := MakeListRegistry(cbMock)
+	listRegistryCtrl := MakeListRegistry(&cbMock)
 	ctrl.Ctx.Input.SetParam("registry-name", "test")
 	listRegistryCtrl.Controller = ctrl
 
@@ -446,14 +443,14 @@ func TestViewRegistry_Get(t *testing.T) {
 	}
 
 	cbMock := test.MockCodebaseService{
-		GetCodebaseByNameK8sResult: &query.Codebase{
-			CodebaseBranch: []*query.CodebaseBranch{
-				{},
-			},
-			ActionLog: []*query.ActionLog{
-				{},
-			},
-		},
+		//GetCodebaseByNameK8sResult: &query.Codebase{
+		//	CodebaseBranch: []*query.CodebaseBranch{
+		//		{},
+		//	},
+		//	ActionLog: []*query.ActionLog{
+		//		{},
+		//	},
+		//},
 	}
 
 	eds := test.MockEDPComponentServiceK8S{
@@ -463,7 +460,7 @@ func TestViewRegistry_Get(t *testing.T) {
 		},
 	}
 
-	beego.Router("/view-registry", MakeViewRegistry(cbMock, eds))
+	beego.Router("/view-registry", MakeViewRegistry(&cbMock, eds))
 	request, _ := http.NewRequest("GET", "/view-registry", nil)
 	responseWriter := httptest.NewRecorder()
 
@@ -481,14 +478,14 @@ func TestViewRegistry_Get_FailureEdpComponents(t *testing.T) {
 	}
 
 	cbMock := test.MockCodebaseService{
-		GetCodebaseByNameK8sResult: &query.Codebase{
-			CodebaseBranch: []*query.CodebaseBranch{
-				{},
-			},
-			ActionLog: []*query.ActionLog{
-				{},
-			},
-		},
+		//GetCodebaseByNameK8sResult: &query.Codebase{
+		//	CodebaseBranch: []*query.CodebaseBranch{
+		//		{},
+		//	},
+		//	ActionLog: []*query.ActionLog{
+		//		{},
+		//	},
+		//},
 	}
 
 	mockErr := errors.New("GetEDPComponents fatal")
@@ -498,7 +495,7 @@ func TestViewRegistry_Get_FailureEdpComponents(t *testing.T) {
 		GetAllError: mockErr,
 	}
 
-	beego.Router("/view-registry-failure-edp-comp", MakeViewRegistry(cbMock, eds))
+	beego.Router("/view-registry-failure-edp-comp", MakeViewRegistry(&cbMock, eds))
 	request, _ := http.NewRequest("GET", "/view-registry-failure-edp-comp", nil)
 	responseWriter := httptest.NewRecorder()
 
@@ -521,11 +518,11 @@ func TestViewRegistry_Get_FailureGetCodebaseByName(t *testing.T) {
 	mockErr := errors.New("GetCodebaseByName fatal")
 
 	cbMock := test.MockCodebaseService{
-		GetCodebaseByNameK8sError: mockErr,
+		//GetCodebaseByNameK8sError: mockErr,
 	}
 	eds := test.MockEDPComponentServiceK8S{}
 
-	beego.Router("/view-registry-FailureGetCodebaseByName", MakeViewRegistry(cbMock, eds))
+	beego.Router("/view-registry-FailureGetCodebaseByName", MakeViewRegistry(&cbMock, eds))
 	request, _ := http.NewRequest("GET", "/view-registry-FailureGetCodebaseByName", nil)
 	responseWriter := httptest.NewRecorder()
 
@@ -547,11 +544,11 @@ func TestViewRegistry_Get_FailureGetCodebaseByName404(t *testing.T) {
 	}
 
 	cbMock := test.MockCodebaseService{
-		GetCodebaseByNameK8sError: errors.Wrap(service.RegistryNotFound{}, ""),
+		//GetCodebaseByNameK8sError: errors.Wrap(service.RegistryNotFound{}, ""),
 	}
 	eds := test.MockEDPComponentServiceK8S{}
 
-	beego.Router("/view-registry-FailureGetCodebaseByName404", MakeViewRegistry(cbMock, eds))
+	beego.Router("/view-registry-FailureGetCodebaseByName404", MakeViewRegistry(&cbMock, eds))
 	request, _ := http.NewRequest("GET", "/view-registry-FailureGetCodebaseByName404", nil)
 	responseWriter := httptest.NewRecorder()
 
@@ -574,18 +571,18 @@ func TestViewRegistry_Get_FailureCreateLinksForGerritProvider(t *testing.T) {
 	mockErr := errors.New("GetEDPComponentError fatal")
 
 	cbMock := test.MockCodebaseService{
-		GetCodebaseByNameK8sResult: &query.Codebase{
-			CodebaseBranch: []*query.CodebaseBranch{
-				{},
-			},
-		},
+		//GetCodebaseByNameK8sResult: &query.Codebase{
+		//	CodebaseBranch: []*query.CodebaseBranch{
+		//		{},
+		//	},
+		//},
 	}
 
 	eds := test.MockEDPComponentServiceK8S{
 		GetError: mockErr,
 	}
 
-	beego.Router("/view-registry-FailureCreateLinksForGerritProvider", MakeViewRegistry(cbMock, eds))
+	beego.Router("/view-registry-FailureCreateLinksForGerritProvider", MakeViewRegistry(&cbMock, eds))
 	request, _ := http.NewRequest("GET", "/view-registry-FailureCreateLinksForGerritProvider", nil)
 	responseWriter := httptest.NewRecorder()
 

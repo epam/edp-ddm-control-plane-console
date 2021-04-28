@@ -119,12 +119,56 @@ func (s CodebaseService) CreateCodebase(codebase command.CreateCodebase) (*edpv1
 	return result, nil
 }
 
+const (
+	key6SecretKey                        = "Key-6.dat"
+	digitalSignatureKeyIssuerSecretKey   = "digital-signature-key-issuer"
+	digitalSignatureKeyPasswordSecretKey = "digital-signature-key-password"
+	caCertificatesSecretKey              = "CACertificates.p7b"
+	CAsJSONSecretKey                     = "CAs.json"
+)
+
+func (s *CodebaseService) UpdateKeySecret(key6, caCert, casJSON []byte, signKeyIssuer, signKeyPwd,
+	registryName string) error {
+	keySecret, err := s.Clients.CoreClient.Secrets(console.Namespace).Get(
+		fmt.Sprintf("system-digital-sign-%s-key", registryName), metav1.GetOptions{})
+	if err != nil {
+		return errors.Wrap(err, "unable to get secret")
+	}
+
+	keySecret.Data = map[string][]byte{
+		key6SecretKey:                        key6,
+		digitalSignatureKeyIssuerSecretKey:   []byte(signKeyIssuer),
+		digitalSignatureKeyPasswordSecretKey: []byte(signKeyPwd),
+	}
+
+	if _, err := s.Clients.CoreClient.Secrets(console.Namespace).Update(keySecret); err != nil {
+		return errors.Wrap(err, "unable to update secret")
+	}
+
+	caSecret, err := s.Clients.CoreClient.Secrets(console.Namespace).Get(
+		fmt.Sprintf("system-digital-sign-%s-ca", registryName), metav1.GetOptions{})
+	if err != nil {
+		return errors.Wrap(err, "unable to get secret")
+	}
+
+	caSecret.Data = map[string][]byte{
+		caCertificatesSecretKey: caCert,
+		CAsJSONSecretKey:        casJSON,
+	}
+
+	if _, err := s.Clients.CoreClient.Secrets(console.Namespace).Update(caSecret); err != nil {
+		return errors.Wrap(err, "unable to update secret")
+	}
+
+	return nil
+}
+
 func (s *CodebaseService) CreateKeySecret(key6, caCert, casJSON []byte, signKeyIssuer, signKeyPwd,
 	registryName string) error {
 	if _, err := s.Clients.CoreClient.Secrets(console.Namespace).Create(&v1.Secret{Data: map[string][]byte{
-		"Key-6.dat":                      key6,
-		"digital-signature-key-issuer":   []byte(signKeyIssuer),
-		"digital-signature-key-password": []byte(signKeyPwd),
+		key6SecretKey:                        key6,
+		digitalSignatureKeyIssuerSecretKey:   []byte(signKeyIssuer),
+		digitalSignatureKeyPasswordSecretKey: []byte(signKeyPwd),
 	}, ObjectMeta: metav1.ObjectMeta{
 		Name:      fmt.Sprintf("system-digital-sign-%s-key", registryName),
 		Namespace: console.Namespace,
@@ -133,8 +177,8 @@ func (s *CodebaseService) CreateKeySecret(key6, caCert, casJSON []byte, signKeyI
 	}
 
 	if _, err := s.Clients.CoreClient.Secrets(console.Namespace).Create(&v1.Secret{Data: map[string][]byte{
-		"CACertificates.p7b": caCert,
-		"CAs.json":           casJSON,
+		caCertificatesSecretKey: caCert,
+		CAsJSONSecretKey:        casJSON,
 	}, ObjectMeta: metav1.ObjectMeta{
 		Name:      fmt.Sprintf("system-digital-sign-%s-ca", registryName),
 		Namespace: console.Namespace,
