@@ -56,7 +56,7 @@ func (c *ClusterManagement) createClusterCodebase() (*query.Codebase, error) {
 	_, err := c.CodebaseService.CreateCodebase(command.CreateCodebase{
 		Name:             c.CodebaseName,
 		Username:         username,
-		Type:             string(query.Autotests),
+		Type:             string(query.ClusterManagement),
 		Description:      util.GetStringP(codebaseDescription),
 		DefaultBranch:    defaultBranch,
 		Lang:             lang,

@@ -44,7 +44,7 @@ func TestClusterManagement_CreateCodebase(t *testing.T) {
 	codebaseService := test.MockCodebaseService{}
 	codebaseService.On("CreateCodebase", command.CreateCodebase{
 		Name: "cluster-management", DefaultBranch: "master", Strategy: "import", Lang: "other", BuildTool: "gitops",
-		Type: "autotests", Repository: &command.Repository{URL: beego.AppConfig.String("clusterManagementRepo")},
+		Type: string(query.ClusterManagement), Repository: &command.Repository{URL: beego.AppConfig.String("clusterManagementRepo")},
 		Description:     util.GetStringP(codebaseDescription),
 		Versioning:      command.Versioning{StartFrom: util.GetStringP("0.0.1"), Type: "edp"},
 		JobProvisioning: util.GetStringP("default"), GitServer: "gerrit", GitURLPath: util.GetStringP("/cluster-mgmt"),

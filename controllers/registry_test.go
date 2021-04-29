@@ -32,7 +32,7 @@ func TestListRegistry_GetSuccess(t *testing.T) {
 	}
 
 	codebaseService := test.MockCodebaseService{}
-	codebaseService.On("GetCodebasesByCriteriaK8s", query.CodebaseCriteria{Type: "library"}).
+	codebaseService.On("GetCodebasesByCriteriaK8s", query.CodebaseCriteria{Type: query.Registry}).
 		Return([]*query.Codebase{}, nil)
 
 	beego.Router("/list-registry", MakeListRegistry(&codebaseService))
@@ -112,7 +112,7 @@ func TestCreatRegistry_Post_CodebaseExists(t *testing.T) {
 
 	codebaseService := test.MockCodebaseService{}
 	codebaseService.On("CreateCodebase", command.CreateCodebase{
-		Name: "name1", DefaultBranch: "master", Strategy: "clone", Lang: "other", BuildTool: "gitops", Type: "library",
+		Name: "name1", DefaultBranch: "master", Strategy: "clone", Lang: "other", BuildTool: "gitops", Type: string(query.Registry),
 		Repository:  &command.Repository{URL: beego.AppConfig.String("registryGitRepo")},
 		Description: util.GetStringP("desc1"), GitServer: "gerrit",
 		Versioning:   command.Versioning{Type: "edp", StartFrom: util.GetStringP("0.0.1")},
@@ -279,7 +279,7 @@ func TestCreatRegistry_Post_Success(t *testing.T) {
 	}
 
 	codebaseService.On("CreateCodebase", command.CreateCodebase{
-		Name: "name1", DefaultBranch: "master", Strategy: "clone", Lang: "other", BuildTool: "gitops", Type: "library",
+		Name: "name1", DefaultBranch: "master", Strategy: "clone", Lang: "other", BuildTool: "gitops", Type: string(query.Registry),
 		Repository:  &command.Repository{URL: beego.AppConfig.String("registryGitRepo")},
 		Description: util.GetStringP("desc1"), GitServer: "gerrit",
 		Versioning:   command.Versioning{Type: "edp", StartFrom: util.GetStringP("0.0.1")},
