@@ -94,16 +94,18 @@ type CodebaseType string
 type CodebaseLanguage string
 
 const (
-	App       CodebaseType = "application"
-	Autotests CodebaseType = "autotests"
-	Library   CodebaseType = "library"
-	Registry  CodebaseType = "library" // temporary needs, change to registry-tenant
+	App CodebaseType = "application"
+	//Autotests CodebaseType = "autotests"
+	Library           CodebaseType = "library"
+	Registry          CodebaseType = "registry"
+	ClusterManagement CodebaseType = "clustermgmt"
 )
 
 var CodebaseTypes = map[string]CodebaseType{
 	"application": App,
-	"autotests":   Autotests,
+	//"autotests":   Autotests,
 	"library":     Library,
+	"clustermgmt": ClusterManagement,
 }
 
 type ApplicationsToPromote struct {
