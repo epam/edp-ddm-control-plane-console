@@ -141,11 +141,11 @@ func (s *CodebaseService) UpdateKeySecret(key6, caCert, casJSON []byte, signKeyI
 		digitalSignatureKeyPasswordSecretKey: []byte(signKeyPwd),
 	}
 
-	if _, err := s.Clients.CoreClient.Secrets(console.Namespace).Update(keySecret); err != nil {
+	if _, err := s.Clients.CoreClient.Secrets(registryName).Update(keySecret); err != nil {
 		return errors.Wrap(err, "unable to update secret")
 	}
 
-	caSecret, err := s.Clients.CoreClient.Secrets(console.Namespace).Get(
+	caSecret, err := s.Clients.CoreClient.Secrets(registryName).Get(
 		fmt.Sprintf("system-digital-sign-%s-ca", registryName), metav1.GetOptions{})
 	if err != nil {
 		return errors.Wrap(err, "unable to get secret")
