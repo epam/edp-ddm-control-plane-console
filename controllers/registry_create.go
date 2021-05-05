@@ -88,7 +88,7 @@ func (r *CreateRegistry) createRegistry(registry *models.Registry,
 		return valid.ErrorMap(), nil
 	}
 
-	if err = createRegistryKeys(registry, &valid, request, true, r.CodebaseService.CreateKeySecret); err != nil {
+	if err = createRegistryKeys(r.CodebaseService, registry, &valid, request, true); err != nil {
 		err = errors.Wrap(err, "unable to create registry keys")
 	}
 
@@ -175,8 +175,8 @@ func validateRegistryKeys(registry *models.Registry, valid *validation.Validatio
 	return
 }
 
-func createRegistryKeys(registry *models.Registry, valid *validation.Validation, rq *http.Request, required bool,
-	secretsPutFunc func(key6, caCert, casJSON []byte, signKeyIssuer, signKeyPwd, registryName string) error) error {
+func createRegistryKeys(cb CodebaseService, registry *models.Registry, valid *validation.Validation, rq *http.Request,
+	required bool) error {
 
 	createKeys, key6Fl, caCertFl, caJSONFl := validateRegistryKeys(registry, valid, rq, required)
 	if !createKeys || len(valid.ErrorsMap) > 0 {
@@ -198,7 +198,7 @@ func createRegistryKeys(registry *models.Registry, valid *validation.Validation,
 		return errors.Wrap(err, "unable to read file")
 	}
 
-	if err := secretsPutFunc(key6Bytes, caCertBytes, casJSONBytes, registry.SignKeyIssuer,
+	if err := cb.CreateKeySecret(key6Bytes, caCertBytes, casJSONBytes, registry.SignKeyIssuer,
 		registry.SignKeyPwd, registry.Name); err != nil {
 		return errors.Wrap(err, "unable to create registry keys secret")
 	}
