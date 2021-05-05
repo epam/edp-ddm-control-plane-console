@@ -149,8 +149,7 @@ func (r *EditRegistry) editRegistry(registry *models.Registry) (errorMap map[str
 		return valid.ErrorMap(), nil
 	}
 
-	if err = createRegistryKeys(
-		registry, &valid, r.Ctx.Request, false, r.CodebaseService.UpdateKeySecret); err != nil {
+	if err = createRegistryKeys(r.CodebaseService, registry, &valid, r.Ctx.Request, false); err != nil {
 		err = errors.Wrap(err, "unable to create registry keys")
 	}
 
