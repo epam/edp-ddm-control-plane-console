@@ -17,27 +17,19 @@
 package k8s
 
 import (
-	"ddm-admin-console/service/logger"
-
 	edppipelinesv1alpha1 "github.com/epmd-edp/cd-pipeline-operator/v2/pkg/apis/edp/v1alpha1"
 	edpv1alpha1 "github.com/epmd-edp/codebase-operator/v2/pkg/apis/edp/v1alpha1"
 	"github.com/epmd-edp/edp-component-operator/pkg/apis/v1/v1alpha1"
-	appsV1Client "github.com/openshift/client-go/apps/clientset/versioned/typed/apps/v1"
-	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/client-go/kubernetes"
-	v1 "k8s.io/client-go/kubernetes/typed/apps/v1"
 	coreV1Client "k8s.io/client-go/kubernetes/typed/core/v1"
-	storageV1Client "k8s.io/client-go/kubernetes/typed/storage/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
 var (
-	log                  = logger.GetLogger()
 	k8sConfig            clientcmd.ClientConfig
 	SchemeGroupVersionV2 = schema.GroupVersion{Group: "v2.edp.epam.com", Version: "v1alpha1"}
 	SchemeGroupVersionV1 = schema.GroupVersion{Group: "v1.edp.epam.com", Version: "v1alpha1"}
@@ -45,11 +37,8 @@ var (
 
 type ClientSet struct {
 	CoreClient      CoreClient
-	StorageClient   *storageV1Client.StorageV1Client
-	EDPRestClient   rest.Interface // v2 version
-	EDPRestClientV1 rest.Interface
-	AppsV1Client    *appsV1Client.AppsV1Client
-	K8sAppV1Client  v1.AppsV1Interface
+	EDPRestClientV2 rest.Interface // v2 version
+	EDPRestClientV1 rest.Interface // v1 version
 }
 
 func init() {
@@ -62,41 +51,18 @@ func init() {
 func CreateOpenShiftClients() ClientSet {
 	coreClient, err := getCoreClient()
 	if err != nil {
-		log.Error("An error has occurred while getting core client", zap.Error(err))
 		panic(err)
 	}
 
 	crClientV1, crClientV2, err := getApplicationClient()
 	if err != nil {
-		log.Error("An error has occurred while getting custom resource client", zap.Error(err))
-		panic(err)
-	}
-
-	storageClient, err := getStorageClient()
-	if err != nil {
-		log.Error("An error has occurred while getting custom resource client", zap.Error(err))
-		panic(err)
-	}
-
-	openshiftAppClient, err := getOpenshiftApplicationClient()
-	if err != nil {
-		log.Error("An error has occurred while getting oenshift application resource client", zap.Error(err))
-		panic(err)
-	}
-
-	k8sAppClient, err := getK8sAppsV1Client()
-	if err != nil {
-		log.Error("An error has occurred while getting k8s extension client", zap.Error(err))
 		panic(err)
 	}
 
 	return ClientSet{
 		CoreClient:      coreClient,
-		StorageClient:   storageClient,
-		EDPRestClient:   crClientV2,
+		EDPRestClientV2: crClientV2,
 		EDPRestClientV1: crClientV1,
-		AppsV1Client:    openshiftAppClient,
-		K8sAppV1Client:  k8sAppClient,
 	}
 }
 
@@ -105,35 +71,12 @@ func getCoreClient() (*coreV1Client.CoreV1Client, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	coreClient, err := coreV1Client.NewForConfig(restConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	return coreClient, nil
-}
-
-func getK8sAppsV1Client() (v1.AppsV1Interface, error) {
-	restConfig, err := k8sConfig.ClientConfig()
-	if err != nil {
-		return nil, err
-	}
-	cs, err := kubernetes.NewForConfig(restConfig)
-	if err != nil {
-		return nil, err
-	}
-	return cs.AppsV1(), nil
-}
-
-func getStorageClient() (*storageV1Client.StorageV1Client, error) {
-	restConfig, err := k8sConfig.ClientConfig()
-	if err != nil {
-		return nil, err
-	}
-	coreClient, err := storageV1Client.NewForConfig(restConfig)
-	if err != nil {
-		return nil, err
-	}
 	return coreClient, nil
 }
 
@@ -156,23 +99,6 @@ func getApplicationClient() (v1Client *rest.RESTClient, v2Client *rest.RESTClien
 	}
 
 	return clientV1, clientV2, nil
-}
-
-func getOpenshiftApplicationClient() (*appsV1Client.AppsV1Client, error) {
-	var config *rest.Config
-	var err error
-
-	config, err = k8sConfig.ClientConfig()
-
-	if err != nil {
-		return nil, err
-	}
-
-	clientset, err := appsV1Client.NewForConfig(config)
-	if err != nil {
-		return nil, err
-	}
-	return clientset, nil
 }
 
 func createCrdClient(cfg *rest.Config, groupVersion *schema.GroupVersion,

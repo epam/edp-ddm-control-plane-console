@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"ddm-admin-console/console"
 	"ddm-admin-console/models"
 	"ddm-admin-console/models/command"
 	"ddm-admin-console/models/query"
@@ -53,6 +52,7 @@ type EDPComponentServiceK8S interface {
 type ListRegistry struct {
 	beego.Controller
 	CodebaseService CodebaseService
+	BasePath        string
 }
 
 func MakeListRegistry(codebaseService CodebaseService) *ListRegistry {
@@ -62,7 +62,7 @@ func MakeListRegistry(codebaseService CodebaseService) *ListRegistry {
 }
 
 func (r *ListRegistry) Get() {
-	r.Data["BasePath"] = console.BasePath
+	r.Data["BasePath"] = r.BasePath
 	r.Data["Type"] = registryType
 	r.Data["xsrfdata"] = r.XSRFToken()
 
@@ -106,6 +106,7 @@ func (r *ListRegistry) Post() {
 
 type EditRegistry struct {
 	beego.Controller
+	BasePath        string
 	CodebaseService CodebaseService
 }
 
@@ -116,7 +117,7 @@ func MakeEditRegistry(codebaseService CodebaseService) *EditRegistry {
 }
 
 func (r *EditRegistry) Get() {
-	r.Data["BasePath"] = console.BasePath
+	r.Data["BasePath"] = r.BasePath
 	r.Data["xsrfdata"] = r.XSRFToken()
 	r.Data["Type"] = registryType
 	r.TplName = "registry/edit.html"
@@ -165,7 +166,7 @@ func (r *EditRegistry) editRegistry(registry *models.Registry) (errorMap map[str
 }
 
 func (r *EditRegistry) Post() {
-	r.Data["BasePath"] = console.BasePath
+	r.Data["BasePath"] = r.BasePath
 	r.Data["xsrfdata"] = r.XSRFToken()
 	r.Data["Type"] = registryType
 	r.TplName = "registry/edit.html"
@@ -204,6 +205,8 @@ type ViewRegistry struct {
 	beego.Controller
 	CodebaseService        CodebaseService
 	EDPComponentServiceK8S EDPComponentServiceK8S
+	BasePath               string
+	Namespace              string
 }
 
 func MakeViewRegistry(codebaseService CodebaseService, edpComponentService EDPComponentServiceK8S) *ViewRegistry {
@@ -213,13 +216,14 @@ func MakeViewRegistry(codebaseService CodebaseService, edpComponentService EDPCo
 	}
 }
 
-func CreateLinksForGerritProviderK8s(edpComponentServiceK8S EDPComponentServiceK8S, registry *query.Codebase) error {
-	cj, err := edpComponentServiceK8S.Get(console.Namespace, consts.Jenkins)
+func CreateLinksForGerritProviderK8s(edpComponentServiceK8S EDPComponentServiceK8S, registry *query.Codebase,
+	namespace string) error {
+	cj, err := edpComponentServiceK8S.Get(namespace, consts.Jenkins)
 	if err != nil {
 		return errors.Wrap(err, "unable to get jenkins edp component resource")
 	}
 
-	cg, err := edpComponentServiceK8S.Get(console.Namespace, consts.Gerrit)
+	cg, err := edpComponentServiceK8S.Get(namespace, consts.Gerrit)
 	if err != nil {
 		return errors.Wrap(err, "unable to get gerrit edp component resource")
 	}
@@ -234,7 +238,7 @@ func CreateLinksForGerritProviderK8s(edpComponentServiceK8S EDPComponentServiceK
 }
 
 func (r *ViewRegistry) Get() {
-	r.Data["BasePath"] = console.BasePath
+	r.Data["BasePath"] = r.BasePath
 	r.Data["Type"] = registryType
 	r.TplName = "registry/view.html"
 	var gErr error
@@ -258,7 +262,7 @@ func (r *ViewRegistry) Get() {
 	}
 
 	if len(rg.CodebaseBranch) > 0 {
-		if err := CreateLinksForGerritProviderK8s(r.EDPComponentServiceK8S, rg); err != nil {
+		if err := CreateLinksForGerritProviderK8s(r.EDPComponentServiceK8S, rg, r.Namespace); err != nil {
 			gErr = err
 			return
 		}
