@@ -22,6 +22,8 @@ import (
 	edppipelinesv1alpha1 "github.com/epmd-edp/cd-pipeline-operator/v2/pkg/apis/edp/v1alpha1"
 	edpv1alpha1 "github.com/epmd-edp/codebase-operator/v2/pkg/apis/edp/v1alpha1"
 	"github.com/epmd-edp/edp-component-operator/pkg/apis/v1/v1alpha1"
+	projectV1 "github.com/openshift/client-go/project/clientset/versioned/typed/project/v1"
+	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -37,11 +39,12 @@ const (
 
 type ClientSet struct {
 	CoreClient           CoreClient
-	EDPRestClientV2      rest.Interface // v2 version
-	EDPRestClientV1      rest.Interface // v1 version
+	EDPRestClientV2      rest.Interface
+	EDPRestClientV1      rest.Interface
 	restConfig           *rest.Config
 	schemeGroupVersionV1 *schema.GroupVersion
 	schemeGroupVersionV2 *schema.GroupVersion
+	projectsV1Client     *projectV1.ProjectV1Client
 }
 
 func (cs *ClientSet) GetConfig() *rest.Config {
@@ -75,6 +78,11 @@ func MakeK8SClients() (*ClientSet, error) {
 	}
 
 	cs.EDPRestClientV2, err = createCrdClient(cs.restConfig, cs.schemeGroupVersionV2, cs.knownTypesV2)
+	if err != nil {
+		return nil, err
+	}
+
+	cs.projectsV1Client, err = projectV1.NewForConfig(restConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +177,7 @@ func (cs *ClientSet) GetEDPRestClientV1(ctx context.Context) (rest.Interface, er
 
 	edpRestClientV1, err := createCrdClient(userConfig, cs.schemeGroupVersionV1, cs.knownTypesV1)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "unable to create crd client")
 	}
 
 	return edpRestClientV1, nil
@@ -183,8 +191,23 @@ func (cs *ClientSet) GetEDPRestClientV2(ctx context.Context) (rest.Interface, er
 
 	edpRestClientV2, err := createCrdClient(userConfig, cs.schemeGroupVersionV2, cs.knownTypesV2)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "unable to create crd client")
 	}
 
 	return edpRestClientV2, nil
+}
+
+func (cs *ClientSet) GetOCProjectsClient(ctx context.Context) (*projectV1.ProjectV1Client, error) {
+	userConfig, changed := cs.userConfig(ctx)
+	if !changed {
+		return cs.projectsV1Client, nil
+	}
+
+	pc, err := projectV1.NewForConfig(userConfig)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to create projects client")
+	}
+
+	return pc, nil
+
 }
