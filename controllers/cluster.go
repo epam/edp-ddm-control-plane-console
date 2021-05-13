@@ -30,12 +30,14 @@ type ClusterManagement struct {
 }
 
 func MakeClusterManagement(codebaseService CodebaseService, edpComponentsService EDPComponentServiceK8S,
-	codebaseName, gitRepo string) *ClusterManagement {
+	codebaseName, gitRepo, basePath, namespace string) *ClusterManagement {
 	return &ClusterManagement{
 		CodebaseService:      codebaseService,
 		CodebaseName:         codebaseName,
 		EDPComponentsService: edpComponentsService,
 		GitRepo:              gitRepo,
+		BasePath:             basePath,
+		Namespace:            namespace,
 	}
 }
 
@@ -79,7 +81,7 @@ func (c *ClusterManagement) createClusterCodebase() (*query.Codebase, error) {
 		return nil, errors.Wrap(err, "unable to create cluster codebase")
 	}
 
-	codebase, err := c.CodebaseService.GetCodebaseByNameK8s(c.CodebaseName)
+	codebase, err := c.CodebaseService.GetCodebaseByNameK8s(contextWithUserAccessToken(c.Ctx), c.CodebaseName)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to load cluster codebase")
 	}
@@ -99,7 +101,7 @@ func (c *ClusterManagement) Get() {
 		}
 	}()
 
-	codebase, err := c.CodebaseService.GetCodebaseByNameK8s(c.CodebaseName)
+	codebase, err := c.CodebaseService.GetCodebaseByNameK8s(contextWithUserAccessToken(c.Ctx), c.CodebaseName)
 	if err != nil {
 		switch err.(type) {
 		case service.RegistryNotFound:

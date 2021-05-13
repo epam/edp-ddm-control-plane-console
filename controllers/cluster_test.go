@@ -64,7 +64,7 @@ func TestClusterManagement_CreateCodebase(t *testing.T) {
 	ecs.On("Get", "mdtuddm", "gerrit").Return(&v1alpha12.EDPComponent{}, nil)
 
 	beego.Router("/cluster-management-create", MakeClusterManagement(&codebaseService, &ecs,
-		"cluster-management", beego.AppConfig.String("clusterManagementRepo")))
+		"cluster-management", beego.AppConfig.String("clusterManagementRepo"), "", "mdtuddm"))
 	request, _ := http.NewRequest("GET", "/cluster-management-create", nil)
 	responseWriter := httptest.NewRecorder()
 
@@ -90,7 +90,7 @@ func TestClusterManagement_GetSuccess(t *testing.T) {
 	ecs.On("Get", "mdtuddm", "gerrit").Return(&v1alpha12.EDPComponent{}, nil)
 
 	beego.Router("/cluster-management", MakeClusterManagement(&codebaseService, &ecs,
-		"cluster-management", beego.AppConfig.String("clusterManagementRepo")))
+		"cluster-management", beego.AppConfig.String("clusterManagementRepo"), "", "mdtuddm"))
 	request, _ := http.NewRequest("GET", "/cluster-management", nil)
 	responseWriter := httptest.NewRecorder()
 
@@ -114,7 +114,8 @@ func TestClusterManagement_FailureCodebase(t *testing.T) {
 		Return(nil, mockErr)
 	ecs := test.MockEDPComponentServiceK8S{}
 
-	beego.Router("/cluster-management-error1", MakeClusterManagement(&codebaseService, &ecs, "cluster-management", ""))
+	beego.Router("/cluster-management-error1",
+		MakeClusterManagement(&codebaseService, &ecs, "cluster-management", "", "", "mdtuddm"))
 	request, _ := http.NewRequest("GET", "/cluster-management-error1", nil)
 	responseWriter := httptest.NewRecorder()
 
@@ -145,7 +146,8 @@ func TestClusterManagement_FailureEdpComponent(t *testing.T) {
 	ecs := test.MockEDPComponentServiceK8S{}
 	ecs.On("Get", "mdtuddm", "jenkins").Return(nil, mockErr)
 
-	beego.Router("/cluster-management-error2", MakeClusterManagement(&codebaseService, &ecs, "cluster-management", ""))
+	beego.Router("/cluster-management-error2", MakeClusterManagement(&codebaseService, &ecs, "cluster-management", "",
+		"", "mdtuddm"))
 	request, _ := http.NewRequest("GET", "/cluster-management-error2", nil)
 	responseWriter := httptest.NewRecorder()
 

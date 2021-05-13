@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	"ddm-admin-console/models"
 	"ddm-admin-console/models/command"
 	"ddm-admin-console/models/query"
@@ -33,13 +34,12 @@ const (
 
 type CodebaseService interface {
 	CreateCodebase(codebase command.CreateCodebase) (*edpv1alpha1.Codebase, error)
-	GetCodebasesByCriteria(criteria query.CodebaseCriteria) ([]*query.Codebase, error)
 	GetCodebaseByName(name string) (*query.Codebase, error)
 	UpdateDescription(reg *models.Registry) error
 	ExistCodebaseAndBranch(cbName, brName string) bool
 	Delete(name, codebaseType string) error
-	GetCodebasesByCriteriaK8s(criteria query.CodebaseCriteria) ([]*query.Codebase, error)
-	GetCodebaseByNameK8s(name string) (*query.Codebase, error)
+	GetCodebasesByCriteriaK8s(ctx context.Context, criteria query.CodebaseCriteria) ([]*query.Codebase, error)
+	GetCodebaseByNameK8s(ctx context.Context, name string) (*query.Codebase, error)
 	CreateKeySecret(key6, caCert, casJSON []byte, signKeyIssuer, signKeyPwd, registryName string) error
 	UpdateKeySecret(key6, caCert, casJSON []byte, signKeyIssuer, signKeyPwd, registryName string) error
 }
@@ -68,9 +68,12 @@ func (r *ListRegistry) Get() {
 
 	r.TplName = "registry/list.html"
 
-	codebases, err := r.CodebaseService.GetCodebasesByCriteriaK8s(query.CodebaseCriteria{
-		Type: query.Registry,
-	})
+	r.Ctx.Input.Session(AuthTokenSessionKey)
+
+	codebases, err := r.CodebaseService.GetCodebasesByCriteriaK8s(contextWithUserAccessToken(r.Ctx),
+		query.CodebaseCriteria{
+			Type: query.Registry,
+		})
 
 	if err != nil {
 		log.Error(fmt.Sprintf("%+v\n", err))
@@ -83,7 +86,7 @@ func (r *ListRegistry) Get() {
 
 func (r *ListRegistry) Post() {
 	registryName := r.GetString("registry-name")
-	rg, err := r.CodebaseService.GetCodebaseByNameK8s(registryName)
+	rg, err := r.CodebaseService.GetCodebaseByNameK8s(contextWithUserAccessToken(r.Ctx), registryName)
 	if err != nil {
 		log.Error(fmt.Sprintf("%+v\n", err))
 		if _, ok := errors.Cause(err).(service.RegistryNotFound); ok {
@@ -123,7 +126,7 @@ func (r *EditRegistry) Get() {
 	r.TplName = "registry/edit.html"
 
 	registryName := r.Ctx.Input.Param(":name")
-	rg, err := r.CodebaseService.GetCodebaseByNameK8s(registryName)
+	rg, err := r.CodebaseService.GetCodebaseByNameK8s(contextWithUserAccessToken(r.Ctx), registryName)
 	if err != nil {
 		log.Error(fmt.Sprintf("%+v\n", err))
 		if _, ok := errors.Cause(err).(service.RegistryNotFound); ok {
@@ -209,10 +212,13 @@ type ViewRegistry struct {
 	Namespace              string
 }
 
-func MakeViewRegistry(codebaseService CodebaseService, edpComponentService EDPComponentServiceK8S) *ViewRegistry {
+func MakeViewRegistry(codebaseService CodebaseService, edpComponentService EDPComponentServiceK8S,
+	basePath, namespace string) *ViewRegistry {
 	return &ViewRegistry{
 		CodebaseService:        codebaseService,
 		EDPComponentServiceK8S: edpComponentService,
+		BasePath:               basePath,
+		Namespace:              namespace,
 	}
 }
 
@@ -250,7 +256,7 @@ func (r *ViewRegistry) Get() {
 	}()
 
 	registryName := r.Ctx.Input.Param(":name")
-	rg, err := r.CodebaseService.GetCodebaseByNameK8s(registryName)
+	rg, err := r.CodebaseService.GetCodebaseByNameK8s(contextWithUserAccessToken(r.Ctx), registryName)
 	if err != nil {
 		if _, ok := errors.Cause(err).(service.RegistryNotFound); ok {
 			r.TplName = notFoundTemplatePath

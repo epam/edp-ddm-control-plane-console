@@ -19,12 +19,10 @@ package routers
 import (
 	oauth "ddm-admin-console/auth"
 	"ddm-admin-console/controllers"
-	"ddm-admin-console/controllers/auth"
 	"ddm-admin-console/k8s"
 	"ddm-admin-console/repository"
 	edpComponentRepo "ddm-admin-console/repository/edp-component"
 	"ddm-admin-console/service"
-	cbs "ddm-admin-console/service/codebasebranch"
 	edpComponentService "ddm-admin-console/service/edp-component"
 	"ddm-admin-console/service/logger"
 	"ddm-admin-console/util"
@@ -62,32 +60,37 @@ func init() {
 		authEnabled = true
 	}
 
+	k8sClients, err := k8s.MakeK8SClients()
+	if err != nil {
+		panic(err)
+	}
+
 	if authEnabled {
 		oa, err := oauth.InitOauth2(
 			beego.AppConfig.String("clientId"),
 			beego.AppConfig.String("clientSecret"),
-			beego.AppConfig.String("keycloakURL"),
+			//beego.AppConfig.String("keycloakURL"),
+			k8sClients.GetConfig().Host,
 			host+basePath+"/auth/callback",
 			http.DefaultClient)
 		if err != nil {
-			log.Fatal(err.Error())
+			panic(err)
 		}
 
-		beego.Router(fmt.Sprintf("%s/auth/callback", basePath), auth.MakeController(basePath, oa), "get:Callback")
+		beego.Router(fmt.Sprintf("%s/auth/callback", basePath), controllers.MakeAuthController(basePath, oa), "get:Callback")
 		beego.InsertFilter(fmt.Sprintf("%s/admin/*", basePath), beego.BeforeRouter,
-			oauth.MakeBeegoFilter(oa, auth.SessionKey))
+			oauth.MakeBeegoFilter(oa, controllers.AuthTokenSessionKey))
 	}
 
-	clients := k8s.CreateOpenShiftClients()
 	codebaseRepository := repository.CodebaseRepository{}
 	branchRepository := repository.CodebaseBranchRepository{}
 	ecr := edpComponentRepo.EDPComponent{}
 
 	ecs := edpComponentService.MakeService(ecr, namespace)
 	edpService := service.EDPTenantService{}
-	branchService := cbs.MakeService(&clients, branchRepository, codebaseRepository, namespace)
+	branchService := service.MakeCodebaseBranchService(k8sClients, branchRepository, codebaseRepository, namespace)
 
-	codebaseService := service.MakeCodebaseService(&clients,
+	codebaseService := service.MakeCodebaseService(k8sClients,
 		codebaseRepository, branchService, beego.AppConfig.String("gerritCreatorSecretName"), namespace)
 
 	ec := controllers.MakeEDPTenantController(tenant, basePath, &edpService, ecs)
@@ -132,7 +135,7 @@ func init() {
 	autis := make([]string, len(integrationStrategies))
 	copy(autis, integrationStrategies)
 
-	k8sEDPComponentService := edpComponentService.MakeServiceK8S(clients.EDPRestClientV1)
+	k8sEDPComponentService := edpComponentService.MakeServiceK8S(k8sClients.EDPRestClientV1)
 
 	adminEdpNamespace := beego.NewNamespace(fmt.Sprintf("%s/admin", basePath),
 		beego.NSRouter("/overview", ec, "get:GetEDPComponents"),
@@ -141,11 +144,12 @@ func init() {
 		beego.NSRouter("/registry/overview", controllers.MakeListRegistry(codebaseService)),
 		beego.NSRouter("/registry/create", controllers.MakeCreateRegistry(codebaseService)),
 		beego.NSRouter("/registry/edit/:name", controllers.MakeEditRegistry(codebaseService)),
-		beego.NSRouter("/registry/view/:name", controllers.MakeViewRegistry(codebaseService, k8sEDPComponentService)),
+		beego.NSRouter("/registry/view/:name", controllers.MakeViewRegistry(codebaseService,
+			k8sEDPComponentService, basePath, namespace)),
 		beego.NSRouter("/cluster/management", controllers.MakeClusterManagement(codebaseService,
 			k8sEDPComponentService,
 			beego.AppConfig.DefaultString("clusterManagementCodebaseName", "cluster-management"),
-			beego.AppConfig.String("clusterManagementRepo"))),
+			beego.AppConfig.String("clusterManagementRepo"), basePath, namespace)),
 	)
 	beego.AddNamespace(adminEdpNamespace)
 

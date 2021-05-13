@@ -14,37 +14,38 @@
  * limitations under the License.
  */
 
-package auth
+package controllers
 
 import (
 	"context"
 	"ddm-admin-console/auth"
-	"ddm-admin-console/service/logger"
+	"ddm-admin-console/k8s"
 	"fmt"
 
-	"github.com/astaxie/beego"
-)
+	"golang.org/x/oauth2"
 
-var log = logger.GetLogger()
+	"github.com/astaxie/beego"
+	bgCtx "github.com/astaxie/beego/context"
+)
 
 const (
-	SessionKey = "access_token"
+	AuthTokenSessionKey = "access_token"
 )
 
-type Controller struct {
+type AuthController struct {
 	beego.Controller
 	BasePath string
 	OAuth    *auth.OAuth2
 }
 
-func MakeController(basePath string, oauth *auth.OAuth2) *Controller {
-	return &Controller{
+func MakeAuthController(basePath string, oauth *auth.OAuth2) *AuthController {
+	return &AuthController{
 		BasePath: basePath,
 		OAuth:    oauth,
 	}
 }
 
-func (ac *Controller) Callback() {
+func (ac *AuthController) Callback() {
 	authCode := ac.Ctx.Input.Query("code")
 	token, _, err := ac.OAuth.GetTokenClient(context.Background(), authCode)
 	if err != nil {
@@ -53,16 +54,30 @@ func (ac *Controller) Callback() {
 		return
 	}
 
-	ac.Ctx.Output.Session(SessionKey, token)
+	ac.Ctx.Output.Session(AuthTokenSessionKey, token)
 	path := ac.getRedirectPath()
 	ac.Redirect(path, 302)
 }
 
-func (ac *Controller) getRedirectPath() string {
+func (ac *AuthController) getRedirectPath() string {
 	requestPath := ac.Ctx.Input.Session("request_path")
 	if requestPath == nil {
 		return fmt.Sprintf("%s/admin/registry/overview", ac.BasePath)
 	}
 	ac.Ctx.Output.Session("request_path", nil)
 	return requestPath.(string)
+}
+
+func contextWithUserAccessToken(ctx *bgCtx.Context) context.Context {
+	token := ctx.Input.Session(AuthTokenSessionKey)
+	if token == nil {
+		return context.Background()
+	}
+
+	tokenData, ok := token.(*oauth2.Token)
+	if !ok {
+		return context.Background()
+	}
+
+	return context.WithValue(context.Background(), k8s.UserTokenKey, tokenData.AccessToken)
 }

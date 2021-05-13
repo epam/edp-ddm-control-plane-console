@@ -17,15 +17,14 @@
 package service
 
 import (
+	"context"
 	"ddm-admin-console/k8s"
 	"ddm-admin-console/models"
 	"ddm-admin-console/models/command"
 	edperror "ddm-admin-console/models/error"
 	"ddm-admin-console/models/query"
 	"ddm-admin-console/repository"
-	cbs "ddm-admin-console/service/codebasebranch"
 	"ddm-admin-console/service/logger"
-	"ddm-admin-console/util"
 	"ddm-admin-console/util/consts"
 	"encoding/base64"
 	"fmt"
@@ -37,6 +36,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/rest"
 )
 
 var log = logger.GetLogger()
@@ -49,14 +49,14 @@ const (
 type CodebaseService struct {
 	Clients                 *k8s.ClientSet
 	ICodebaseRepository     repository.ICodebaseRepository
-	BranchService           *cbs.Service
+	BranchService           *CodebaseBranchService
 	GerritCreatorSecretName string
 	Namespace               string
 }
 
 func MakeCodebaseService(clients *k8s.ClientSet,
 	iCodebaseRepository repository.ICodebaseRepository,
-	branchService *cbs.Service,
+	branchService *CodebaseBranchService,
 	gerritCreatorSecretName,
 	namespace string) *CodebaseService {
 	return &CodebaseService{
@@ -71,8 +71,8 @@ func MakeCodebaseService(clients *k8s.ClientSet,
 func (s CodebaseService) CreateCodebase(codebase command.CreateCodebase) (*edpv1alpha1.Codebase, error) {
 	log.Info("start creating Codebase resource", zap.String("name", codebase.Name))
 
-	codebaseCr, err := util.GetCodebaseCR(s.Clients.EDPRestClientV2, codebase.Name, s.Namespace)
-	if err != nil {
+	codebaseCr, err := GetCodebaseCR(s.Clients.EDPRestClientV2, codebase.Name, s.Namespace)
+	if err != nil && !k8sErrors.IsNotFound(err) {
 		log.Info("an error has occurred while fetching Codebase CR from cluster",
 			zap.String("name", codebase.Name))
 		return nil, err
@@ -214,7 +214,7 @@ func (s *CodebaseService) GetCodebasesByCriteria(criteria query.CodebaseCriteria
 	return codebases, nil
 }
 
-func (s *CodebaseService) k8sCodebase2queryCodebase(
+func (s *CodebaseService) k8sCodebase2queryCodebase(clientV2 rest.Interface,
 	cb *edpv1alpha1.Codebase, loadBranches bool) (*query.Codebase, error) {
 
 	description := ""
@@ -245,7 +245,7 @@ func (s *CodebaseService) k8sCodebase2queryCodebase(
 
 	if loadBranches {
 		var edpCodebaseBranchList edpv1alpha1.CodebaseBranchList
-		if err := s.Clients.EDPRestClientV2.Get().Namespace(s.Namespace).Resource(consts.CodebaseBranchPlural).Do().
+		if err := clientV2.Get().Namespace(s.Namespace).Resource(consts.CodebaseBranchPlural).Do().
 			Into(&edpCodebaseBranchList); err != nil {
 			return nil, errors.Wrap(err, "unable to get codebase branches from k8s")
 		}
@@ -267,9 +267,14 @@ func (s *CodebaseService) k8sCodebase2queryCodebase(
 	return &qcb, nil
 }
 
-func (s *CodebaseService) GetCodebasesByCriteriaK8s(criteria query.CodebaseCriteria) ([]*query.Codebase, error) {
+func (s *CodebaseService) GetCodebasesByCriteriaK8s(ctx context.Context, criteria query.CodebaseCriteria) ([]*query.Codebase, error) {
+	clV2, err := s.Clients.GetEDPRestClientV2(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to get edp rest client v2")
+	}
+
 	var edpCodebasesList edpv1alpha1.CodebaseList
-	if err := s.Clients.EDPRestClientV2.Get().Namespace(s.Namespace).Resource(consts.CodebasePlural).Do().
+	if err := clV2.Get().Namespace(s.Namespace).Resource(consts.CodebasePlural).Do().
 		Into(&edpCodebasesList); err != nil {
 		return nil, errors.Wrap(err, "unable to get codebase list from k8s")
 	}
@@ -280,7 +285,7 @@ func (s *CodebaseService) GetCodebasesByCriteriaK8s(criteria query.CodebaseCrite
 			continue
 		}
 
-		qcb, err := s.k8sCodebase2queryCodebase(&edpCodebasesList.Items[i], true)
+		qcb, err := s.k8sCodebase2queryCodebase(clV2, &edpCodebasesList.Items[i], true)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to convert k8s codebase to query codebase")
 		}
@@ -307,9 +312,14 @@ func (r RegistryNotFound) Error() string {
 	return r.cause.Error()
 }
 
-func (s CodebaseService) GetCodebaseByNameK8s(name string) (*query.Codebase, error) {
+func (s CodebaseService) GetCodebaseByNameK8s(ctx context.Context, name string) (*query.Codebase, error) {
+	clientV2, err := s.Clients.GetEDPRestClientV2(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	var edpCodebase edpv1alpha1.Codebase
-	if err := s.Clients.EDPRestClientV2.Get().Namespace(s.Namespace).Resource(consts.CodebasePlural).Name(name).
+	if err := clientV2.Get().Namespace(s.Namespace).Resource(consts.CodebasePlural).Name(name).
 		Do().Into(&edpCodebase); err != nil {
 		if errStatus, ok := err.(*k8sErrors.StatusError); ok && errStatus.ErrStatus.Code == 404 {
 			return nil, RegistryNotFound{cause: errStatus}
@@ -322,7 +332,7 @@ func (s CodebaseService) GetCodebaseByNameK8s(name string) (*query.Codebase, err
 		return nil, errors.Wrap(err, "unable to get codebase from k8s api")
 	}
 
-	qcb, err := s.k8sCodebase2queryCodebase(&edpCodebase, true)
+	qcb, err := s.k8sCodebase2queryCodebase(clientV2, &edpCodebase, true)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to convert k8s codebase to query codebase")
 	}
@@ -529,8 +539,18 @@ func setCodebaseBranchCr(vt string, username string, version *string, defaultBra
 	}
 }
 
+func GetCodebaseCR(c rest.Interface, name, namespace string) (*edpv1alpha1.Codebase, error) {
+	var cb edpv1alpha1.Codebase
+	err := c.Get().Namespace(namespace).Resource(consts.CodebasePlural).Name(name).Do().Into(&cb)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to get codebase")
+	}
+
+	return &cb, nil
+}
+
 func (s *CodebaseService) UpdateDescription(reg *models.Registry) error {
-	c, err := util.GetCodebaseCR(s.Clients.EDPRestClientV2, reg.Name, s.Namespace)
+	c, err := GetCodebaseCR(s.Clients.EDPRestClientV2, reg.Name, s.Namespace)
 	if err != nil {
 		return errors.Wrapf(err, "couldn't get codebase from cluster %v", reg.Name)
 	}
@@ -550,7 +570,7 @@ func (s *CodebaseService) UpdateDescription(reg *models.Registry) error {
 
 func (s *CodebaseService) Update(command command.UpdateCodebaseCommand) (*edpv1alpha1.Codebase, error) {
 	log.Debug("start executing Update method fort codebase", zap.String("name", command.Name))
-	c, err := util.GetCodebaseCR(s.Clients.EDPRestClientV2, command.Name, s.Namespace)
+	c, err := GetCodebaseCR(s.Clients.EDPRestClientV2, command.Name, s.Namespace)
 	if err != nil {
 		return nil, errors.Wrapf(err, "couldn't get codebase from cluster %v", command.Name)
 	}

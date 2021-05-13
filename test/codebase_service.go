@@ -1,6 +1,7 @@
 package test
 
 import (
+	"context"
 	"ddm-admin-console/models"
 	"ddm-admin-console/models/command"
 	"ddm-admin-console/models/query"
@@ -18,7 +19,7 @@ func (m *MockCodebaseService) CreateKeySecret(key6, caCert, casJSON []byte, sign
 	return nil
 }
 
-func (m *MockCodebaseService) GetCodebaseByNameK8s(name string) (*query.Codebase, error) {
+func (m *MockCodebaseService) GetCodebaseByNameK8s(ctx context.Context, name string) (*query.Codebase, error) {
 	args := m.Called(name)
 	if err := args.Error(1); err != nil {
 		return nil, err
@@ -27,7 +28,7 @@ func (m *MockCodebaseService) GetCodebaseByNameK8s(name string) (*query.Codebase
 	return args.Get(0).(*query.Codebase), nil
 }
 
-func (m *MockCodebaseService) GetCodebasesByCriteriaK8s(criteria query.CodebaseCriteria) ([]*query.Codebase, error) {
+func (m *MockCodebaseService) GetCodebasesByCriteriaK8s(ctx context.Context, criteria query.CodebaseCriteria) ([]*query.Codebase, error) {
 	args := m.Called(criteria)
 	if err := args.Error(1); err != nil {
 		return nil, err

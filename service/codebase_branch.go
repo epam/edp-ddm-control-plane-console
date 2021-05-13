@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package codebasebranch
+package service
 
 import (
 	"ddm-admin-console/k8s"
 	"ddm-admin-console/models/command"
 	"ddm-admin-console/models/query"
 	"ddm-admin-console/repository"
-	"ddm-admin-console/service/logger"
 	"ddm-admin-console/util"
 	"ddm-admin-console/util/consts"
 	dberror "ddm-admin-console/util/error/db-errors"
@@ -38,9 +37,7 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-var log = logger.GetLogger()
-
-type Service struct {
+type CodebaseBranchService struct {
 	Clients                  *k8s.ClientSet
 	IReleaseBranchRepository repository.ICodebaseBranchRepository
 	ICodebaseRepository      repository.ICodebaseRepository
@@ -48,9 +45,9 @@ type Service struct {
 	Namespace                string
 }
 
-func MakeService(clients *k8s.ClientSet, iReleaseBranchRepository repository.ICodebaseBranchRepository,
-	iCodebaseRepository repository.ICodebaseRepository, namespace string) *Service {
-	return &Service{
+func MakeCodebaseBranchService(clients *k8s.ClientSet, iReleaseBranchRepository repository.ICodebaseBranchRepository,
+	iCodebaseRepository repository.ICodebaseRepository, namespace string) *CodebaseBranchService {
+	return &CodebaseBranchService{
 		Clients:                  clients,
 		IReleaseBranchRepository: iReleaseBranchRepository,
 		ICodebaseRepository:      iCodebaseRepository,
@@ -59,7 +56,7 @@ func MakeService(clients *k8s.ClientSet, iReleaseBranchRepository repository.ICo
 	}
 }
 
-func (s *Service) CreateCodebaseBranch(branchInfo command.CreateCodebaseBranch, appName string) (*edpv1alpha1.CodebaseBranch, error) {
+func (s *CodebaseBranchService) CreateCodebaseBranch(branchInfo command.CreateCodebaseBranch, appName string) (*edpv1alpha1.CodebaseBranch, error) {
 	log.Debug("start creating CodebaseBranch CR",
 		zap.String("codebase", appName), zap.String("branch", branchInfo.Name))
 	edpRestClient := s.Clients.EDPRestClientV2
@@ -75,7 +72,7 @@ func (s *Service) CreateCodebaseBranch(branchInfo command.CreateCodebaseBranch, 
 		return nil, fmt.Errorf("CodebaseBranch %v already exists", cb)
 	}
 
-	c, err := util.GetCodebaseCR(s.Clients.EDPRestClientV2, appName, s.Namespace)
+	c, err := GetCodebaseCR(s.Clients.EDPRestClientV2, appName, s.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +127,7 @@ func newTrue() *bool {
 	return &b
 }
 
-func (s *Service) UpdateCodebaseBranch(appName, branchName string, version *string) error {
+func (s *CodebaseBranchService) UpdateCodebaseBranch(appName, branchName string, version *string) error {
 	log.Debug("start updating CodebaseBranch CR",
 		zap.String("version", *version),
 		zap.String("branch", branchName))
@@ -162,7 +159,7 @@ func (s *Service) UpdateCodebaseBranch(appName, branchName string, version *stri
 	return nil
 }
 
-func (s *Service) GetCodebaseBranchesByCriteria(criteria query.CodebaseBranchCriteria) ([]query.CodebaseBranch, error) {
+func (s *CodebaseBranchService) GetCodebaseBranchesByCriteria(criteria query.CodebaseBranchCriteria) ([]query.CodebaseBranch, error) {
 	codebaseBranches, err := s.IReleaseBranchRepository.GetCodebaseBranchesByCriteria(criteria)
 	if err != nil {
 		return nil, errors.Wrap(err, "an error has occurred while getting branch entities")
@@ -186,7 +183,7 @@ func getReleaseBranchCR(edpRestClient rest.Interface, branchName string, appName
 	return result, nil
 }
 
-func (s *Service) Delete(codebase, branch string) error {
+func (s *CodebaseBranchService) Delete(codebase, branch string) error {
 	log.Debug("start executing service codebase branch delete method",
 		zap.String("name", codebase),
 		zap.String("branch", branch))
@@ -204,7 +201,7 @@ func (s *Service) Delete(codebase, branch string) error {
 	return nil
 }
 
-func (s *Service) canCodebaseBranchBeDeleted(codebase, branch string) error {
+func (s *CodebaseBranchService) canCodebaseBranchBeDeleted(codebase, branch string) error {
 	c, err := s.ICodebaseRepository.GetCodebaseByName(codebase)
 	if err != nil {
 		return err
@@ -222,7 +219,7 @@ func (s *Service) canCodebaseBranchBeDeleted(codebase, branch string) error {
 	return nil
 }
 
-func (s *Service) deleteCodebaseBranch(name string) error {
+func (s *CodebaseBranchService) deleteCodebaseBranch(name string) error {
 	cb := &edpv1alpha1.CodebaseBranch{}
 	err := s.Clients.EDPRestClientV2.Delete().
 		Namespace(s.Namespace).

@@ -574,17 +574,12 @@ func TestViewRegistry_Get(t *testing.T) {
 	cbMock.On("GetCodebaseByNameK8s", "").
 		Return(&query.Codebase{CodebaseBranch: []*query.CodebaseBranch{{}}, ActionLog: []*query.ActionLog{{}}}, nil)
 
-	eds := test.MockEDPComponentServiceK8S{
-		//GetResult: &v1alpha1.EDPComponent{},
-		//GetAllResult: []v1alpha1.EDPComponent{
-		//	{},
-		//},
-	}
+	eds := test.MockEDPComponentServiceK8S{}
 	eds.On("Get", "mdtuddm", "jenkins").Return(&v1alpha12.EDPComponent{}, nil)
 	eds.On("Get", "mdtuddm", "gerrit").Return(&v1alpha12.EDPComponent{}, nil)
 	eds.On("GetAll", "").Return([]v1alpha12.EDPComponent{{}}, nil)
 
-	beego.Router("/view-registry", MakeViewRegistry(&cbMock, &eds))
+	beego.Router("/view-registry", MakeViewRegistry(&cbMock, &eds, "", "mdtuddm"))
 	request, _ := http.NewRequest("GET", "/view-registry", nil)
 	responseWriter := httptest.NewRecorder()
 
@@ -612,7 +607,7 @@ func TestViewRegistry_Get_FailureEdpComponents(t *testing.T) {
 	eds.On("Get", "mdtuddm", "gerrit").Return(&v1alpha12.EDPComponent{}, nil)
 	eds.On("GetAll", "").Return(nil, mockErr)
 
-	beego.Router("/view-registry-failure-edp-comp", MakeViewRegistry(&cbMock, &eds))
+	beego.Router("/view-registry-failure-edp-comp", MakeViewRegistry(&cbMock, &eds, "", "mdtuddm"))
 	request, _ := http.NewRequest("GET", "/view-registry-failure-edp-comp", nil)
 	responseWriter := httptest.NewRecorder()
 
@@ -638,7 +633,7 @@ func TestViewRegistry_Get_FailureGetCodebaseByName(t *testing.T) {
 	cbMock.On("GetCodebaseByNameK8s", "").Return(nil, mockErr)
 	eds := test.MockEDPComponentServiceK8S{}
 
-	beego.Router("/view-registry-FailureGetCodebaseByName", MakeViewRegistry(&cbMock, &eds))
+	beego.Router("/view-registry-FailureGetCodebaseByName", MakeViewRegistry(&cbMock, &eds, "", "mdtuddm"))
 	request, _ := http.NewRequest("GET", "/view-registry-FailureGetCodebaseByName", nil)
 	responseWriter := httptest.NewRecorder()
 
@@ -664,7 +659,7 @@ func TestViewRegistry_Get_FailureGetCodebaseByName404(t *testing.T) {
 		Return(nil, errors.Wrap(service.RegistryNotFound{}, ""))
 	eds := test.MockEDPComponentServiceK8S{}
 
-	beego.Router("/view-registry-FailureGetCodebaseByName404", MakeViewRegistry(&cbMock, &eds))
+	beego.Router("/view-registry-FailureGetCodebaseByName404", MakeViewRegistry(&cbMock, &eds, "", "mdtuddm"))
 	request, _ := http.NewRequest("GET", "/view-registry-FailureGetCodebaseByName404", nil)
 	responseWriter := httptest.NewRecorder()
 
@@ -693,7 +688,7 @@ func TestViewRegistry_Get_FailureCreateLinksForGerritProvider(t *testing.T) {
 	eds := test.MockEDPComponentServiceK8S{}
 	eds.On("Get", "mdtuddm", "jenkins").Return(nil, mockErr)
 
-	beego.Router("/view-registry-FailureCreateLinksForGerritProvider", MakeViewRegistry(&cbMock, &eds))
+	beego.Router("/view-registry-FailureCreateLinksForGerritProvider", MakeViewRegistry(&cbMock, &eds, "", "mdtuddm"))
 	request, _ := http.NewRequest("GET", "/view-registry-FailureCreateLinksForGerritProvider", nil)
 	responseWriter := httptest.NewRecorder()
 
