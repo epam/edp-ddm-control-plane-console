@@ -71,7 +71,7 @@ func init() {
 			beego.AppConfig.String("clientSecret"),
 			k8sClients.GetConfig().Host,
 			host+basePath+"/auth/callback",
-			http.DefaultClient)
+			&http.Client{Transport: k8sClients.GetConfig().Transport})
 		if err != nil {
 			panic(err)
 		}
