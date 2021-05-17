@@ -1,1 +1,0 @@
-drop table if exists quality_gate_stage;

@@ -1,1 +1,0 @@
-alter type "action" add value 'import_project';

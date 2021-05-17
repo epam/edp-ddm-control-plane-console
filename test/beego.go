@@ -1,7 +1,6 @@
 package test
 
 import (
-	"ddm-admin-console/console"
 	"io/ioutil"
 	"os"
 
@@ -46,13 +45,9 @@ func InitBeego() error {
 	}
 
 	beego.TestBeegoInit(".")
-	console.Tenant = "develop"
-	console.Namespace = "mdtuddm"
+	//console.Tenant = "develop"
+	//console.Namespace = "mdtuddm"
 	beego.BConfig.WebConfig.EnableXSRF = false
-
-	// if _, err := orm.GetDB("default"); err != nil {
-	//	console.InitDb()
-	//}
 
 	return nil
 }

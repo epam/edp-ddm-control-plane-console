@@ -1,1 +1,0 @@
-create type quality_gate as enum ('manual', 'autotests');

@@ -1,1 +1,0 @@
-alter type "framework" add value 'dotnet-2.1';

@@ -1,1 +1,0 @@
-alter table codebase add commit_message_pattern text not null;

@@ -17,7 +17,6 @@
 package controllers
 
 import (
-	"ddm-admin-console/console"
 	"ddm-admin-console/service"
 
 	"github.com/astaxie/beego"
@@ -25,12 +24,19 @@ import (
 
 type MainController struct {
 	beego.Controller
-	EDPTenantService service.EDPTenantService
+	EDPTenantService *service.EDPTenantService
+	BasePath         string
+}
+
+func MakeMainController(basePath string, edpTenantService *service.EDPTenantService) *MainController {
+	return &MainController{
+		BasePath:         basePath,
+		EDPTenantService: edpTenantService,
+	}
 }
 
 func (c *MainController) Index() {
-	c.Data["EDPVersion"] = console.EDPVersion
-	c.Data["BasePath"] = console.BasePath
+	c.Data["BasePath"] = c.BasePath
 	c.TplName = "index.html"
 }
 

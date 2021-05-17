@@ -1,23 +1,31 @@
 package controllers
 
 import (
-	"ddm-admin-console/console"
 	"ddm-admin-console/models"
 	"ddm-admin-console/models/command"
 	edperror "ddm-admin-console/models/error"
 	"ddm-admin-console/models/query"
 	"ddm-admin-console/util"
-	"encoding/base64"
 	"fmt"
+	"io/ioutil"
+	"mime/multipart"
+	"net/http"
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/validation"
 	"github.com/pkg/errors"
 )
 
+const (
+	key6FormKey   = "key6"
+	caCertFormKey = "ca-cert"
+	caJSONFormKey = "ca-json"
+)
+
 type CreateRegistry struct {
 	beego.Controller
 	CodebaseService CodebaseService
+	BasePath        string
 }
 
 func MakeCreateRegistry(codebaseService CodebaseService) *CreateRegistry {
@@ -27,14 +35,14 @@ func MakeCreateRegistry(codebaseService CodebaseService) *CreateRegistry {
 }
 
 func (r *CreateRegistry) Get() {
-	r.Data["BasePath"] = console.BasePath
+	r.Data["BasePath"] = r.BasePath
 	r.Data["xsrfdata"] = r.XSRFToken()
 	r.Data["Type"] = registryType
 	r.TplName = "registry/create.html"
 }
 
 func (r *CreateRegistry) Post() {
-	r.Data["BasePath"] = console.BasePath
+	r.Data["BasePath"] = r.BasePath
 	r.TplName = "registry/create.html"
 	r.Data["xsrfdata"] = r.XSRFToken()
 	r.Data["Type"] = registryType
@@ -47,7 +55,7 @@ func (r *CreateRegistry) Post() {
 	}
 	r.Data["model"] = registry
 
-	validationErrors, err := r.createRegistry(&registry)
+	validationErrors, err := r.createRegistry(&registry, r.Ctx.Request)
 	if err != nil {
 		log.Error(fmt.Sprintf("%+v\n", err))
 		r.CustomAbort(500, err.Error())
@@ -67,8 +75,8 @@ func (r *CreateRegistry) Post() {
 	r.Redirect(registryOverviewURL, 303)
 }
 
-func (r *CreateRegistry) createRegistry(registry *models.Registry) (errorMap map[string][]*validation.Error,
-	err error) {
+func (r *CreateRegistry) createRegistry(registry *models.Registry,
+	request *http.Request) (errorMap map[string][]*validation.Error, err error) {
 	var valid validation.Validation
 
 	dataValid, err := valid.Valid(registry)
@@ -77,6 +85,14 @@ func (r *CreateRegistry) createRegistry(registry *models.Registry) (errorMap map
 	}
 
 	if !dataValid {
+		return valid.ErrorMap(), nil
+	}
+
+	if err = createRegistryKeys(r.CodebaseService, registry, &valid, request, true); err != nil {
+		err = errors.Wrap(err, "unable to create registry keys")
+	}
+
+	if len(valid.ErrorMap()) > 0 {
 		return valid.ErrorMap(), nil
 	}
 
@@ -119,51 +135,71 @@ func (r *CreateRegistry) createRegistry(registry *models.Registry) (errorMap map
 		}
 	}
 
-	if err := r.createRegistryKeys(registry, &valid); err != nil {
-		err = errors.Wrap(err, "unable to create registry keys")
+	return
+}
+
+func validateRegistryKeys(registry *models.Registry, valid *validation.Validation,
+	rq *http.Request, required bool) (createKeys bool, key6Fl, caCertFl, caJSONFl multipart.File) {
+
+	var err error
+	key6Fl, _, err = rq.FormFile(key6FormKey)
+	if err != nil {
+		if !required {
+			err = nil
+			return
+		}
+
+		valid.AddError("Key6.Required", err.Error())
 	}
+
+	caCertFl, _, err = rq.FormFile(caCertFormKey)
+	if err != nil {
+		valid.AddError("CACertificate.Required", err.Error())
+	}
+
+	caJSONFl, _, err = rq.FormFile(caJSONFormKey)
+	if err != nil {
+		valid.AddError("CAsJSON.Required", err.Error())
+	}
+
+	if registry.SignKeyPwd == "" {
+		valid.AddError("SignKeyPwd.Required", "Can not be empty")
+	}
+
+	if registry.SignKeyIssuer == "" {
+		valid.AddError("SignKeyIssuer.Required", "Can not be empty")
+	}
+
+	createKeys = true
 
 	return
 }
 
-func (r *CreateRegistry) createRegistryKeys(registry *models.Registry, valid *validation.Validation) error {
-	if registry.Key6 == "" {
+func createRegistryKeys(cb CodebaseService, registry *models.Registry, valid *validation.Validation, rq *http.Request,
+	required bool) error {
+
+	createKeys, key6Fl, caCertFl, caJSONFl := validateRegistryKeys(registry, valid, rq, required)
+	if !createKeys || len(valid.ErrorsMap) > 0 {
 		return nil
 	}
 
-	key6, err := base64.StdEncoding.DecodeString(registry.Key6)
+	key6Bytes, err := ioutil.ReadAll(key6Fl)
 	if err != nil {
-		return errors.Wrapf(err, "unable to decode key6 base64")
+		return errors.Wrap(err, "unable to read file")
 	}
 
-	if registry.SignKeyIssuer == "" {
-		valid.AddError("SignKeyIssuer.Required", "digital-signature-key-issuer is required")
-	}
-
-	if registry.SignKeyPwd == "" {
-		valid.AddError("SignKeyPwd.Required", "digital-signature-key-password is required")
-	}
-
-	if registry.CACertificate == "" {
-		valid.AddError("CACertificate.Required", "CACertificates.p7b is required")
-	}
-
-	if registry.CAsJSON == "" {
-		valid.AddError("CAsJSON.Required", "CAs.json is required")
-	}
-
-	caCert, err := base64.StdEncoding.DecodeString(registry.CACertificate)
+	caCertBytes, err := ioutil.ReadAll(caCertFl)
 	if err != nil {
-		return errors.Wrapf(err, "unable to decode CACertificates.p7b base64")
+		return errors.Wrap(err, "unable to read file")
 	}
 
-	casJSON, err := base64.StdEncoding.DecodeString(registry.CAsJSON)
+	casJSONBytes, err := ioutil.ReadAll(caJSONFl)
 	if err != nil {
-		return errors.Wrapf(err, "unable to decode CAs.json base64")
+		return errors.Wrap(err, "unable to read file")
 	}
 
-	if err := r.CodebaseService.CreateKeySecret(key6, caCert, casJSON, registry.SignKeyIssuer, registry.SignKeyPwd,
-		registry.Name); err != nil {
+	if err := cb.CreateKeySecret(key6Bytes, caCertBytes, casJSONBytes, registry.SignKeyIssuer,
+		registry.SignKeyPwd, registry.Name); err != nil {
 		return errors.Wrap(err, "unable to create registry keys secret")
 	}
 

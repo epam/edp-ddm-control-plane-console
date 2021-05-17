@@ -1,1 +1,0 @@
-alter table cd_pipeline_third_party_service rename column service_id to third_party_service_id;

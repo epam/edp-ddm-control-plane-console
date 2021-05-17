@@ -11,7 +11,7 @@
         <h1>Створити новий реєстр</h1>
         <div class="registry-description">Щоб створити реєстр, вкажіть його назву та додайте опис.</div>
 
-        <form class="registry-create-form" method="post" action="">
+        <form class="registry-create-form" method="post" enctype="multipart/form-data" action="">
             {{ if .error }}
             <div class="rc-global-error">{{.error}}</div>
             {{ end }}
@@ -48,9 +48,11 @@
                 <span>{{range $key, $val := .errorsMap.Description}}{{ $val }}{{end}}</span>
                 <p>Опис може містити офіційну назву реєстру чи його призначення.</p>
             </div>
+            <h3>Дані про ключ</h3>
+            <hr />
             <div class="rc-form-group {{ if .errorsMap.Key6 }}error{{end}}">
-                <label for="key6">Key-6.dat (обов'язково у форматі base64)</label>
-                <textarea rows="3" name="key6" id="key6">{{.model.key6}}</textarea>
+                <label for="key6">Файловий ключ (розширення .dat)</label>
+                <input type="file" name="key6" id="key6" accept=".dat" />
                 <span>
                     {{range $key, $val := .errorsMap.Key6}}
                         {{i18n "uk" $val.Error}}
@@ -58,7 +60,7 @@
                 </span>
             </div>
             <div class="rc-form-group {{ if .errorsMap.SignKeyIssuer }}error{{end}}">
-                <label for="sign-key-issuer">digital-signature-key-issuer</label>
+                <label for="sign-key-issuer">АЦСК, що видав ключ</label>
                 <input type="text" id="sign-key-issuer" name="sign-key-issuer" value="{{.model.SignKeyIssuer}}" />
                 <span>
                     {{range $key, $val := .errorsMap.SignKeyIssuer}}
@@ -67,7 +69,7 @@
                 </span>
             </div>
             <div class="rc-form-group {{ if .errorsMap.SignKeyPwd }}error{{end}}">
-                <label for="sign-key-pwd">digital-signature-key-password</label>
+                <label for="sign-key-pwd">Пароль до файлового ключа</label>
                 <input type="text" id="sign-key-pwd" name="sign-key-pwd" value="{{.model.SignKeyPwd}}" />
                 <span>
                     {{range $key, $val := .errorsMap.SignKeyPwd}}
@@ -75,9 +77,11 @@
                     {{end}}
                 </span>
             </div>
+            <h3>Дані для перевірки ключа</h3>
+            <hr />
             <div class="rc-form-group {{ if .errorsMap.CACertificate }}error{{end}}">
-                <label for="ca-cert">CACertificates.p7b</label>
-                <textarea rows="3" name="ca-cert" id="ca-cert">{{.model.CACertificate}}</textarea>
+                <label for="ca-cert">Публічні сертифікати АЦСК (розширення .p7b)</label>
+                <input type="file" name="ca-cert" id="ca-cert" accept=".p7b" />
                 <span>
                     {{range $key, $val := .errorsMap.CACertificate}}
                         {{i18n "uk" $val.Error}}
@@ -85,8 +89,8 @@
                 </span>
             </div>
             <div class="rc-form-group {{ if .errorsMap.CAsJSON }}error{{end}}">
-                <label for="ca-json">CAs.json</label>
-                <textarea rows="3" name="ca-json" id="ca-json">{{.model.CAsJSON}}</textarea>
+                <label for="ca-json">Список АЦСК (розширення .json)</label>
+                <input type="file" name="ca-json" id="ca-json" accept=".json" />
                 <span>
                     {{range $key, $val := .errorsMap.CAsJSON}}
                         {{i18n "uk" $val.Error}}

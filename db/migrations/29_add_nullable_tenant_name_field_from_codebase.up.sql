@@ -1,1 +1,0 @@
-alter table codebase alter column tenant_name drop not null;

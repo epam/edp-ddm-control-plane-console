@@ -1,1 +1,0 @@
-drop table if exists stage_codebase_docker_stream;

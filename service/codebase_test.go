@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"ddm-admin-console/k8s"
 	"ddm-admin-console/models"
 	"ddm-admin-console/models/query"
@@ -58,8 +59,8 @@ func TestCodebaseService_UpdateDescription(t *testing.T) {
 	}
 
 	svc := CodebaseService{
-		Clients: k8s.ClientSet{
-			EDPRestClient: test.MockRestInterface{
+		Clients: &k8s.ClientSet{
+			EDPRestClientV2: test.MockRestInterface{
 				GetResponse: test.NewRequestShortcut(getHTTPClient),
 				PutResponse: test.NewRequestShortcut(putHTTPClient),
 			},
@@ -90,14 +91,14 @@ func TestCodebaseService_GetCodebasesByCriteriaK8s(t *testing.T) {
 		},
 	}
 
-	cs := CodebaseService{Clients: k8s.ClientSet{
-		EDPRestClient: test.MockRestInterface{
+	cs := CodebaseService{Clients: &k8s.ClientSet{
+		EDPRestClientV2: test.MockRestInterface{
 			GetResponseHandler: func() *rest.Request {
 				return test.NewRequestShortcut(getHTTPClient)
 			},
 		},
 	}}
-	rsp, err := cs.GetCodebasesByCriteriaK8s(query.CodebaseCriteria{
+	rsp, err := cs.GetCodebasesByCriteriaK8s(context.Background(), query.CodebaseCriteria{
 		Type: query.Registry,
 	})
 	if err != nil {
@@ -119,8 +120,8 @@ func TestCodebaseService_UpdateDescription_FailureGetCodebase(t *testing.T) {
 	}
 
 	svc := CodebaseService{
-		Clients: k8s.ClientSet{
-			EDPRestClient: test.MockRestInterface{
+		Clients: &k8s.ClientSet{
+			EDPRestClientV2: test.MockRestInterface{
 				GetResponse: test.NewRequestShortcut(getHTTPClient),
 			},
 		},
@@ -155,8 +156,8 @@ func TestCodebaseService_UpdateDescription_FailureUpdateCodebase(t *testing.T) {
 	}
 
 	svc := CodebaseService{
-		Clients: k8s.ClientSet{
-			EDPRestClient: test.MockRestInterface{
+		Clients: &k8s.ClientSet{
+			EDPRestClientV2: test.MockRestInterface{
 				GetResponse: test.NewRequestShortcut(getHTTPClient),
 				PutResponse: test.NewRequestShortcut(putHTTPClient),
 			},

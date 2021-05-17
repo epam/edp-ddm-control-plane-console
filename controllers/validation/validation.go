@@ -6,11 +6,12 @@ import (
 	"ddm-admin-console/util"
 	"encoding/json"
 	"fmt"
-	"github.com/astaxie/beego/validation"
-	gateV1alpha1 "github.com/epmd-edp/cd-pipeline-operator/v2/pkg/apis/edp/v1alpha1"
 	"net/http"
 	"regexp"
 	"strings"
+
+	"github.com/astaxie/beego/validation"
+	gateV1alpha1 "github.com/epmd-edp/cd-pipeline-operator/v2/pkg/apis/edp/v1alpha1"
 )
 
 const codebaseAutotests = "autotests"
@@ -112,52 +113,6 @@ func CreateCodebaseLogRequestData(app command.CreateCodebase) strings.Builder {
 	return result
 }
 
-func ValidateCDPipelineRequest(cdPipeline command.CDPipelineCommand) *ErrMsg {
-	var isCDPipelineValid, isApplicationsValid, isStagesValid, isQualityGatesValid bool
-	errMsg := &ErrMsg{"An internal error has occurred on server while validating CD Pipeline's request body.", http.StatusInternalServerError}
-	valid := validation.Validation{}
-	isCDPipelineValid, err := valid.Valid(cdPipeline)
-
-	if err != nil {
-		return errMsg
-	}
-
-	if cdPipeline.Applications != nil {
-		for _, app := range cdPipeline.Applications {
-			isApplicationsValid, err = valid.Valid(app)
-			if err != nil {
-				return errMsg
-			}
-		}
-	}
-
-	if cdPipeline.Stages != nil {
-		for _, stage := range cdPipeline.Stages {
-
-			isValid, err := validateQualityGates(valid, stage.QualityGates)
-			if err != nil {
-				return errMsg
-			}
-			isQualityGatesValid = isValid
-
-			isStagesValid, err = valid.Valid(stage)
-			if err != nil {
-				return errMsg
-			}
-		}
-	} else {
-		err := &validation.Error{Key: "stages", Message: "can not be null"}
-		valid.Errors = append(valid.Errors, err)
-		isStagesValid = false
-	}
-
-	if isCDPipelineValid && isApplicationsValid && isStagesValid && isQualityGatesValid {
-		return nil
-	}
-
-	return &ErrMsg{string(CreateErrorResponseBody(valid)), http.StatusBadRequest}
-}
-
 func validateQualityGates(valid validation.Validation, qualityGates []gateV1alpha1.QualityGate) (bool, error) {
 	isQualityGatesValid := true
 
@@ -180,50 +135,6 @@ func validateQualityGates(valid validation.Validation, qualityGates []gateV1alph
 	}
 
 	return isQualityGatesValid, nil
-}
-
-func ValidateCDPipelineUpdateRequestData(cdPipeline command.CDPipelineCommand) *ErrMsg {
-	isApplicationsValid := true
-	isStagesValid := true
-	isQualityGatesValid := true
-	errMsg := &ErrMsg{"An internal error has occurred on server while validating CD Pipeline's request body.", http.StatusInternalServerError}
-	valid := validation.Validation{}
-	isCDPipelineValid, err := valid.Valid(cdPipeline)
-
-	if err != nil {
-		return errMsg
-	}
-
-	if cdPipeline.Applications != nil {
-		for _, app := range cdPipeline.Applications {
-			isApplicationsValid, err = valid.Valid(app)
-			if err != nil {
-				return errMsg
-			}
-		}
-	}
-
-	if cdPipeline.Stages != nil {
-		for _, stage := range cdPipeline.Stages {
-
-			isValid, err := validateQualityGates(valid, stage.QualityGates)
-			if err != nil {
-				return errMsg
-			}
-			isQualityGatesValid = isValid
-
-			isStagesValid, err = valid.Valid(stage)
-			if err != nil {
-				return errMsg
-			}
-		}
-	}
-
-	if isCDPipelineValid && isApplicationsValid && isStagesValid && isQualityGatesValid {
-		return nil
-	}
-
-	return &ErrMsg{string(CreateErrorResponseBody(valid)), http.StatusBadRequest}
 }
 
 func CreateErrorResponseBody(valid validation.Validation) []byte {

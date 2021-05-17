@@ -1,1 +1,0 @@
-alter table codebase drop constraint codebase_tenant_fk;

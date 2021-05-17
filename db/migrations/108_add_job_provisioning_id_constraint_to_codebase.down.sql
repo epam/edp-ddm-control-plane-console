@@ -1,1 +1,0 @@
-alter table codebase drop column job_provisioning_id;

@@ -17,172 +17,89 @@
 package k8s
 
 import (
-	"ddm-admin-console/service/logger"
+	"context"
 
 	edppipelinesv1alpha1 "github.com/epmd-edp/cd-pipeline-operator/v2/pkg/apis/edp/v1alpha1"
 	edpv1alpha1 "github.com/epmd-edp/codebase-operator/v2/pkg/apis/edp/v1alpha1"
 	"github.com/epmd-edp/edp-component-operator/pkg/apis/v1/v1alpha1"
-	appsV1Client "github.com/openshift/client-go/apps/clientset/versioned/typed/apps/v1"
-	"go.uber.org/zap"
+	projectV1 "github.com/openshift/client-go/project/clientset/versioned/typed/project/v1"
+	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/client-go/kubernetes"
-	v1 "k8s.io/client-go/kubernetes/typed/apps/v1"
 	coreV1Client "k8s.io/client-go/kubernetes/typed/core/v1"
-	storageV1Client "k8s.io/client-go/kubernetes/typed/storage/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-var (
-	log                  = logger.GetLogger()
-	k8sConfig            clientcmd.ClientConfig
-	SchemeGroupVersionV2 = schema.GroupVersion{Group: "v2.edp.epam.com", Version: "v1alpha1"}
-	SchemeGroupVersionV1 = schema.GroupVersion{Group: "v1.edp.epam.com", Version: "v1alpha1"}
+const (
+	UserTokenKey = "access-token"
 )
 
 type ClientSet struct {
-	CoreClient      CoreClient
-	StorageClient   *storageV1Client.StorageV1Client
-	EDPRestClient   rest.Interface // v2 version
-	EDPRestClientV1 rest.Interface
-	AppsV1Client    *appsV1Client.AppsV1Client
-	K8sAppV1Client  v1.AppsV1Interface
+	CoreClient           CoreClient
+	EDPRestClientV2      rest.Interface
+	EDPRestClientV1      rest.Interface
+	restConfig           *rest.Config
+	schemeGroupVersionV1 *schema.GroupVersion
+	schemeGroupVersionV2 *schema.GroupVersion
+	projectsV1Client     *projectV1.ProjectV1Client
 }
 
-func init() {
-	k8sConfig = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+func (cs *ClientSet) GetConfig() *rest.Config {
+	return cs.restConfig
+}
+
+func MakeK8SClients() (*ClientSet, error) {
+	k8sConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		clientcmd.NewDefaultClientConfigLoadingRules(),
 		&clientcmd.ConfigOverrides{},
 	)
-}
 
-func CreateOpenShiftClients() ClientSet {
-	coreClient, err := getCoreClient()
-	if err != nil {
-		log.Error("An error has occurred while getting core client", zap.Error(err))
-		panic(err)
-	}
-
-	crClientV1, crClientV2, err := getApplicationClient()
-	if err != nil {
-		log.Error("An error has occurred while getting custom resource client", zap.Error(err))
-		panic(err)
-	}
-
-	storageClient, err := getStorageClient()
-	if err != nil {
-		log.Error("An error has occurred while getting custom resource client", zap.Error(err))
-		panic(err)
-	}
-
-	openshiftAppClient, err := getOpenshiftApplicationClient()
-	if err != nil {
-		log.Error("An error has occurred while getting oenshift application resource client", zap.Error(err))
-		panic(err)
-	}
-
-	k8sAppClient, err := getK8sAppsV1Client()
-	if err != nil {
-		log.Error("An error has occurred while getting k8s extension client", zap.Error(err))
-		panic(err)
-	}
-
-	return ClientSet{
-		CoreClient:      coreClient,
-		StorageClient:   storageClient,
-		EDPRestClient:   crClientV2,
-		EDPRestClientV1: crClientV1,
-		AppsV1Client:    openshiftAppClient,
-		K8sAppV1Client:  k8sAppClient,
-	}
-}
-
-func getCoreClient() (*coreV1Client.CoreV1Client, error) {
 	restConfig, err := k8sConfig.ClientConfig()
 	if err != nil {
 		return nil, err
 	}
-	coreClient, err := coreV1Client.NewForConfig(restConfig)
+
+	cs := ClientSet{restConfig: restConfig,
+		schemeGroupVersionV1: &schema.GroupVersion{Group: "v1.edp.epam.com", Version: "v1alpha1"},
+		schemeGroupVersionV2: &schema.GroupVersion{Group: "v2.edp.epam.com", Version: "v1alpha1"},
+	}
+
+	cs.CoreClient, err = coreV1Client.NewForConfig(restConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	return coreClient, nil
+	cs.EDPRestClientV1, err = createCrdClient(cs.restConfig, cs.schemeGroupVersionV1, cs.knownTypesV1)
+	if err != nil {
+		return nil, err
+	}
+
+	cs.EDPRestClientV2, err = createCrdClient(cs.restConfig, cs.schemeGroupVersionV2, cs.knownTypesV2)
+	if err != nil {
+		return nil, err
+	}
+
+	cs.projectsV1Client, err = projectV1.NewForConfig(restConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	return &cs, nil
 }
 
-func getK8sAppsV1Client() (v1.AppsV1Interface, error) {
-	restConfig, err := k8sConfig.ClientConfig()
-	if err != nil {
-		return nil, err
-	}
-	cs, err := kubernetes.NewForConfig(restConfig)
-	if err != nil {
-		return nil, err
-	}
-	return cs.AppsV1(), nil
-}
-
-func getStorageClient() (*storageV1Client.StorageV1Client, error) {
-	restConfig, err := k8sConfig.ClientConfig()
-	if err != nil {
-		return nil, err
-	}
-	coreClient, err := storageV1Client.NewForConfig(restConfig)
-	if err != nil {
-		return nil, err
-	}
-	return coreClient, nil
-}
-
-func getApplicationClient() (v1Client *rest.RESTClient, v2Client *rest.RESTClient, err error) {
-	var config *rest.Config
-	config, err = k8sConfig.ClientConfig()
-
-	if err != nil {
-		return
-	}
-
-	clientV1, tErr := createCrdClient(config, &SchemeGroupVersionV1, addKnownTypesV1)
-	if tErr != nil {
-		return nil, nil, tErr
-	}
-
-	clientV2, tErr := createCrdClient(config, &SchemeGroupVersionV2, addKnownTypesV2)
-	if tErr != nil {
-		return nil, nil, tErr
-	}
-
-	return clientV1, clientV2, nil
-}
-
-func getOpenshiftApplicationClient() (*appsV1Client.AppsV1Client, error) {
-	var config *rest.Config
-	var err error
-
-	config, err = k8sConfig.ClientConfig()
-
-	if err != nil {
-		return nil, err
-	}
-
-	clientset, err := appsV1Client.NewForConfig(config)
-	if err != nil {
-		return nil, err
-	}
-	return clientset, nil
-}
-
-func createCrdClient(cfg *rest.Config, groupVersion *schema.GroupVersion,
+func createCrdClient(conf *rest.Config, groupVersion *schema.GroupVersion,
 	knownTypes func(*runtime.Scheme) error) (*rest.RESTClient, error) {
+
 	scheme := runtime.NewScheme()
 	SchemeBuilder := runtime.NewSchemeBuilder(knownTypes)
 	if err := SchemeBuilder.AddToScheme(scheme); err != nil {
 		return nil, err
 	}
-	config := *cfg
+
+	config := *conf
 	config.GroupVersion = groupVersion
 	config.APIPath = "/apis"
 	config.ContentType = runtime.ContentTypeJSON
@@ -191,21 +108,22 @@ func createCrdClient(cfg *rest.Config, groupVersion *schema.GroupVersion,
 	if err != nil {
 		return nil, err
 	}
+
 	return client, nil
 }
 
-func addKnownTypesV1(scheme *runtime.Scheme) error {
-	scheme.AddKnownTypes(SchemeGroupVersionV1,
+func (cs *ClientSet) knownTypesV1(scheme *runtime.Scheme) error {
+	scheme.AddKnownTypes(*cs.schemeGroupVersionV1,
 		&v1alpha1.EDPComponent{},
 		&v1alpha1.EDPComponentList{},
 	)
 
-	metav1.AddToGroupVersion(scheme, SchemeGroupVersionV1)
+	metav1.AddToGroupVersion(scheme, *cs.schemeGroupVersionV1)
 	return nil
 }
 
-func addKnownTypesV2(scheme *runtime.Scheme) error {
-	scheme.AddKnownTypes(SchemeGroupVersionV2,
+func (cs *ClientSet) knownTypesV2(scheme *runtime.Scheme) error {
+	scheme.AddKnownTypes(*cs.schemeGroupVersionV2,
 		&edpv1alpha1.Codebase{},
 		&edpv1alpha1.CodebaseList{},
 		&edpv1alpha1.CodebaseBranch{},
@@ -216,6 +134,79 @@ func addKnownTypesV2(scheme *runtime.Scheme) error {
 		&edppipelinesv1alpha1.StageList{},
 	)
 
-	metav1.AddToGroupVersion(scheme, SchemeGroupVersionV2)
+	metav1.AddToGroupVersion(scheme, *cs.schemeGroupVersionV2)
 	return nil
+}
+
+func (cs *ClientSet) GetCoreClient(ctx context.Context) (CoreClient, error) {
+	userConfig, changed := cs.userConfig(ctx)
+	if !changed {
+		return cs.CoreClient, nil
+	}
+
+	userCoreClient, err := coreV1Client.NewForConfig(userConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	return userCoreClient, nil
+}
+
+func (cs *ClientSet) userConfig(ctx context.Context) (config *rest.Config, changed bool) {
+	tok := ctx.Value(UserTokenKey)
+	if tok == nil {
+		return cs.restConfig, false
+	}
+
+	tokString, ok := tok.(string)
+	if !ok {
+		return cs.restConfig, false
+	}
+
+	userConfig := rest.AnonymousClientConfig(cs.restConfig)
+	userConfig.BearerToken = tokString
+
+	return userConfig, true
+}
+
+func (cs *ClientSet) GetEDPRestClientV1(ctx context.Context) (rest.Interface, error) {
+	userConfig, changed := cs.userConfig(ctx)
+	if !changed {
+		return cs.EDPRestClientV1, nil
+	}
+
+	edpRestClientV1, err := createCrdClient(userConfig, cs.schemeGroupVersionV1, cs.knownTypesV1)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to create crd client")
+	}
+
+	return edpRestClientV1, nil
+}
+
+func (cs *ClientSet) GetEDPRestClientV2(ctx context.Context) (rest.Interface, error) {
+	userConfig, changed := cs.userConfig(ctx)
+	if !changed {
+		return cs.EDPRestClientV2, nil
+	}
+
+	edpRestClientV2, err := createCrdClient(userConfig, cs.schemeGroupVersionV2, cs.knownTypesV2)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to create crd client")
+	}
+
+	return edpRestClientV2, nil
+}
+
+func (cs *ClientSet) GetOCProjectsClient(ctx context.Context) (*projectV1.ProjectV1Client, error) {
+	userConfig, changed := cs.userConfig(ctx)
+	if !changed {
+		return cs.projectsV1Client, nil
+	}
+
+	pc, err := projectV1.NewForConfig(userConfig)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to create projects client")
+	}
+
+	return pc, nil
 }

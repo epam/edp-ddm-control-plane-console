@@ -17,7 +17,6 @@
 package controllers
 
 import (
-	"ddm-admin-console/console"
 	"ddm-admin-console/service"
 	ec "ddm-admin-console/service/edp-component"
 	"net/http"
@@ -28,8 +27,20 @@ import (
 
 type EDPTenantController struct {
 	beego.Controller
-	EDPTenantService service.EDPTenantService
-	EDPComponent     ec.Service
+	EDPTenantService *service.EDPTenantService
+	EDPComponent     *ec.Service
+	Tenant           string
+	BasePath         string
+}
+
+func MakeEDPTenantController(tenant, basePath string, edpTenantService *service.EDPTenantService,
+	edpComponent *ec.Service) *EDPTenantController {
+	return &EDPTenantController{
+		Tenant:           tenant,
+		BasePath:         basePath,
+		EDPTenantService: edpTenantService,
+		EDPComponent:     edpComponent,
+	}
 }
 
 func (c *EDPTenantController) GetEDPComponents() {
@@ -40,13 +51,11 @@ func (c *EDPTenantController) GetEDPComponents() {
 	}
 
 	c.Data["Username"] = c.Ctx.Input.Session("username")
-	c.Data["InputURL"] = strings.TrimSuffix(c.Ctx.Input.URL(), "/"+console.Tenant)
-	c.Data["EDPTenantName"] = console.Tenant
-	c.Data["EDPVersion"] = console.EDPVersion
+	c.Data["InputURL"] = strings.TrimSuffix(c.Ctx.Input.URL(), "/"+c.Tenant)
+	c.Data["EDPTenantName"] = c.Tenant
 	c.Data["EDPComponents"] = comp
 	c.Data["Type"] = "overview"
-	c.Data["BasePath"] = console.BasePath
-	c.Data["DiagramPageEnabled"] = console.DiagramPageEnabled
+	c.Data["BasePath"] = c.BasePath
 	c.TplName = "edp_components.html"
 }
 
