@@ -92,7 +92,6 @@ If you want to write a new migration please see `db/migrations` folder.
 - repository - structures and interfaces for querying database
 - routers - global init package with basic router and controllers initialization
 - static - static files css, js images
-- templatefunction - function helpers for html rendering
 - test - additional test utils and mocks
 - views - html templates
 

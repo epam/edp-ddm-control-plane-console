@@ -8,7 +8,6 @@ import (
 	edperror "ddm-admin-console/models/error"
 	"ddm-admin-console/models/query"
 	"ddm-admin-console/service"
-	_ "ddm-admin-console/templatefunction"
 	"ddm-admin-console/test"
 	"ddm-admin-console/util"
 	"mime/multipart"
@@ -19,15 +18,12 @@ import (
 	"strings"
 	"testing"
 
-	projectsV1 "github.com/openshift/api/project/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	v1alpha12 "github.com/epmd-edp/edp-component-operator/pkg/apis/v1/v1alpha1"
-
-	"github.com/epmd-edp/codebase-operator/v2/pkg/apis/edp/v1alpha1"
-
 	"github.com/astaxie/beego"
+	"github.com/epmd-edp/codebase-operator/v2/pkg/apis/edp/v1alpha1"
+	v1alpha12 "github.com/epmd-edp/edp-component-operator/pkg/apis/v1/v1alpha1"
+	projectsV1 "github.com/openshift/api/project/v1"
 	"github.com/pkg/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestListRegistry_GetSuccess(t *testing.T) {
