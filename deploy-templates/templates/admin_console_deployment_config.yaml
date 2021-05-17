@@ -38,8 +38,6 @@ spec:
               value: "{{if .Values.basePath}}/{{ .Values.basePath }}{{else}}{{end}}"
             - name: EDP_ADMIN_CONSOLE_VERSION
               value: "{{ .Values.version }}"
-            - name: EDP_VERSION
-              value: "{{ .Values.version }}"
             - name: GERRIT_GLOBAL_LINK
               value: "https://gerrit-{{ .Values.namespace }}.{{ .Values.dnsWildcard }}"
             - name: CLUSTER_REPO
@@ -50,10 +48,6 @@ spec:
               value: "https://jenkins-{{ .Values.namespace }}.{{ .Values.dnsWildcard }}"
             - name: AUTH_ENABLED
               value: "true"
-            - name: DNS_WILDCARD
-              value: "{{ .Values.dnsWildcard }}"
-            - name: OPENSHIFT_CLUSTER_URL
-              value: "console-openshift-console.{{ .Values.dnsWildcard }}"
             - name: INTEGRATION_STRATEGIES
               value: "Create,Import"
             - name: BUILD_TOOLS
