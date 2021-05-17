@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"ddm-admin-console/console"
 	"ddm-admin-console/models"
 	"ddm-admin-console/models/command"
 	edperror "ddm-admin-console/models/error"
@@ -26,6 +25,7 @@ const (
 type CreateRegistry struct {
 	beego.Controller
 	CodebaseService CodebaseService
+	BasePath        string
 }
 
 func MakeCreateRegistry(codebaseService CodebaseService) *CreateRegistry {
@@ -35,14 +35,14 @@ func MakeCreateRegistry(codebaseService CodebaseService) *CreateRegistry {
 }
 
 func (r *CreateRegistry) Get() {
-	r.Data["BasePath"] = console.BasePath
+	r.Data["BasePath"] = r.BasePath
 	r.Data["xsrfdata"] = r.XSRFToken()
 	r.Data["Type"] = registryType
 	r.TplName = "registry/create.html"
 }
 
 func (r *CreateRegistry) Post() {
-	r.Data["BasePath"] = console.BasePath
+	r.Data["BasePath"] = r.BasePath
 	r.TplName = "registry/create.html"
 	r.Data["xsrfdata"] = r.XSRFToken()
 	r.Data["Type"] = registryType

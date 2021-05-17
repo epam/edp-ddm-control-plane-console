@@ -17,14 +17,13 @@
 package service
 
 import (
-	"ddm-admin-console/k8s"
+	"strconv"
+
 	"github.com/astaxie/beego"
 	"go.uber.org/zap"
-	"strconv"
 )
 
 type EDPTenantService struct {
-	Clients k8s.ClientSet
 }
 
 func (s EDPTenantService) GetVcsIntegrationValue() (bool, error) {

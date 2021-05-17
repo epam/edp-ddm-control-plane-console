@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"ddm-admin-console/console"
 	"ddm-admin-console/models/command"
 	"ddm-admin-console/models/query"
 	"ddm-admin-console/service"
@@ -26,15 +25,19 @@ type ClusterManagement struct {
 	EDPComponentsService EDPComponentServiceK8S
 	CodebaseName         string
 	GitRepo              string
+	BasePath             string
+	Namespace            string
 }
 
 func MakeClusterManagement(codebaseService CodebaseService, edpComponentsService EDPComponentServiceK8S,
-	codebaseName, gitRepo string) *ClusterManagement {
+	codebaseName, gitRepo, basePath, namespace string) *ClusterManagement {
 	return &ClusterManagement{
 		CodebaseService:      codebaseService,
 		CodebaseName:         codebaseName,
 		EDPComponentsService: edpComponentsService,
 		GitRepo:              gitRepo,
+		BasePath:             basePath,
+		Namespace:            namespace,
 	}
 }
 
@@ -78,7 +81,7 @@ func (c *ClusterManagement) createClusterCodebase() (*query.Codebase, error) {
 		return nil, errors.Wrap(err, "unable to create cluster codebase")
 	}
 
-	codebase, err := c.CodebaseService.GetCodebaseByNameK8s(c.CodebaseName)
+	codebase, err := c.CodebaseService.GetCodebaseByNameK8s(contextWithUserAccessToken(c.Ctx), c.CodebaseName)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to load cluster codebase")
 	}
@@ -87,7 +90,7 @@ func (c *ClusterManagement) createClusterCodebase() (*query.Codebase, error) {
 }
 
 func (c *ClusterManagement) Get() {
-	c.Data["BasePath"] = console.BasePath
+	c.Data["BasePath"] = c.BasePath
 	c.Data["Type"] = clusterType
 	c.TplName = "cluster_management.html"
 	var gErr error
@@ -98,7 +101,7 @@ func (c *ClusterManagement) Get() {
 		}
 	}()
 
-	codebase, err := c.CodebaseService.GetCodebaseByNameK8s(c.CodebaseName)
+	codebase, err := c.CodebaseService.GetCodebaseByNameK8s(contextWithUserAccessToken(c.Ctx), c.CodebaseName)
 	if err != nil {
 		switch err.(type) {
 		case service.RegistryNotFound:
@@ -114,7 +117,7 @@ func (c *ClusterManagement) Get() {
 	}
 
 	if len(codebase.CodebaseBranch) > 0 {
-		if err := CreateLinksForGerritProviderK8s(c.EDPComponentsService, codebase); err != nil {
+		if err := CreateLinksForGerritProviderK8s(c.EDPComponentsService, codebase, c.Namespace); err != nil {
 			gErr = err
 			return
 		}
