@@ -15,6 +15,7 @@ import (
 	"github.com/astaxie/beego/validation"
 	edpv1alpha1 "github.com/epmd-edp/codebase-operator/v2/pkg/apis/edp/v1alpha1"
 	"github.com/epmd-edp/edp-component-operator/pkg/apis/v1/v1alpha1"
+	projectsV1 "github.com/openshift/api/project/v1"
 	"github.com/pkg/errors"
 )
 
@@ -44,78 +45,27 @@ type CodebaseService interface {
 	UpdateKeySecret(key6, caCert, casJSON []byte, signKeyIssuer, signKeyPwd, registryName string) error
 }
 
+type ProjectsService interface {
+	GetAll(ctx context.Context) ([]projectsV1.Project, error)
+	Get(ctx context.Context, name string) (*projectsV1.Project, error)
+}
+
 type EDPComponentServiceK8S interface {
 	GetAll(namespace string) ([]v1alpha1.EDPComponent, error)
 	Get(namespace, name string) (*v1alpha1.EDPComponent, error)
-}
-
-type ListRegistry struct {
-	beego.Controller
-	CodebaseService CodebaseService
-	BasePath        string
-}
-
-func MakeListRegistry(codebaseService CodebaseService) *ListRegistry {
-	return &ListRegistry{
-		CodebaseService: codebaseService,
-	}
-}
-
-func (r *ListRegistry) Get() {
-	r.Data["BasePath"] = r.BasePath
-	r.Data["Type"] = registryType
-	r.Data["xsrfdata"] = r.XSRFToken()
-
-	r.TplName = "registry/list.html"
-
-	r.Ctx.Input.Session(AuthTokenSessionKey)
-
-	codebases, err := r.CodebaseService.GetCodebasesByCriteriaK8s(contextWithUserAccessToken(r.Ctx),
-		query.CodebaseCriteria{
-			Type: query.Registry,
-		})
-
-	if err != nil {
-		log.Error(fmt.Sprintf("%+v\n", err))
-		r.CustomAbort(500, fmt.Sprintf("%+v\n", err))
-		return
-	}
-
-	r.Data["registries"] = codebases
-}
-
-func (r *ListRegistry) Post() {
-	registryName := r.GetString("registry-name")
-	rg, err := r.CodebaseService.GetCodebaseByNameK8s(contextWithUserAccessToken(r.Ctx), registryName)
-	if err != nil {
-		log.Error(fmt.Sprintf("%+v\n", err))
-		if _, ok := errors.Cause(err).(service.RegistryNotFound); ok {
-			r.TplName = notFoundTemplatePath
-			return
-		}
-
-		r.CustomAbort(500, fmt.Sprintf("%+v\n", err))
-		return
-	}
-
-	if err := r.CodebaseService.Delete(rg.Name, string(rg.Type)); err != nil {
-		log.Error(fmt.Sprintf("%+v\n", err))
-		r.CustomAbort(500, fmt.Sprintf("%+v\n", err))
-		return
-	}
-
-	r.Redirect(registryOverviewURL, 303)
 }
 
 type EditRegistry struct {
 	beego.Controller
 	BasePath        string
 	CodebaseService CodebaseService
+	ProjectsService ProjectsService
 }
 
-func MakeEditRegistry(codebaseService CodebaseService) *EditRegistry {
+func MakeEditRegistry(codebaseService CodebaseService, projectsService ProjectsService) *EditRegistry {
 	return &EditRegistry{
 		CodebaseService: codebaseService,
+		ProjectsService: projectsService,
 	}
 }
 
@@ -126,7 +76,7 @@ func (r *EditRegistry) Get() {
 	r.TplName = "registry/edit.html"
 
 	registryName := r.Ctx.Input.Param(":name")
-	rg, err := r.CodebaseService.GetCodebaseByNameK8s(contextWithUserAccessToken(r.Ctx), registryName)
+	rg, err := getCodebaseByName(contextWithUserAccessToken(r.Ctx), r.CodebaseService, r.ProjectsService, registryName)
 	if err != nil {
 		log.Error(fmt.Sprintf("%+v\n", err))
 		if _, ok := errors.Cause(err).(service.RegistryNotFound); ok {
@@ -142,6 +92,11 @@ func (r *EditRegistry) Get() {
 
 func (r *EditRegistry) editRegistry(registry *models.Registry) (errorMap map[string][]*validation.Error,
 	err error) {
+	_, err = getCodebaseByName(contextWithUserAccessToken(r.Ctx), r.CodebaseService, r.ProjectsService, registry.Name)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to check registry")
+	}
+
 	var valid validation.Validation
 
 	dataValid, err := valid.Valid(registry)
@@ -207,18 +162,20 @@ func (r *EditRegistry) Post() {
 type ViewRegistry struct {
 	beego.Controller
 	CodebaseService        CodebaseService
+	ProjectsService        ProjectsService
 	EDPComponentServiceK8S EDPComponentServiceK8S
 	BasePath               string
 	Namespace              string
 }
 
 func MakeViewRegistry(codebaseService CodebaseService, edpComponentService EDPComponentServiceK8S,
-	basePath, namespace string) *ViewRegistry {
+	projectsService ProjectsService, basePath, namespace string) *ViewRegistry {
 	return &ViewRegistry{
 		CodebaseService:        codebaseService,
 		EDPComponentServiceK8S: edpComponentService,
 		BasePath:               basePath,
 		Namespace:              namespace,
+		ProjectsService:        projectsService,
 	}
 }
 
@@ -256,7 +213,7 @@ func (r *ViewRegistry) Get() {
 	}()
 
 	registryName := r.Ctx.Input.Param(":name")
-	rg, err := r.CodebaseService.GetCodebaseByNameK8s(contextWithUserAccessToken(r.Ctx), registryName)
+	rg, err := getCodebaseByName(contextWithUserAccessToken(r.Ctx), r.CodebaseService, r.ProjectsService, registryName)
 	if err != nil {
 		if _, ok := errors.Cause(err).(service.RegistryNotFound); ok {
 			r.TplName = notFoundTemplatePath
@@ -289,4 +246,20 @@ func (r *ViewRegistry) Get() {
 	}
 
 	r.Data["registry"] = rg
+}
+
+//TODO: try to embed this function in all registry controllers
+func getCodebaseByName(ctx context.Context, codebaseService CodebaseService, projectsService ProjectsService,
+	name string) (*query.Codebase, error) {
+	_, err := projectsService.Get(ctx, name)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to get project")
+	}
+
+	cb, err := codebaseService.GetCodebaseByNameK8s(ctx, name)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to get codebase by name")
+	}
+
+	return cb, nil
 }

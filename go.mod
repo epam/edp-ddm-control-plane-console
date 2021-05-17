@@ -11,6 +11,8 @@ require (
 	github.com/epmd-edp/codebase-operator/v2 v2.3.0-95.0.20200903073301-2eefd21202bb
 	github.com/epmd-edp/edp-component-operator v0.1.1-0.20200827122548-e87429a916e0
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
+	github.com/openshift/api v3.9.0+incompatible
+	github.com/openshift/client-go v3.9.0+incompatible
 	github.com/pkg/errors v0.8.1
 	github.com/shiena/ansicolor v0.0.0-20151119151921-a422bbe96644 // indirect
 	github.com/stretchr/testify v1.4.0

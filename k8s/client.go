@@ -209,5 +209,4 @@ func (cs *ClientSet) GetOCProjectsClient(ctx context.Context) (*projectV1.Projec
 	}
 
 	return pc, nil
-
 }

@@ -48,15 +48,15 @@ func init() {
 		log       = logger.GetLogger()
 		basePath  = beego.AppConfig.String("basePath")
 		tenant    = beego.AppConfig.String("edpName")
-		namespace = beego.AppConfig.String("cicdNamespace")
+		namespace = beego.AppConfig.String("namespace")
 		host      = beego.AppConfig.String("host")
 	)
 
 	log.Info("Start application...",
 		zap.String("mode", beego.AppConfig.String("runmode")))
-	authEnabled, err := beego.AppConfig.Bool("keycloakAuthEnabled")
+	authEnabled, err := beego.AppConfig.Bool("authEnabled")
 	if err != nil {
-		log.Error("Cannot read property keycloakAuthEnabled. Set default: true", zap.Error(err))
+		log.Error("Cannot read property authEnabled. Set default: true", zap.Error(err))
 		authEnabled = true
 	}
 
@@ -69,7 +69,6 @@ func init() {
 		oa, err := oauth.InitOauth2(
 			beego.AppConfig.String("clientId"),
 			beego.AppConfig.String("clientSecret"),
-			//beego.AppConfig.String("keycloakURL"),
 			k8sClients.GetConfig().Host,
 			host+basePath+"/auth/callback",
 			http.DefaultClient)
@@ -137,15 +136,17 @@ func init() {
 
 	k8sEDPComponentService := edpComponentService.MakeServiceK8S(k8sClients.EDPRestClientV1)
 
+	projectsSvc := service.MakeProjects(k8sClients)
+
 	adminEdpNamespace := beego.NewNamespace(fmt.Sprintf("%s/admin", basePath),
 		beego.NSRouter("/overview", ec, "get:GetEDPComponents"),
 		beego.NSRouter("/dashboard", controllers.MakeDashboardController()),
 
-		beego.NSRouter("/registry/overview", controllers.MakeListRegistry(codebaseService)),
+		beego.NSRouter("/registry/overview", controllers.MakeListRegistry(codebaseService, projectsSvc)),
 		beego.NSRouter("/registry/create", controllers.MakeCreateRegistry(codebaseService)),
-		beego.NSRouter("/registry/edit/:name", controllers.MakeEditRegistry(codebaseService)),
+		beego.NSRouter("/registry/edit/:name", controllers.MakeEditRegistry(codebaseService, projectsSvc)),
 		beego.NSRouter("/registry/view/:name", controllers.MakeViewRegistry(codebaseService,
-			k8sEDPComponentService, basePath, namespace)),
+			k8sEDPComponentService, projectsSvc, basePath, namespace)),
 		beego.NSRouter("/cluster/management", controllers.MakeClusterManagement(codebaseService,
 			k8sEDPComponentService,
 			beego.AppConfig.DefaultString("clusterManagementCodebaseName", "cluster-management"),

@@ -68,6 +68,7 @@ func (ac *AuthController) getRedirectPath() string {
 	return requestPath.(string)
 }
 
+//TODO: try to embed this function in all controllers
 func contextWithUserAccessToken(ctx *bgCtx.Context) context.Context {
 	token := ctx.Input.Session(AuthTokenSessionKey)
 	if token == nil {
