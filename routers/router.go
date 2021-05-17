@@ -32,6 +32,7 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/beego/i18n"
 	"go.uber.org/zap"
+	"k8s.io/client-go/rest"
 )
 
 const (
@@ -66,12 +67,17 @@ func init() {
 	}
 
 	if authEnabled {
+		transport, err := rest.TransportFor(k8sClients.GetConfig())
+		if err != nil {
+			panic(err)
+		}
+
 		oa, err := oauth.InitOauth2(
 			beego.AppConfig.String("clientId"),
 			beego.AppConfig.String("clientSecret"),
 			k8sClients.GetConfig().Host,
 			host+basePath+"/auth/callback",
-			&http.Client{Transport: k8sClients.GetConfig().Transport})
+			&http.Client{Transport: transport})
 		if err != nil {
 			panic(err)
 		}
