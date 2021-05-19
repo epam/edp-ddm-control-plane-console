@@ -72,7 +72,7 @@ func (s CodebaseService) CreateCodebase(codebase command.CreateCodebase) (*edpv1
 	log.Info("start creating Codebase resource", zap.String("name", codebase.Name))
 
 	codebaseCr, err := GetCodebaseCR(s.Clients.EDPRestClientV2, codebase.Name, s.Namespace)
-	if err != nil && !k8sErrors.IsNotFound(err) {
+	if err != nil && !k8sErrors.IsNotFound(errors.Cause(err)) {
 		log.Info("an error has occurred while fetching Codebase CR from cluster",
 			zap.String("name", codebase.Name))
 		return nil, err
