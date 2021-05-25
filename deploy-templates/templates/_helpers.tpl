@@ -66,3 +66,7 @@ Create chart name and version as used by the chart label.
   repository: "{{ $baseUrl }}/{{ .Values.jenkins.edpSharedLibraries.pipelines }}.git"
   version: {{ .Values.jenkins.edpSharedLibraries.version }}
 {{- end }}
+
+{{- define "oauthclient_secret" -}}
+{{- $oauthclient_secret := randAscii 16 | b64enc -}}
+{{- end }}

@@ -72,6 +72,16 @@ spec:
                 configMapKeyRef:
                   key: edp_name
                   name: edp-config
+            - name: OC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: oauth-admin-console-client
+                  key: secret
+            - name: OC_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: oauth-admin-console-client
+                  key: clientId
             - name: PROJECT_MASK_URL
               value: "{{.Values.projectUrlMask}}"
             - name: IMAGE_STREAM_MASK_URL
