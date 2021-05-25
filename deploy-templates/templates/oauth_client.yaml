@@ -1,9 +1,0 @@
-apiVersion: oauth.openshift.io/v1
-grantMethod: auto
-kind: OAuthClient
-metadata:
-  name: admin-console-client
-redirectURIs:
-  - https://ddm-admin-console-mdtu-ddm-edp-cicd.apps.cicd2.mdtu-ddm.projects.epam.com/auth/callback
-  - http://localhost:8080/auth/callback
-secret: {{ template "oauthclientSecret" }}
