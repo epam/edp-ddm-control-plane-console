@@ -67,6 +67,10 @@ Create chart name and version as used by the chart label.
   version: {{ .Values.jenkins.edpSharedLibraries.version }}
 {{- end }}
 
-{{- define "oauthclient_secret" -}}
-{{ randAscii 16 | b64enc }}
-{{- end }}
+{{- define "oauthclientSecret" -}}
+{{- if .Values.oauthclientSecret -}}
+{{- printf "%s" .Values.oauthclientSecret -}}
+{{- else -}}
+{{- randAscii 16 | b64enc -}}
+{{- end -}}
+{{- end -}}

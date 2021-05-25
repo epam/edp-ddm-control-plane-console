@@ -6,4 +6,4 @@ metadata:
 redirectURIs:
   - https://ddm-admin-console-mdtu-ddm-edp-cicd.apps.cicd2.mdtu-ddm.projects.epam.com/auth/callback
   - http://localhost:8080/auth/callback
-secret: {{ .Values.oauthclient_secret }}
+secret: {{ template "oauthclientSecret" }}
