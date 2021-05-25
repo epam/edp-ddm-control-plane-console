@@ -71,6 +71,6 @@ Create chart name and version as used by the chart label.
 {{- if .Values.oauthclientSecret -}}
 {{- printf "%s" .Values.oauthclientSecret -}}
 {{- else -}}
-{{- randAscii 16 | b64enc -}}
+{{- randAscii 16 -}}
 {{- end -}}
 {{- end -}}
