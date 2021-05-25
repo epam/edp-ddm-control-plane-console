@@ -68,5 +68,5 @@ Create chart name and version as used by the chart label.
 {{- end }}
 
 {{- define "oauthclient_secret" -}}
-{{- $oauthclient_secret := randAscii 16 | b64enc -}}
+{{ randAscii 16 | b64enc }}
 {{- end }}
