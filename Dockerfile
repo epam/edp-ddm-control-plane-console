@@ -9,11 +9,11 @@ RUN addgroup --gid ${USER_UID} ${USER_NAME} \
 
 WORKDIR /go/bin
 
-COPY app .
+COPY control-plane-console .
 COPY static static
 COPY views views
 COPY conf conf
 
 USER ${USER_UID}
 
-ENTRYPOINT ["app"]
+ENTRYPOINT ["control-plane-console"]

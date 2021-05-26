@@ -10,7 +10,7 @@ ci:
 
 .PHONY: build
 build:
-	go build -mod=vendor -o app
+	go build -mod=vendor
 
 .PHONY: deps
 deps:
