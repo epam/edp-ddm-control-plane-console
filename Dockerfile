@@ -9,11 +9,11 @@ RUN addgroup --gid ${USER_UID} ${USER_NAME} \
 
 WORKDIR /go/bin
 
-COPY ddm-admin-console .
+COPY app .
 COPY static static
 COPY views views
 COPY conf conf
 
 USER ${USER_UID}
 
-ENTRYPOINT ["ddm-admin-console"]
+ENTRYPOINT ["app"]
