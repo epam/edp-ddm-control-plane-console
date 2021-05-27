@@ -1,4 +1,4 @@
-name: ddm-admin-console
+name: control-plane-console
 namespace: ""
 cdPipelineName: ""
 cdPipelineStageName: ""
@@ -12,15 +12,11 @@ imageStreamUrlMask: "/console/project/{namespace}/browse/images/{stream}"
 
 ingress:
   required: true
-  site: ddm-admin-console
+  site: control-plane-console
   path: /
 
-image:
-  name: ddm-admin-console
-  version: latest
-
 operator:
-  serviceAccountName: ddm-admin-console
+  serviceAccountName: control-plane-console
   clusterRoleName: edp-admin-console-operator-clusterrole-mdtu-ddm-edp-cicd
 
 dockerProxyRegistry: 'nexus-docker-registry.apps.cicd2.mdtu-ddm.projects.epam.com'

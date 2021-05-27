@@ -8,7 +8,7 @@ spec:
   replicas: 1
   revisionHistoryLimit: 10
   selector:
-    app: ddm-admin-console
+    app: control-plane-console
   strategy:
     activeDeadlineSeconds: 21600
     resources: {}
