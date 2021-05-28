@@ -36,12 +36,11 @@ import (
 )
 
 const (
-	integrationStrategies = "integrationStrategies"
-	buildTools            = "buildTools"
-	versioningTypes       = "versioningTypes"
-	testReportTools       = "testReportTools"
-	deploymentScript      = "deploymentScript"
-	ciTools               = "ciTools"
+	buildTools       = "buildTools"
+	versioningTypes  = "versioningTypes"
+	testReportTools  = "testReportTools"
+	deploymentScript = "deploymentScript"
+	ciTools          = "ciTools"
 )
 
 func init() {
@@ -104,11 +103,6 @@ func init() {
 	beego.Router(fmt.Sprintf("%s/", basePath), controllers.MakeMainController(basePath, &edpService), "get:Index")
 	beego.SetStaticPath(fmt.Sprintf("%s/static", basePath), "static")
 
-	integrationStrategies := util.GetValuesFromConfig(integrationStrategies)
-	if integrationStrategies == nil {
-		log.Fatal("integrationStrategies config variable is empty.")
-	}
-
 	buildTools := util.GetValuesFromConfig(buildTools)
 	if buildTools == nil {
 		log.Fatal("buildTools config variable is empty.")
@@ -134,15 +128,10 @@ func init() {
 		log.Fatal("ciTools config variable is empty.")
 	}
 
-	is := make([]string, len(integrationStrategies))
-	copy(is, integrationStrategies)
-
-	autis := make([]string, len(integrationStrategies))
-	copy(autis, integrationStrategies)
-
 	k8sEDPComponentService := edpComponentService.MakeServiceK8S(k8sClients.EDPRestClientV1)
 
 	projectsSvc := service.MakeProjects(k8sClients)
+	jenkinsSvc := service.MakeJenkins(k8sClients, namespace)
 
 	adminEdpNamespace := beego.NewNamespace(fmt.Sprintf("%s/admin", basePath),
 		beego.NSRouter("/overview", ec, "get:GetEDPComponents"),
@@ -150,7 +139,8 @@ func init() {
 
 		beego.NSRouter("/registry/overview", controllers.MakeListRegistry(codebaseService, projectsSvc)),
 		beego.NSRouter("/registry/create", controllers.MakeCreateRegistry(codebaseService)),
-		beego.NSRouter("/registry/edit/:name", controllers.MakeEditRegistry(codebaseService, projectsSvc)),
+		beego.NSRouter("/registry/edit/:name", controllers.MakeEditRegistry(codebaseService, projectsSvc,
+			jenkinsSvc)),
 		beego.NSRouter("/registry/view/:name", controllers.MakeViewRegistry(codebaseService,
 			k8sEDPComponentService, projectsSvc, basePath, namespace)),
 		beego.NSRouter("/cluster/management", controllers.MakeClusterManagement(codebaseService,

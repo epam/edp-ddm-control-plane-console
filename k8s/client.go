@@ -132,6 +132,8 @@ func (cs *ClientSet) knownTypesV2(scheme *runtime.Scheme) error {
 		&edppipelinesv1alpha1.CDPipelineList{},
 		&edppipelinesv1alpha1.Stage{},
 		&edppipelinesv1alpha1.StageList{},
+		&JenkinsJobBuildRun{},
+		&JenkinsJobBuildRunList{},
 	)
 
 	metav1.AddToGroupVersion(scheme, *cs.schemeGroupVersionV2)

@@ -326,10 +326,11 @@ func TestEditRegistry_GetFailure(t *testing.T) {
 		Return(nil, mockErr)
 
 	projectsSvc := test.MockProjectsService{}
+	jenkinsSvc := test.MockJenkinsService{}
 	projectsSvc.On("Get", context.Background(), "test").
 		Return(&projectsV1.Project{ObjectMeta: v1.ObjectMeta{Name: "test"}}, nil)
 
-	ctrl := MakeEditRegistry(&codebaseService, &projectsSvc)
+	ctrl := MakeEditRegistry(&codebaseService, &projectsSvc, &jenkinsSvc)
 
 	beego.Router("/edit-registry-get-failure/:name", ctrl)
 	request, _ := http.NewRequest("GET", "/edit-registry-get-failure/test", nil)
@@ -359,10 +360,11 @@ func TestEditRegistry_GetFailure404(t *testing.T) {
 		service.RegistryNotFound{})
 
 	projectsSvc := test.MockProjectsService{}
+	jenkinsSvc := test.MockJenkinsService{}
 	projectsSvc.On("Get", context.Background(), "test").
 		Return(&projectsV1.Project{ObjectMeta: v1.ObjectMeta{Name: "test"}}, nil)
 
-	ctrl := MakeEditRegistry(&codebaseService, &projectsSvc)
+	ctrl := MakeEditRegistry(&codebaseService, &projectsSvc, &jenkinsSvc)
 
 	beego.Router("/edit-registry-get-failure404/:name", ctrl)
 	request, _ := http.NewRequest("GET", "/edit-registry-get-failure404/test", nil)
@@ -394,8 +396,9 @@ func TestEditRegistry_PostFailure_k8sFatal(t *testing.T) {
 	projectsSvc := test.MockProjectsService{}
 	projectsSvc.On("Get", context.Background(), "test").
 		Return(&projectsV1.Project{ObjectMeta: v1.ObjectMeta{Name: "test"}}, nil)
+	jenkinsSvc := test.MockJenkinsService{}
 
-	ctrl := MakeEditRegistry(&cbMock, &projectsSvc)
+	ctrl := MakeEditRegistry(&cbMock, &projectsSvc, &jenkinsSvc)
 
 	beego.Router("/edit-registry-failure/:name", ctrl)
 	request, _ := http.NewRequest("POST", "/edit-registry-failure/test", nil)
@@ -426,8 +429,9 @@ func TestEditRegistry_PostFailure_LongDescription(t *testing.T) {
 	projectsSvc := test.MockProjectsService{}
 	projectsSvc.On("Get", context.Background(), "test").
 		Return(&projectsV1.Project{ObjectMeta: v1.ObjectMeta{Name: "test"}}, nil)
+	jenkinsSvc := test.MockJenkinsService{}
 
-	ctrl := MakeEditRegistry(&cbMock, &projectsSvc)
+	ctrl := MakeEditRegistry(&cbMock, &projectsSvc, &jenkinsSvc)
 
 	formData := url.Values{
 		"description": []string{`test11111111111111111111111111111111111111111111111111111111111111111111111test1111111
@@ -469,8 +473,10 @@ func TestEditRegistry_PostSuccess(t *testing.T) {
 	projectsSvc := test.MockProjectsService{}
 	projectsSvc.On("Get", context.Background(), "test").
 		Return(&projectsV1.Project{ObjectMeta: v1.ObjectMeta{Name: "test"}}, nil)
-
-	ctrl := MakeEditRegistry(&cbMock, &projectsSvc)
+	jenkinsSvc := test.MockJenkinsService{}
+	var params map[string]string
+	jenkinsSvc.On("CreateJobBuildRun", "test/job/MASTER-Build-test/", params).Return(nil)
+	ctrl := MakeEditRegistry(&cbMock, &projectsSvc, &jenkinsSvc)
 
 	formData := url.Values{
 		"description": []string{"test1"},
@@ -502,8 +508,9 @@ func TestEditRegistry_GetSuccess(t *testing.T) {
 	projectsSvc := test.MockProjectsService{}
 	projectsSvc.On("Get", context.Background(), "test").
 		Return(&projectsV1.Project{ObjectMeta: v1.ObjectMeta{Name: "test"}}, nil)
+	jenkinsSvc := test.MockJenkinsService{}
 
-	ctrl := MakeEditRegistry(&cbMock, &projectsSvc)
+	ctrl := MakeEditRegistry(&cbMock, &projectsSvc, &jenkinsSvc)
 
 	beego.Router("/edit-registry-success/:name", ctrl)
 	request, _ := http.NewRequest("GET", "/edit-registry-success/test", nil)

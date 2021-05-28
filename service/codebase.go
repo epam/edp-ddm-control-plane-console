@@ -179,22 +179,36 @@ func (s *CodebaseService) UpdateKeySecret(key6, caCert, casJSON []byte, signKeyI
 
 func (s *CodebaseService) CreateKeySecret(key6, caCert, casJSON []byte, signKeyIssuer, signKeyPwd,
 	registryName string) error {
+
+	keysSecretName := fmt.Sprintf("system-digital-sign-%s-key", registryName)
+	if _, err := s.Clients.CoreClient.Secrets(s.Namespace).Get(keysSecretName, metav1.GetOptions{}); err == nil {
+		if err := s.Clients.CoreClient.Secrets(s.Namespace).Delete(keysSecretName, &metav1.DeleteOptions{}); err != nil {
+			return errors.Wrapf(err, "unable to delete secret: %s", keysSecretName)
+		}
+	}
+
 	if _, err := s.Clients.CoreClient.Secrets(s.Namespace).Create(&v1.Secret{Data: map[string][]byte{
 		key6SecretKey:                        key6,
 		digitalSignatureKeyIssuerSecretKey:   []byte(signKeyIssuer),
 		digitalSignatureKeyPasswordSecretKey: []byte(signKeyPwd),
 	}, ObjectMeta: metav1.ObjectMeta{
-		Name:      fmt.Sprintf("system-digital-sign-%s-key", registryName),
+		Name:      keysSecretName,
 		Namespace: s.Namespace,
 	}}); err != nil {
 		return errors.Wrap(err, "unable to create registry key secret")
 	}
 
+	certsSecretName := fmt.Sprintf("system-digital-sign-%s-ca", registryName)
+	if _, err := s.Clients.CoreClient.Secrets(s.Namespace).Get(certsSecretName, metav1.GetOptions{}); err == nil {
+		if err := s.Clients.CoreClient.Secrets(s.Namespace).Delete(certsSecretName, &metav1.DeleteOptions{}); err != nil {
+			return errors.Wrapf(err, "unable to delete secret: %s", certsSecretName)
+		}
+	}
 	if _, err := s.Clients.CoreClient.Secrets(s.Namespace).Create(&v1.Secret{Data: map[string][]byte{
 		caCertificatesSecretKey: caCert,
 		CAsJSONSecretKey:        casJSON,
 	}, ObjectMeta: metav1.ObjectMeta{
-		Name:      fmt.Sprintf("system-digital-sign-%s-ca", registryName),
+		Name:      certsSecretName,
 		Namespace: s.Namespace,
 	}}); err != nil {
 		return errors.Wrap(err, "unable to create registry key secret")
