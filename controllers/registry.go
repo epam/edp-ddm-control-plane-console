@@ -10,6 +10,7 @@ import (
 	"ddm-admin-console/util"
 	"ddm-admin-console/util/consts"
 	"fmt"
+	"time"
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/validation"
@@ -45,6 +46,10 @@ type CodebaseService interface {
 	UpdateKeySecret(key6, caCert, casJSON []byte, signKeyIssuer, signKeyPwd, registryName string) error
 }
 
+type JenkinsService interface {
+	CreateJobBuildRun(name, jobPath string, jobParams map[string]string) error
+}
+
 type ProjectsService interface {
 	GetAll(ctx context.Context) ([]projectsV1.Project, error)
 	Get(ctx context.Context, name string) (*projectsV1.Project, error)
@@ -60,12 +65,15 @@ type EditRegistry struct {
 	BasePath        string
 	CodebaseService CodebaseService
 	ProjectsService ProjectsService
+	JenkinsService  JenkinsService
 }
 
-func MakeEditRegistry(codebaseService CodebaseService, projectsService ProjectsService) *EditRegistry {
+func MakeEditRegistry(codebaseService CodebaseService, projectsService ProjectsService,
+	jenkinsService JenkinsService) *EditRegistry {
 	return &EditRegistry{
 		CodebaseService: codebaseService,
 		ProjectsService: projectsService,
+		JenkinsService:  jenkinsService,
 	}
 }
 
@@ -118,6 +126,11 @@ func (r *EditRegistry) editRegistry(registry *models.Registry) (errorMap map[str
 
 	if err := r.CodebaseService.UpdateDescription(registry); err != nil {
 		return nil, errors.Wrap(err, "something went wrong during k8s registry edit")
+	}
+
+	if err := r.JenkinsService.CreateJobBuildRun(fmt.Sprintf("registry-update-%d", time.Now().Unix()),
+		fmt.Sprintf("%s/job/MASTER-Build-%s/", registry.Name, registry.Name), nil); err != nil {
+		return nil, errors.Wrap(err, "unable to trigger jenkins job build run")
 	}
 
 	return
