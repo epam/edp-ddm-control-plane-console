@@ -16,6 +16,8 @@ rules:
   - codebasebranches/finalizers
   - cdpipelines/finalizers
   - stages/finalizers
+  - jenkinsjobbuildruns
+  - jenkinsjobbuildruns/status
   verbs:
   - create
   - get
