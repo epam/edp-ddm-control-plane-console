@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	"ddm-admin-console/models/query"
 	"ddm-admin-console/service"
 	"fmt"
@@ -42,7 +43,7 @@ func (r *ListRegistry) Get() {
 }
 
 func (r *ListRegistry) getUserCodebases() ([]*query.Codebase, error) {
-	codebases, err := r.CodebaseService.GetCodebasesByCriteriaK8s(contextWithUserAccessToken(r.Ctx),
+	codebases, err := r.CodebaseService.GetCodebasesByCriteriaK8s(context.Background(),
 		query.CodebaseCriteria{
 			Type: query.Registry,
 		})
