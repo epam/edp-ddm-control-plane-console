@@ -45,11 +45,12 @@ const (
 
 func init() {
 	var (
-		log       = logger.GetLogger()
-		basePath  = beego.AppConfig.String("basePath")
-		tenant    = beego.AppConfig.String("edpName")
-		namespace = beego.AppConfig.String("namespace")
-		host      = beego.AppConfig.String("host")
+		log          = logger.GetLogger()
+		basePath     = beego.AppConfig.String("basePath")
+		tenant       = beego.AppConfig.String("edpName")
+		namespace    = beego.AppConfig.String("namespace")
+		host         = beego.AppConfig.String("host")
+		creatorGroup = beego.AppConfig.String("creatorGroup")
 	)
 
 	log.Info("Start application...",
@@ -81,7 +82,8 @@ func init() {
 			panic(err)
 		}
 
-		beego.Router(fmt.Sprintf("%s/auth/callback", basePath), controllers.MakeAuthController(basePath, oa), "get:Callback")
+		beego.Router(fmt.Sprintf("%s/auth/callback", basePath),
+			controllers.MakeAuthController(basePath, namespace, oa, k8sClients), "get:Callback")
 		beego.InsertFilter(fmt.Sprintf("%s/admin/*", basePath), beego.BeforeRouter,
 			oauth.MakeBeegoFilter(oa, controllers.AuthTokenSessionKey))
 	}
@@ -137,8 +139,9 @@ func init() {
 		beego.NSRouter("/overview", ec, "get:GetEDPComponents"),
 		beego.NSRouter("/dashboard", controllers.MakeDashboardController()),
 
-		beego.NSRouter("/registry/overview", controllers.MakeListRegistry(codebaseService, projectsSvc)),
-		beego.NSRouter("/registry/create", controllers.MakeCreateRegistry(codebaseService)),
+		beego.NSRouter("/registry/overview", controllers.MakeListRegistry(basePath, creatorGroup,
+			codebaseService, projectsSvc)),
+		beego.NSRouter("/registry/create", controllers.MakeCreateRegistry(basePath, creatorGroup, codebaseService)),
 		beego.NSRouter("/registry/edit/:name", controllers.MakeEditRegistry(codebaseService, projectsSvc,
 			jenkinsSvc)),
 		beego.NSRouter("/registry/view/:name", controllers.MakeViewRegistry(codebaseService,

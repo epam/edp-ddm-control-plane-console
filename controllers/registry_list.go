@@ -16,12 +16,18 @@ type ListRegistry struct {
 	CodebaseService CodebaseService
 	ProjectsService ProjectsService
 	BasePath        string
+	CreatorGroup    string
+	GroupValidator  GroupValidator
 }
 
-func MakeListRegistry(codebaseService CodebaseService, projectsService ProjectsService) *ListRegistry {
+func MakeListRegistry(basePath, creatorGroup string, codebaseService CodebaseService,
+	projectsService ProjectsService) *ListRegistry {
 	return &ListRegistry{
 		CodebaseService: codebaseService,
 		ProjectsService: projectsService,
+		BasePath:        basePath,
+		CreatorGroup:    creatorGroup,
+		GroupValidator:  &groupValidator{},
 	}
 }
 
@@ -40,6 +46,7 @@ func (r *ListRegistry) Get() {
 	}
 
 	r.Data["registries"] = codebases
+	r.Data["allowedToCreate"] = r.GroupValidator.IsAllowedToCreateRegistry(r.Ctx, r.CreatorGroup)
 }
 
 func (r *ListRegistry) getUserCodebases() ([]*query.Codebase, error) {

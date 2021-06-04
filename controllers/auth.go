@@ -22,10 +22,11 @@ import (
 	"ddm-admin-console/k8s"
 	"fmt"
 
-	"golang.org/x/oauth2"
-
 	"github.com/astaxie/beego"
 	bgCtx "github.com/astaxie/beego/context"
+	"github.com/pkg/errors"
+	"golang.org/x/oauth2"
+	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -34,29 +35,72 @@ const (
 
 type AuthController struct {
 	beego.Controller
-	BasePath string
-	OAuth    *auth.OAuth2
+	BasePath, Namespace string
+	OAuth               *auth.OAuth2
+	K8SClients          *k8s.ClientSet
 }
 
-func MakeAuthController(basePath string, oauth *auth.OAuth2) *AuthController {
+func MakeAuthController(basePath, namespace string, oauth *auth.OAuth2, k8sClients *k8s.ClientSet) *AuthController {
 	return &AuthController{
-		BasePath: basePath,
-		OAuth:    oauth,
+		BasePath:   basePath,
+		Namespace:  namespace,
+		OAuth:      oauth,
+		K8SClients: k8sClients,
 	}
 }
 
 func (ac *AuthController) Callback() {
-	authCode := ac.Ctx.Input.Query("code")
-	token, _, err := ac.OAuth.GetTokenClient(context.Background(), authCode)
+	err := ac.parseCallback()
 	if err != nil {
 		ac.CustomAbort(500, fmt.Sprintf("%+v", err))
 		log.Error(fmt.Sprintf("%+v", err))
 		return
 	}
 
-	ac.Ctx.Output.Session(AuthTokenSessionKey, token)
 	path := ac.getRedirectPath()
 	ac.Redirect(path, 302)
+}
+
+func (ac *AuthController) parseCallback() error {
+	authCode := ac.Ctx.Input.Query("code")
+	token, _, err := ac.OAuth.GetTokenClient(context.Background(), authCode)
+	if err != nil {
+		return errors.Wrap(err, "unable to get token client")
+	}
+
+	ac.Ctx.Output.Session(AuthTokenSessionKey, token)
+
+	userCl, err := ac.K8SClients.GetUserClient(contextWithUserAccessToken(ac.Ctx))
+	if err != nil {
+		return errors.Wrap(err, "unable to init user client")
+	}
+
+	me, err := userCl.Users().Get("~", v12.GetOptions{})
+	if err != nil {
+		return errors.Wrap(err, "unable to read current user info")
+	}
+
+	rbacClient, err := ac.K8SClients.GetRbacClient(context.Background())
+	if err != nil {
+		return errors.Wrap(err, "unable to ini rbac client")
+	}
+
+	bindings, err := rbacClient.RoleBindings(ac.Namespace).List(v12.ListOptions{})
+	if err != nil {
+		return errors.Wrap(err, "unable to get role bindings")
+	}
+
+	var userRoles []string
+	for _, b := range bindings.Items {
+		for _, s := range b.Subjects {
+			if s.Kind == "User" && s.Name == me.Name && b.RoleRef.Kind == "Role" {
+				userRoles = append(userRoles, b.RoleRef.Name)
+			}
+		}
+	}
+	ac.Ctx.Output.Session(sessionGroupsKey, userRoles)
+
+	return nil
 }
 
 func (ac *AuthController) getRedirectPath() string {

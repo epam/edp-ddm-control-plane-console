@@ -48,7 +48,7 @@ func TestListRegistry_GetSuccess(t *testing.T) {
 	projectSVC.On("GetAll", context.Background()).
 		Return([]projectsV1.Project{{ObjectMeta: v1.ObjectMeta{Name: "name1"}}}, nil)
 
-	beego.Router("/list-registry", MakeListRegistry(&codebaseService, &projectSVC))
+	beego.Router("/list-registry", MakeListRegistry("/", "creator", &codebaseService, &projectSVC))
 	request, _ := http.NewRequest("GET", "/list-registry", nil)
 	responseWriter := httptest.NewRecorder()
 
@@ -71,7 +71,7 @@ func TestListRegistry_GetFailure(t *testing.T) {
 
 	projectSVC := test.MockProjectsService{}
 
-	beego.Router("/list-registry-failure", MakeListRegistry(&codebaseService, &projectSVC))
+	beego.Router("/list-registry-failure", MakeListRegistry("/", "creator", &codebaseService, &projectSVC))
 	request, _ := http.NewRequest("GET", "/list-registry-failure", nil)
 	responseWriter := httptest.NewRecorder()
 
@@ -89,7 +89,7 @@ func TestCreateRegistry_Get(t *testing.T) {
 	}
 
 	codebaseService := test.MockCodebaseService{}
-	beego.Router("/create-registry-get", MakeCreateRegistry(&codebaseService))
+	beego.Router("/create-registry-get", MakeCreateRegistry("/", "creator", &codebaseService))
 	request, _ := http.NewRequest("GET", "/create-registry-get", nil)
 	responseWriter := httptest.NewRecorder()
 
@@ -106,8 +106,12 @@ func TestCreatRegistry_Post_ValidationError(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	grv := mockGroupValidator{}
+	grv.On("IsAllowedToCreateRegistry", "creator").Return(true)
 	codebaseService := test.MockCodebaseService{}
-	ctrl := MakeCreateRegistry(&codebaseService)
+	ctrl := MakeCreateRegistry("/", "creator", &codebaseService)
+	ctrl.GroupValidator = &grv
+
 	beego.Router("/create-registry-failure", ctrl)
 	request, _ := http.NewRequest("POST", "/create-registry-failure", bytes.NewReader([]byte{}))
 	responseWriter := httptest.NewRecorder()
@@ -135,7 +139,11 @@ func TestCreatRegistry_Post_CodebaseExists(t *testing.T) {
 		DeploymentScript: "openshift-template", CiTool: "Jenkins",
 	}).
 		Return(nil, edperror.NewCodebaseAlreadyExistsError())
-	ctrl := MakeCreateRegistry(&codebaseService)
+	grv := mockGroupValidator{}
+	grv.On("IsAllowedToCreateRegistry", "creator").Return(true)
+
+	ctrl := MakeCreateRegistry("/", "creator", &codebaseService)
+	ctrl.GroupValidator = &grv
 	beego.Router("/create-registry-k8s-error", ctrl)
 
 	body := bytes.Buffer{}
@@ -209,7 +217,10 @@ func TestCreatRegistry_Post_ValidationErrorName(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ctrl := MakeCreateRegistry(&test.MockCodebaseService{})
+	grv := mockGroupValidator{}
+	grv.On("IsAllowedToCreateRegistry", "creator").Return(true)
+	ctrl := MakeCreateRegistry("/", "creator", &test.MockCodebaseService{})
+	ctrl.GroupValidator = &grv
 	beego.Router("/create-registry-error-name", ctrl)
 
 	formData := url.Values{
@@ -237,7 +248,11 @@ func TestCreatRegistry_Post_Success(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ctrl := MakeCreateRegistry(&codebaseService)
+	grv := mockGroupValidator{}
+	grv.On("IsAllowedToCreateRegistry", "creator").Return(true)
+
+	ctrl := MakeCreateRegistry("/", "creator", &codebaseService)
+	ctrl.GroupValidator = &grv
 	beego.Router("/create-registry-success", ctrl)
 
 	body := bytes.Buffer{}
@@ -538,7 +553,7 @@ func TestListRegistry_DeleteRegistry_FailureGetCodebase(t *testing.T) {
 	projectSVC.On("Get", context.Background(), "name1").
 		Return(&projectsV1.Project{ObjectMeta: v1.ObjectMeta{Name: "name1"}}, nil)
 
-	listRegistryCtrl := MakeListRegistry(&cbMock, &projectSVC)
+	listRegistryCtrl := MakeListRegistry("/", "creator", &cbMock, &projectSVC)
 
 	beego.Router("/delete-registry-FailureGetCodebase", listRegistryCtrl)
 	v := url.Values{"registry-name": []string{"name1"}}
@@ -574,7 +589,7 @@ func TestListRegistry_DeleteRegistry_FailureGetCodebase404(t *testing.T) {
 	projectSVC.On("Get", context.Background(), "name1").
 		Return(&projectsV1.Project{ObjectMeta: v1.ObjectMeta{Name: "name1"}}, nil)
 
-	listRegistryCtrl := MakeListRegistry(&cbMock, &projectSVC)
+	listRegistryCtrl := MakeListRegistry("/", "creator", &cbMock, &projectSVC)
 
 	v := url.Values{"registry-name": []string{"name1"}}
 	buffer := bytes.Buffer{}
@@ -593,6 +608,7 @@ func TestListRegistry_DeleteRegistry_FailureGetCodebase404(t *testing.T) {
 	}
 
 	if !strings.Contains(responseWriter.Body.String(), "Sorry, page not found") {
+		t.Log(responseWriter.Body.String())
 		t.Fatal("no error in response body")
 	}
 }
@@ -609,7 +625,7 @@ func TestListRegistry_DeleteRegistry_FailureDeleteCodebase(t *testing.T) {
 	projectSVC.On("Get", context.Background(), "name1").
 		Return(&projectsV1.Project{ObjectMeta: v1.ObjectMeta{Name: "name1"}}, nil)
 
-	listRegistryCtrl := MakeListRegistry(&cbMock, &projectSVC)
+	listRegistryCtrl := MakeListRegistry("/", "creator", &cbMock, &projectSVC)
 	cbMock.On("GetCodebaseByNameK8s", "name1").Return(&query.Codebase{Type: "t1", Name: "n1"}, nil)
 	cbMock.On("Delete", "n1", "t1").Return(mockErr)
 
@@ -643,7 +659,7 @@ func TestListRegistry_DeleteRegistry(t *testing.T) {
 	projectsSvc.On("Get", context.Background(), "name1").
 		Return(&projectsV1.Project{ObjectMeta: v1.ObjectMeta{Name: "name1"}}, nil)
 
-	listRegistryCtrl := MakeListRegistry(&cbMock, &projectsSvc)
+	listRegistryCtrl := MakeListRegistry("/", "creator", &cbMock, &projectsSvc)
 	ctrl.Ctx.Input.SetParam("registry-name", "name1")
 	listRegistryCtrl.Controller = ctrl
 

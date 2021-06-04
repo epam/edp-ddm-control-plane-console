@@ -17,20 +17,26 @@ import (
 )
 
 const (
-	key6FormKey   = "key6"
-	caCertFormKey = "ca-cert"
-	caJSONFormKey = "ca-json"
+	key6FormKey      = "key6"
+	caCertFormKey    = "ca-cert"
+	caJSONFormKey    = "ca-json"
+	sessionGroupsKey = "groups"
 )
 
 type CreateRegistry struct {
 	beego.Controller
 	CodebaseService CodebaseService
 	BasePath        string
+	CreatorGroup    string
+	GroupValidator  GroupValidator
 }
 
-func MakeCreateRegistry(codebaseService CodebaseService) *CreateRegistry {
+func MakeCreateRegistry(basePath, creatorGroup string, codebaseService CodebaseService) *CreateRegistry {
 	return &CreateRegistry{
 		CodebaseService: codebaseService,
+		BasePath:        basePath,
+		CreatorGroup:    creatorGroup,
+		GroupValidator:  &groupValidator{},
 	}
 }
 
@@ -77,6 +83,10 @@ func (r *CreateRegistry) Post() {
 
 func (r *CreateRegistry) createRegistry(registry *models.Registry,
 	request *http.Request) (errorMap map[string][]*validation.Error, err error) {
+	if !r.GroupValidator.IsAllowedToCreateRegistry(r.Ctx, r.CreatorGroup) {
+		return nil, errors.New("user is not allowed to create registry")
+	}
+
 	var valid validation.Validation
 
 	dataValid, err := valid.Valid(registry)

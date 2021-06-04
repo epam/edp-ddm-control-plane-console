@@ -4,10 +4,12 @@
     <div class="registry">
         <div class="registry-header">
             <h1>Реєстри</h1>
+            {{if .allowedToCreate}}
             <a href="{{ .BasePath }}/admin/registry/create" class="registry-add">
                 <img alt="add registry" src="{{ .BasePath }}/static/img/plus.png" />
                 <span>Створити новий</span>
             </a>
+            {{end}}
         </div>
         <div class="registry-description">Перелік реєстрів та їх статусів.</div>
         <div class="registry-table-wrap">

@@ -23,12 +23,14 @@ import (
 	edpv1alpha1 "github.com/epmd-edp/codebase-operator/v2/pkg/apis/edp/v1alpha1"
 	"github.com/epmd-edp/edp-component-operator/pkg/apis/v1/v1alpha1"
 	projectV1 "github.com/openshift/client-go/project/clientset/versioned/typed/project/v1"
+	userV1Client "github.com/openshift/client-go/user/clientset/versioned/typed/user/v1"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	coreV1Client "k8s.io/client-go/kubernetes/typed/core/v1"
+	rbacV1Client "k8s.io/client-go/kubernetes/typed/rbac/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -45,6 +47,8 @@ type ClientSet struct {
 	schemeGroupVersionV1 *schema.GroupVersion
 	schemeGroupVersionV2 *schema.GroupVersion
 	projectsV1Client     *projectV1.ProjectV1Client
+	rbacV1Client         *rbacV1Client.RbacV1Client
+	userV1Client         *userV1Client.UserV1Client
 }
 
 func (cs *ClientSet) GetConfig() *rest.Config {
@@ -85,6 +89,16 @@ func MakeK8SClients() (*ClientSet, error) {
 	cs.projectsV1Client, err = projectV1.NewForConfig(restConfig)
 	if err != nil {
 		return nil, err
+	}
+
+	cs.rbacV1Client, err = rbacV1Client.NewForConfig(restConfig)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to init rbac client")
+	}
+
+	cs.userV1Client, err = userV1Client.NewForConfig(restConfig)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to init oc user client")
 	}
 
 	return &cs, nil
@@ -197,6 +211,34 @@ func (cs *ClientSet) GetEDPRestClientV2(ctx context.Context) (rest.Interface, er
 	}
 
 	return edpRestClientV2, nil
+}
+
+func (cs *ClientSet) GetRbacClient(ctx context.Context) (*rbacV1Client.RbacV1Client, error) {
+	userConfig, changed := cs.userConfig(ctx)
+	if !changed {
+		return cs.rbacV1Client, nil
+	}
+
+	r, err := rbacV1Client.NewForConfig(userConfig)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to create projects client")
+	}
+
+	return r, nil
+}
+
+func (cs *ClientSet) GetUserClient(ctx context.Context) (*userV1Client.UserV1Client, error) {
+	userConfig, changed := cs.userConfig(ctx)
+	if !changed {
+		return cs.userV1Client, nil
+	}
+
+	cl, err := userV1Client.NewForConfig(userConfig)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to create projects client")
+	}
+
+	return cl, nil
 }
 
 func (cs *ClientSet) GetOCProjectsClient(ctx context.Context) (*projectV1.ProjectV1Client, error) {
