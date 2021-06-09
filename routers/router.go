@@ -57,7 +57,7 @@ func init() {
 		zap.String("mode", beego.AppConfig.String("runmode")))
 	authEnabled, err := beego.AppConfig.Bool("authEnabled")
 	if err != nil {
-		log.Error("Cannot read property authEnabled. Set default: true", zap.Error(err))
+		log.Info("Cannot read property authEnabled. Set default: true", zap.Error(err))
 		authEnabled = true
 	}
 

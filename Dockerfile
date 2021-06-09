@@ -7,7 +7,12 @@ ENV USER_UID=1001 \
 RUN addgroup --gid ${USER_UID} ${USER_NAME} \
     && adduser --disabled-password --uid ${USER_UID} --ingroup ${USER_NAME} --home ${HOME} ${USER_NAME}
 
+FROM scratch
+COPY --from=0 /etc/passwd /etc/passwd
+
 WORKDIR /go/bin
+ENV PWD=/go/bin
+ENV PATH=/go/bin
 
 COPY control-plane-console .
 COPY static static
