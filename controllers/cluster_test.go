@@ -41,7 +41,9 @@ func TestClusterManagement_CreateCodebase(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	codebaseService := test.MockCodebaseService{}
+	codebaseService := service.MockCodebaseService{}
+	jenkinsSvc := test.MockJenkinsService{}
+
 	codebaseService.On("CreateCodebase", command.CreateCodebase{
 		Name: "cluster-management", DefaultBranch: "master", Strategy: "import", Lang: "other", BuildTool: "gitops",
 		Type: string(query.ClusterManagement), Repository: &command.Repository{URL: beego.AppConfig.String("clusterManagementRepo")},
@@ -51,7 +53,7 @@ func TestClusterManagement_CreateCodebase(t *testing.T) {
 		JenkinsSlave: util.GetStringP("gitops"), DeploymentScript: "openshift-template", CiTool: "Jenkins",
 	}).Return(&v1alpha1.Codebase{ObjectMeta: v1.ObjectMeta{Name: "cb1"}}, nil)
 	codebaseService.On("GetCodebaseByNameK8s",
-		"cluster-management").Return(nil, service.RegistryNotFound{}).Once()
+		"cluster-management").Return(nil, service.RegistryNotFound("not found")).Once()
 	codebaseService.On("GetCodebaseByNameK8s",
 		"cluster-management").Return(&query.Codebase{Name: "clus1", CodebaseBranch: []*query.CodebaseBranch{
 		{
@@ -63,7 +65,7 @@ func TestClusterManagement_CreateCodebase(t *testing.T) {
 	ecs.On("Get", "mdtuddm", "jenkins").Return(&v1alpha12.EDPComponent{}, nil)
 	ecs.On("Get", "mdtuddm", "gerrit").Return(&v1alpha12.EDPComponent{}, nil)
 
-	beego.Router("/cluster-management-create", MakeClusterManagement(&codebaseService, &ecs,
+	beego.Router("/cluster-management-create", MakeClusterManagement(&jenkinsSvc, &codebaseService, &ecs,
 		"cluster-management", beego.AppConfig.String("clusterManagementRepo"), "", "mdtuddm"))
 	request, _ := http.NewRequest("GET", "/cluster-management-create", nil)
 	responseWriter := httptest.NewRecorder()
@@ -81,7 +83,7 @@ func TestClusterManagement_GetSuccess(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	codebaseService := test.MockCodebaseService{}
+	codebaseService := service.MockCodebaseService{}
 	codebaseService.On("GetCodebaseByNameK8s", "cluster-management").
 		Return(&query.Codebase{CodebaseBranch: []*query.CodebaseBranch{{}}}, nil)
 
@@ -89,7 +91,10 @@ func TestClusterManagement_GetSuccess(t *testing.T) {
 	ecs.On("Get", "mdtuddm", "jenkins").Return(&v1alpha12.EDPComponent{}, nil)
 	ecs.On("Get", "mdtuddm", "gerrit").Return(&v1alpha12.EDPComponent{}, nil)
 
-	beego.Router("/cluster-management", MakeClusterManagement(&codebaseService, &ecs,
+	jenkinsService := test.MockJenkinsService{}
+	codebaseService.On("GetBackupConfig").Return(&service.BackupConfig{}, nil)
+
+	beego.Router("/cluster-management", MakeClusterManagement(&jenkinsService, &codebaseService, &ecs,
 		"cluster-management", beego.AppConfig.String("clusterManagementRepo"), "", "mdtuddm"))
 	request, _ := http.NewRequest("GET", "/cluster-management", nil)
 	responseWriter := httptest.NewRecorder()
@@ -109,13 +114,15 @@ func TestClusterManagement_FailureCodebase(t *testing.T) {
 
 	mockErr := errors.New("GetCodebaseByNameError fatal")
 
-	codebaseService := test.MockCodebaseService{}
+	codebaseService := service.MockCodebaseService{}
 	codebaseService.On("GetCodebaseByNameK8s", "cluster-management").
 		Return(nil, mockErr)
 	ecs := test.MockEDPComponentServiceK8S{}
 
+	jenkinsSvc := test.MockJenkinsService{}
+
 	beego.Router("/cluster-management-error1",
-		MakeClusterManagement(&codebaseService, &ecs, "cluster-management", "", "", "mdtuddm"))
+		MakeClusterManagement(&jenkinsSvc, &codebaseService, &ecs, "cluster-management", "", "", "mdtuddm"))
 	request, _ := http.NewRequest("GET", "/cluster-management-error1", nil)
 	responseWriter := httptest.NewRecorder()
 
@@ -138,15 +145,18 @@ func TestClusterManagement_FailureEdpComponent(t *testing.T) {
 
 	mockErr := errors.New("CreateLinksForGerritProviderK8s fatal")
 
-	codebaseService := test.MockCodebaseService{}
+	codebaseService := service.MockCodebaseService{}
+	codebaseService.On("GetBackupConfig").Return(&service.BackupConfig{}, nil)
 	codebaseService.On("GetCodebaseByNameK8s", "cluster-management").Return(&query.Codebase{
 		CodebaseBranch: []*query.CodebaseBranch{
 			{},
 		}}, nil)
 	ecs := test.MockEDPComponentServiceK8S{}
 	ecs.On("Get", "mdtuddm", "jenkins").Return(nil, mockErr)
+	jenkinsSvc := test.MockJenkinsService{}
 
-	beego.Router("/cluster-management-error2", MakeClusterManagement(&codebaseService, &ecs, "cluster-management", "",
+	beego.Router("/cluster-management-error2", MakeClusterManagement(&jenkinsSvc, &codebaseService, &ecs,
+		"cluster-management", "",
 		"", "mdtuddm"))
 	request, _ := http.NewRequest("GET", "/cluster-management-error2", nil)
 	responseWriter := httptest.NewRecorder()

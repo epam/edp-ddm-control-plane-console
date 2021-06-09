@@ -1,4 +1,4 @@
-package test
+package service
 
 import (
 	"context"
@@ -78,4 +78,17 @@ func (m *MockCodebaseService) ExistCodebaseAndBranch(cbName, brName string) bool
 
 func (m *MockCodebaseService) UpdateKeySecret(key6, caCert, casJSON []byte, signKeyIssuer, signKeyPwd, registryName string) error {
 	return m.Called(key6, caCert, casJSON, signKeyIssuer, signKeyPwd, registryName).Error(0)
+}
+
+func (m *MockCodebaseService) SetBackupConfig(conf *BackupConfig) error {
+	return m.Called(conf).Error(0)
+}
+
+func (m *MockCodebaseService) GetBackupConfig() (*BackupConfig, error) {
+	called := m.Called()
+	if err := called.Error(1); err != nil {
+		return nil, err
+	}
+
+	return called.Get(0).(*BackupConfig), nil
 }

@@ -146,7 +146,7 @@ func init() {
 			jenkinsSvc)),
 		beego.NSRouter("/registry/view/:name", controllers.MakeViewRegistry(codebaseService,
 			k8sEDPComponentService, projectsSvc, basePath, namespace)),
-		beego.NSRouter("/cluster/management", controllers.MakeClusterManagement(codebaseService,
+		beego.NSRouter("/cluster/management", controllers.MakeClusterManagement(jenkinsSvc, codebaseService,
 			k8sEDPComponentService,
 			beego.AppConfig.DefaultString("clusterManagementCodebaseName", "cluster-management"),
 			beego.AppConfig.String("clusterManagementRepo"), basePath, namespace)),

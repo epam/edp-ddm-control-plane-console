@@ -44,6 +44,8 @@ type CodebaseService interface {
 	GetCodebaseByNameK8s(ctx context.Context, name string) (*query.Codebase, error)
 	CreateKeySecret(key6, caCert, casJSON []byte, signKeyIssuer, signKeyPwd, registryName string) error
 	UpdateKeySecret(key6, caCert, casJSON []byte, signKeyIssuer, signKeyPwd, registryName string) error
+	SetBackupConfig(conf *service.BackupConfig) error
+	GetBackupConfig() (*service.BackupConfig, error)
 }
 
 type JenkinsService interface {

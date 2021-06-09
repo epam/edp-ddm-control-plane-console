@@ -52,6 +52,7 @@ type CodebaseService struct {
 	BranchService           *CodebaseBranchService
 	GerritCreatorSecretName string
 	Namespace               string
+	BackupSecretName        string
 }
 
 func MakeCodebaseService(clients *k8s.ClientSet,
@@ -318,12 +319,19 @@ func (s CodebaseService) GetCodebaseByName(name string) (*query.Codebase, error)
 	return c, nil
 }
 
-type RegistryNotFound struct {
-	cause error
-}
+type RegistryNotFound string
 
 func (r RegistryNotFound) Error() string {
-	return r.cause.Error()
+	return string(r)
+}
+
+func IsRegistryNotFound(err error) bool {
+	switch errors.Cause(err).(type) {
+	case RegistryNotFound:
+		return true
+	}
+
+	return false
 }
 
 func (s CodebaseService) GetCodebaseByNameK8s(ctx context.Context, name string) (*query.Codebase, error) {
@@ -336,11 +344,11 @@ func (s CodebaseService) GetCodebaseByNameK8s(ctx context.Context, name string) 
 	if err := clientV2.Get().Namespace(s.Namespace).Resource(consts.CodebasePlural).Name(name).
 		Do().Into(&edpCodebase); err != nil {
 		if errStatus, ok := err.(*k8sErrors.StatusError); ok && errStatus.ErrStatus.Code == 404 {
-			return nil, RegistryNotFound{cause: errStatus}
+			return nil, RegistryNotFound("registry not found")
 		}
 
 		if edpCodebase.ObjectMeta.DeletionTimestamp != nil {
-			return nil, RegistryNotFound{}
+			return nil, RegistryNotFound("registry already deleted")
 		}
 
 		return nil, errors.Wrap(err, "unable to get codebase from k8s api")

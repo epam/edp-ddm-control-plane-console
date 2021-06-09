@@ -31,7 +31,7 @@ func TestListRegistry_GetSuccess(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	codebaseService := test.MockCodebaseService{}
+	codebaseService := service.MockCodebaseService{}
 	codebaseService.On("GetCodebasesByCriteriaK8s", query.CodebaseCriteria{Type: query.Registry}).
 		Return([]*query.Codebase{
 			{
@@ -65,7 +65,7 @@ func TestListRegistry_GetFailure(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	codebaseService := test.MockCodebaseService{}
+	codebaseService := service.MockCodebaseService{}
 	codebaseService.On("GetCodebasesByCriteriaK8s", query.CodebaseCriteria{Type: "library"}).
 		Return(nil, errors.New("error on codebase list"))
 
@@ -88,7 +88,7 @@ func TestCreateRegistry_Get(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	codebaseService := test.MockCodebaseService{}
+	codebaseService := service.MockCodebaseService{}
 	beego.Router("/create-registry-get", MakeCreateRegistry("/", "creator", &codebaseService))
 	request, _ := http.NewRequest("GET", "/create-registry-get", nil)
 	responseWriter := httptest.NewRecorder()
@@ -108,7 +108,7 @@ func TestCreatRegistry_Post_ValidationError(t *testing.T) {
 
 	grv := mockGroupValidator{}
 	grv.On("IsAllowedToCreateRegistry", "creator").Return(true)
-	codebaseService := test.MockCodebaseService{}
+	codebaseService := service.MockCodebaseService{}
 	ctrl := MakeCreateRegistry("/", "creator", &codebaseService)
 	ctrl.GroupValidator = &grv
 
@@ -129,7 +129,7 @@ func TestCreatRegistry_Post_CodebaseExists(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	codebaseService := test.MockCodebaseService{}
+	codebaseService := service.MockCodebaseService{}
 	codebaseService.On("CreateCodebase", command.CreateCodebase{
 		Name: "name1", DefaultBranch: "master", Strategy: "clone", Lang: "other", BuildTool: "gitops", Type: string(query.Registry),
 		Repository:  &command.Repository{URL: beego.AppConfig.String("registryGitRepo")},
@@ -219,7 +219,7 @@ func TestCreatRegistry_Post_ValidationErrorName(t *testing.T) {
 
 	grv := mockGroupValidator{}
 	grv.On("IsAllowedToCreateRegistry", "creator").Return(true)
-	ctrl := MakeCreateRegistry("/", "creator", &test.MockCodebaseService{})
+	ctrl := MakeCreateRegistry("/", "creator", &service.MockCodebaseService{})
 	ctrl.GroupValidator = &grv
 	beego.Router("/create-registry-error-name", ctrl)
 
@@ -242,7 +242,7 @@ func TestCreatRegistry_Post_ValidationErrorName(t *testing.T) {
 }
 
 func TestCreatRegistry_Post_Success(t *testing.T) {
-	codebaseService := test.MockCodebaseService{}
+	codebaseService := service.MockCodebaseService{}
 
 	if err := test.InitBeego(); err != nil {
 		t.Fatal(err)
@@ -336,7 +336,7 @@ func TestEditRegistry_GetFailure(t *testing.T) {
 	}
 
 	mockErr := errors.New("k8s fatal error")
-	codebaseService := test.MockCodebaseService{}
+	codebaseService := service.MockCodebaseService{}
 	codebaseService.On("GetCodebaseByNameK8s", "test").
 		Return(nil, mockErr)
 
@@ -370,9 +370,9 @@ func TestEditRegistry_GetFailure404(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	codebaseService := test.MockCodebaseService{}
+	codebaseService := service.MockCodebaseService{}
 	codebaseService.On("GetCodebaseByNameK8s", "test").Return(nil,
-		service.RegistryNotFound{})
+		service.RegistryNotFound("not found"))
 
 	projectsSvc := test.MockProjectsService{}
 	jenkinsSvc := test.MockJenkinsService{}
@@ -404,7 +404,7 @@ func TestEditRegistry_PostFailure_k8sFatal(t *testing.T) {
 	}
 
 	mockErr := errors.New("k8s fatal")
-	cbMock := test.MockCodebaseService{}
+	cbMock := service.MockCodebaseService{}
 	cbMock.On("UpdateDescription", &models.Registry{Name: "test"}).Return(mockErr)
 	cbMock.On("GetCodebaseByNameK8s", "test").Return(&query.Codebase{}, nil)
 
@@ -438,7 +438,7 @@ func TestEditRegistry_PostFailure_LongDescription(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cbMock := test.MockCodebaseService{}
+	cbMock := service.MockCodebaseService{}
 	cbMock.On("GetCodebaseByNameK8s", "test").Return(&query.Codebase{}, nil)
 
 	projectsSvc := test.MockProjectsService{}
@@ -479,7 +479,7 @@ func TestEditRegistry_PostSuccess(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cbMock := test.MockCodebaseService{}
+	cbMock := service.MockCodebaseService{}
 	cbMock.On("UpdateDescription", &models.Registry{Name: "test", Description: "test1"}).
 		Return(nil)
 	cbMock.On("GetCodebaseByNameK8s", "test").
@@ -517,7 +517,7 @@ func TestEditRegistry_GetSuccess(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cbMock := test.MockCodebaseService{}
+	cbMock := service.MockCodebaseService{}
 	cbMock.On("GetCodebaseByNameK8s", "test").Return(&query.Codebase{}, nil)
 
 	projectsSvc := test.MockProjectsService{}
@@ -546,7 +546,7 @@ func TestListRegistry_DeleteRegistry_FailureGetCodebase(t *testing.T) {
 	}
 
 	mockErr := errors.New("GetCodebaseByNameError fatal")
-	cbMock := test.MockCodebaseService{}
+	cbMock := service.MockCodebaseService{}
 	cbMock.On("GetCodebaseByNameK8s", "name1").Return(nil, mockErr)
 
 	projectSVC := test.MockProjectsService{}
@@ -581,9 +581,9 @@ func TestListRegistry_DeleteRegistry_FailureGetCodebase404(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cbMock := test.MockCodebaseService{}
+	cbMock := service.MockCodebaseService{}
 	cbMock.On("GetCodebaseByNameK8s", "name1").
-		Return(nil, errors.Wrap(service.RegistryNotFound{}, ""))
+		Return(nil, errors.Wrap(service.RegistryNotFound("not found"), ""))
 
 	projectSVC := test.MockProjectsService{}
 	projectSVC.On("Get", context.Background(), "name1").
@@ -619,7 +619,7 @@ func TestListRegistry_DeleteRegistry_FailureDeleteCodebase(t *testing.T) {
 	}
 
 	mockErr := errors.New("DeleteCodebase fatal")
-	cbMock := test.MockCodebaseService{}
+	cbMock := service.MockCodebaseService{}
 
 	projectSVC := test.MockProjectsService{}
 	projectSVC.On("Get", context.Background(), "name1").
@@ -651,7 +651,7 @@ func TestListRegistry_DeleteRegistry_FailureDeleteCodebase(t *testing.T) {
 
 func TestListRegistry_DeleteRegistry(t *testing.T) {
 	rw, ctrl := initBeegoCtrl()
-	cbMock := test.MockCodebaseService{}
+	cbMock := service.MockCodebaseService{}
 	cbMock.On("GetCodebaseByNameK8s", "name1").Return(&query.Codebase{Name: "name2", Type: "type1"}, nil)
 	cbMock.On("Delete", "name2", "type1").Return(nil)
 
@@ -676,7 +676,7 @@ func TestViewRegistry_Get(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cbMock := test.MockCodebaseService{}
+	cbMock := service.MockCodebaseService{}
 	cbMock.On("GetCodebaseByNameK8s", "name1").
 		Return(&query.Codebase{CodebaseBranch: []*query.CodebaseBranch{{}}, ActionLog: []*query.ActionLog{{}}}, nil)
 
@@ -706,7 +706,7 @@ func TestViewRegistry_Get_FailureEdpComponents(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cbMock := test.MockCodebaseService{}
+	cbMock := service.MockCodebaseService{}
 	cbMock.On("GetCodebaseByNameK8s", "name1").
 		Return(&query.Codebase{CodebaseBranch: []*query.CodebaseBranch{{}}, ActionLog: []*query.ActionLog{{}}}, nil)
 
@@ -743,7 +743,7 @@ func TestViewRegistry_Get_FailureGetCodebaseByName(t *testing.T) {
 	}
 	mockErr := errors.New("GetCodebaseByName fatal")
 
-	cbMock := test.MockCodebaseService{}
+	cbMock := service.MockCodebaseService{}
 	cbMock.On("GetCodebaseByNameK8s", "name1").Return(nil, mockErr)
 	eds := test.MockEDPComponentServiceK8S{}
 
@@ -772,9 +772,9 @@ func TestViewRegistry_Get_FailureGetCodebaseByName404(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cbMock := test.MockCodebaseService{}
+	cbMock := service.MockCodebaseService{}
 	cbMock.On("GetCodebaseByNameK8s", "name1").
-		Return(nil, errors.Wrap(service.RegistryNotFound{}, ""))
+		Return(nil, errors.Wrap(service.RegistryNotFound("not found"), ""))
 	eds := test.MockEDPComponentServiceK8S{}
 
 	projectsSvc := test.MockProjectsService{}
@@ -804,7 +804,7 @@ func TestViewRegistry_Get_FailureCreateLinksForGerritProvider(t *testing.T) {
 	}
 	mockErr := errors.New("GetEDPComponentError fatal")
 
-	cbMock := test.MockCodebaseService{}
+	cbMock := service.MockCodebaseService{}
 	cbMock.On("GetCodebaseByNameK8s", "name1").
 		Return(&query.Codebase{CodebaseBranch: []*query.CodebaseBranch{{}}}, nil)
 
