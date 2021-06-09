@@ -9,6 +9,7 @@ RUN addgroup --gid ${USER_UID} ${USER_NAME} \
 
 FROM scratch
 COPY --from=0 /etc/passwd /etc/passwd
+COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 WORKDIR /go/bin
 ENV PWD=/go/bin
