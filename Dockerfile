@@ -1,4 +1,6 @@
-FROM nexus-docker-registry.apps.cicd2.mdtu-ddm.projects.epam.com/golang:1.13.15-stretch
+FROM alpine
+
+RUN apk update && apk add ca-certificates
 
 ENV USER_UID=1001 \
     USER_NAME=admin-console \
