@@ -1,0 +1,52 @@
+{{ template "layout.html" . }}
+
+{{ define "content" }}
+    <div class="registry registry-create">
+        <div class="registry-header">
+            <a href="{{ .BasePath }}/admin/cluster/management" class="registry-add">
+                <img alt="add registry" src="{{ .BasePath }}/static/img/action-back.png" />
+                <span>НАЗАД</span>
+            </a>
+        </div>
+        <h1>Налаштування резервного копіювання</h1>
+        <form class="registry-create-form" method="post" action="">
+            {{ if .error }}
+                <div class="rc-global-error">{{.error}}</div>
+            {{ end }}
+            <input type="hidden" name="_xsrf" value="{{ .xsrfdata }}" />
+            <div class="rc-form-group {{ if .errorsMap.StorageLocation }}error{{end}}">
+                <label for="storage-location">Місце зберігання бекапу</label>
+                <input type="text" id="storage-location" name="storage-location"
+                       value="{{.backupConf.StorageLocation}}" />
+                <span>
+                    {{range $key, $val := .errorsMap.StorageLocation}}
+                        {{i18n "uk" $val.Error}}
+                    {{end}}
+                </span>
+            </div>
+            <div class="rc-form-group {{ if .errorsMap.StorageType }}error{{end}}">
+                <label for="storage-type">Тип сховища для бекапу</label>
+                <input type="text" id="storage-type" name="storage-type"
+                       value="{{.backupConf.StorageType}}" />
+                <span>
+                    {{range $key, $val := .errorsMap.StorageType}}
+                        {{i18n "uk" $val.Error}}
+                    {{end}}
+                </span>
+            </div>
+            <div class="rc-form-group {{ if .errorsMap.StorageCredentials }}error{{end}}">
+                <label for="storage-credentials">Параметри доступу</label>
+                <input type="text" id="storage-credentials" name="storage-credentials"
+                       value="{{.backupConf.StorageCredentials}}" />
+                <span>
+                    {{range $key, $val := .errorsMap.StorageCredentials}}
+                        {{i18n "uk" $val.Error}}
+                    {{end}}
+                </span>
+            </div>
+            <div class="rc-form-group">
+                <button type="submit" name="submit">Підтвердити</button>
+            </div>
+        </form>
+    </div>
+{{ end }}

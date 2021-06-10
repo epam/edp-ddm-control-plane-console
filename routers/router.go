@@ -150,6 +150,7 @@ func init() {
 			k8sEDPComponentService,
 			beego.AppConfig.DefaultString("clusterManagementCodebaseName", "cluster-management"),
 			beego.AppConfig.String("clusterManagementRepo"), basePath, namespace)),
+		beego.NSRouter("/cluster/edit", controllers.MakeClusterEdit(jenkinsSvc, codebaseService, namespace)),
 	)
 	beego.AddNamespace(adminEdpNamespace)
 

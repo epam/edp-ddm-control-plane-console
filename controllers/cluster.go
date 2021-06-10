@@ -8,10 +8,8 @@ import (
 	"ddm-admin-console/util"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/astaxie/beego"
-	"github.com/astaxie/beego/validation"
 	"github.com/pkg/errors"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 )
@@ -94,76 +92,11 @@ func (c *ClusterManagement) createClusterCodebase() (*query.Codebase, error) {
 	return codebase, nil
 }
 
-func (c *ClusterManagement) Post() {
-	c.Data["BasePath"] = c.BasePath
-	c.Data["Type"] = clusterType
-	c.TplName = "cluster_management.html"
-	c.Data["xsrfdata"] = c.XSRFToken()
-
-	codebase, err := c.CodebaseService.GetCodebaseByNameK8s(context.Background(), c.CodebaseName)
-	if err != nil {
-		log.Error(fmt.Sprintf("%+v\n", err))
-		c.CustomAbort(500, fmt.Sprintf("%+v\n", err))
-		return
-	}
-	c.Data["codebase"] = codebase
-
-	if len(codebase.CodebaseBranch) > 0 {
-		if err := CreateLinksForGerritProviderK8s(c.EDPComponentsService, codebase, c.Namespace); err != nil {
-			log.Error(fmt.Sprintf("%+v\n", err))
-			c.CustomAbort(500, fmt.Sprintf("%+v\n", err))
-			return
-		}
-		c.Data["branches"] = codebase.CodebaseBranch
-	}
-
-	backupConfig, validationErrors, err := c.setBackupConfig()
-	if err != nil {
-		log.Error(fmt.Sprintf("%+v\n", err))
-		c.CustomAbort(500, fmt.Sprintf("%+v\n", err))
-		return
-	}
-
-	if validationErrors != nil {
-		c.Data["errorsMap"] = validationErrors
-	}
-
-	c.Data["backupConf"] = backupConfig
-}
-
-func (c *ClusterManagement) setBackupConfig() (backupConfig *service.BackupConfig, errorMap map[string][]*validation.Error, err error) {
-	backupConfig = &service.BackupConfig{}
-	if err := c.ParseForm(backupConfig); err != nil {
-		return nil, nil, errors.Wrap(err, "unable to parse form")
-	}
-
-	var valid validation.Validation
-	dataValid, err := valid.Valid(backupConfig)
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "something went wrong during validation")
-	}
-
-	if !dataValid {
-		return backupConfig, valid.ErrorMap(), nil
-	}
-
-	if err := c.CodebaseService.SetBackupConfig(backupConfig); err != nil {
-		return nil, nil, errors.Wrap(err, "unable to set backup config")
-	}
-
-	if err := c.JenkinsService.CreateJobBuildRun(fmt.Sprintf("cluster-update-%d", time.Now().Unix()),
-		fmt.Sprintf("%s/job/MASTER-Build-%s/", c.CodebaseName, c.CodebaseName), nil); err != nil {
-		return nil, nil, errors.Wrap(err, "unable to trigger jenkins job build run")
-	}
-
-	return backupConfig, nil, nil
-}
-
 func (c *ClusterManagement) Get() {
 	c.Data["xsrfdata"] = c.XSRFToken()
 	c.Data["BasePath"] = c.BasePath
 	c.Data["Type"] = clusterType
-	c.TplName = "cluster_management.html"
+	c.TplName = "cluster/view.html"
 	var gErr error
 	defer func() {
 		if gErr != nil {
