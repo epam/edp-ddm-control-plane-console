@@ -19,11 +19,12 @@ type ClusterEdit struct {
 	CodebaseName    string
 }
 
-func MakeClusterEdit(jenkinsService JenkinsService, codebaseService CodebaseService, namespace string) *ClusterEdit {
+func MakeClusterEdit(jenkinsService JenkinsService, codebaseService CodebaseService, namespace, codebaseName string) *ClusterEdit {
 	return &ClusterEdit{
 		Namespace:       namespace,
 		CodebaseService: codebaseService,
 		JenkinsService:  jenkinsService,
+		CodebaseName:    codebaseName,
 	}
 }
 
