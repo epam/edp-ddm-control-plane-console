@@ -108,6 +108,15 @@ func (c *ClusterManagement) Post() {
 	}
 	c.Data["codebase"] = codebase
 
+	if len(codebase.CodebaseBranch) > 0 {
+		if err := CreateLinksForGerritProviderK8s(c.EDPComponentsService, codebase, c.Namespace); err != nil {
+			log.Error(fmt.Sprintf("%+v\n", err))
+			c.CustomAbort(500, fmt.Sprintf("%+v\n", err))
+			return
+		}
+		c.Data["branches"] = codebase.CodebaseBranch
+	}
+
 	backupConfig, validationErrors, err := c.setBackupConfig()
 	if err != nil {
 		log.Error(fmt.Sprintf("%+v\n", err))
