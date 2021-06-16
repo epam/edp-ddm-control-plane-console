@@ -29,60 +29,77 @@
                 </span>
                 <p>Допустимі символи: "0-9", "a-z", "_", "-", "@", ".", ",".</p>
             </div>
-            <h3>Дані про ключ</h3>
-            <hr />
-            <div class="rc-form-group {{ if .errorsMap.Key6 }}error{{end}}">
-                <label for="key6">Файловий ключ (розширення .dat)</label>
-                <input type="file" name="key6" id="key6" accept=".dat" />
-                <span>
-                    {{range $key, $val := .errorsMap.Key6}}
-                        {{ $val.Error | i18n }}
-                    {{end}}
-                </span>
+
+            <div>
+                <input type="checkbox" id="edit-key">
+                <label for="edit-key">Редагувати дані про ключ</label>
             </div>
-            <div class="rc-form-group {{ if .errorsMap.SignKeyIssuer }}error{{end}}">
-                <label for="sign-key-issuer">АЦСК, що видав ключ</label>
-                <input type="text" id="sign-key-issuer" name="sign-key-issuer" value="{{.model.SignKeyIssuer}}" />
-                <span>
-                    {{range $key, $val := .errorsMap.SignKeyIssuer}}
-                        {{ $val.Error | i18n }}
-                    {{end}}
-                </span>
-            </div>
-            <div class="rc-form-group {{ if .errorsMap.SignKeyPwd }}error{{end}}">
-                <label for="sign-key-pwd">Пароль до файлового ключа</label>
-                <input type="password" id="sign-key-pwd" name="sign-key-pwd" value="{{.model.SignKeyPwd}}" />
-                <span>
-                    {{range $key, $val := .errorsMap.SignKeyPwd}}
-                        {{ $val.Error | i18n }}
-                    {{end}}
-                </span>
-            </div>
-            <h3>Дані для перевірки ключа</h3>
-            <hr />
-            <div class="rc-form-group {{ if .errorsMap.CACertificate }}error{{end}}">
-                <label for="ca-cert">Публічні сертифікати АЦСК (розширення .p7b)</label>
-                <input type="file" name="ca-cert" id="ca-cert" accept=".p7b" />
-                <span>
-                    {{range $key, $val := .errorsMap.CACertificate}}
-                        {{ $val.Error | i18n }}
-                    {{end}}
-                </span>
-            </div>
-            <div class="rc-form-group {{ if .errorsMap.CAsJSON }}error{{end}}">
-                <label for="ca-json">Список АЦСК (розширення .json)</label>
-                <input type="file" name="ca-json" id="ca-json" accept=".json" />
-                <span>
-                    {{range $key, $val := .errorsMap.CAsJSON}}
-                        {{ $val.Error | i18n }}
-                    {{end}}
-                </span>
+
+            <div id="key-block" style="display: none;margin-bottom: 10px;">
+                <h3>Дані про ключ</h3>
+                <hr />
+                <div class="rc-form-group {{ if .errorsMap.Key6 }}error{{end}}">
+                    <label for="key6">Файловий ключ (розширення .dat)</label>
+                    <input type="file" name="key6" id="key6" accept=".dat" />
+                    <span>
+                        {{range $key, $val := .errorsMap.Key6}}
+                            {{ $val.Error | i18n }}
+                        {{end}}
+                    </span>
+                </div>
+                <div class="rc-form-group {{ if .errorsMap.SignKeyIssuer }}error{{end}}">
+                    <label for="sign-key-issuer">АЦСК, що видав ключ</label>
+                    <input type="text" id="sign-key-issuer" name="sign-key-issuer" value="{{.model.SignKeyIssuer}}" />
+                    <span>
+                        {{range $key, $val := .errorsMap.SignKeyIssuer}}
+                            {{ $val.Error | i18n }}
+                        {{end}}
+                    </span>
+                </div>
+                <div class="rc-form-group {{ if .errorsMap.SignKeyPwd }}error{{end}}">
+                    <label for="sign-key-pwd">Пароль до файлового ключа</label>
+                    <input type="password" id="sign-key-pwd" name="sign-key-pwd" value="{{.model.SignKeyPwd}}" />
+                    <span>
+                        {{range $key, $val := .errorsMap.SignKeyPwd}}
+                            {{ $val.Error | i18n }}
+                        {{end}}
+                    </span>
+                </div>
+                <h3>Дані для перевірки ключа</h3>
+                <hr />
+                <div class="rc-form-group {{ if .errorsMap.CACertificate }}error{{end}}">
+                    <label for="ca-cert">Публічні сертифікати АЦСК (розширення .p7b)</label>
+                    <input type="file" name="ca-cert" id="ca-cert" accept=".p7b" />
+                    <span>
+                        {{range $key, $val := .errorsMap.CACertificate}}
+                            {{ $val.Error | i18n }}
+                        {{end}}
+                    </span>
+                </div>
+                <div class="rc-form-group {{ if .errorsMap.CAsJSON }}error{{end}}">
+                    <label for="ca-json">Список АЦСК (розширення .json)</label>
+                    <input type="file" name="ca-json" id="ca-json" accept=".json" />
+                    <span>
+                        {{range $key, $val := .errorsMap.CAsJSON}}
+                            {{ $val.Error | i18n }}
+                        {{end}}
+                    </span>
+                </div>
             </div>
             <div class="rc-form-group">
                 <button type="submit" name="submit">Підтвердити</button>
             </div>
         </form>
     </div>
+    <script type="text/javascript">
+        $(function () {
+            $("#edit-key").prop( "checked", false );
 
+            $("#edit-key").change(function (e) {
+                $("#key-block").toggle();
+            });
+        })
+
+    </script>
     {{template "footer" .}}
 {{ end }}
