@@ -19,8 +19,9 @@ ENV PATH=/go/bin
 
 COPY control-plane-console .
 COPY static static
-COPY views views
-COPY conf conf
+COPY templates templates
+COPY .env .env
+COPY locale locale
 
 USER ${USER_UID}
 

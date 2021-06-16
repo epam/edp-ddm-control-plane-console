@@ -1,0 +1,101 @@
+{{ define "registry/list.html" }}
+    {{template "header" .}}
+    <link rel="stylesheet" type="text/css" href="{{.BasePath}}/static/css/datatables.custom.css" />
+    <div class="registry">
+        <div class="registry-header">
+            <h1>Реєстри</h1>
+            {{if .allowedToCreate}}
+            <a href="{{ .BasePath }}/admin/registry/create" class="registry-add">
+                <img alt="add registry" src="{{ .BasePath }}/static/img/plus.png" />
+                <span>Створити новий</span>
+            </a>
+            {{end}}
+        </div>
+        <div class="registry-description">Перелік реєстрів та їх статусів.</div>
+        <div class="registry-table-wrap">
+            <table id="registry-table" class="registry-table row-border">
+                <thead>
+                    <tr>
+                        <th>Статус</th>
+                        <th>Назва</th>
+                        <th>Опис</th>
+                        <th>Час створення</th>
+                        <th></th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range $key, $registry := .registries}}
+                    <tr {{if $registry.ForegroundDeletion}}class="disabled"{{end}}>
+                        <td>
+                            {{if $registry.ForegroundDeletion}}
+                                <img src="{{ $.BasePath }}/static/img/action-delete.png" alt="delete registry" />
+                            {{else}}
+                                <img src="{{ $.BasePath }}/static/img/status-{{$registry.StrStatus}}.png" alt="status {{$registry.StrStatus}}" />
+                            {{end}}
+                        </td>
+                        <td>
+                            <a href="{{ $.BasePath }}/admin/registry/view/{{$registry.Name}}">{{$registry.Name}}</a>
+                        </td>
+                        <td>
+                            {{$registry.Description}}
+                        </td>
+                        <td>
+                            {{$registry.FormattedCreatedAt}}
+                        </td>
+                        <td>
+                            {{if not $registry.ForegroundDeletion}}
+                            <a href="{{ $.BasePath }}/admin/registry/edit/{{$registry.Name}}">
+                                <img src="{{ $.BasePath }}/static/img/action-edit.png" alt="edit registry" />
+                            </a>
+                            {{end}}
+                        </td>
+                        <td>
+                            {{if $registry.CanBeDeleted}}
+                            {{if not $registry.ForegroundDeletion}}
+                            <a href="#" class="delete-registry"
+                               data-name="{{$registry.Name}}">
+                                <img src="{{ $.BasePath }}/static/img/action-delete.png" alt="delete registry" />
+                            </a>
+                            {{end}}
+                            {{end}}
+                        </td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="popup-backdrop"></div>
+    <div class="popup-window">
+        <div class="popup-header">
+            <p>Видалити "<span id="delete-name">business-pro</span>"?</p>
+            <a href="#" class="popup-close">
+                <img alt="close popup window" src="{{.BasePath}}/static/img/close.png" />
+            </a>
+        </div>
+        <form id="delete-form" method="post" action="">
+            <input type="hidden" name="_xsrf" value="{{ .xsrfdata }}" />
+            <div class="popup-body">
+                <p>Щоб уникнути випадкової втрати даних, введіть назву реєстру перш,
+                    ніж ви зможете його видалити.</p>
+
+                <div class="rc-form-group">
+                    <input aria-label="registry name" type="text" id="registry-name" name="registry-name" required
+                           placeholder="Назва реєстру" autocomplete="off" />
+                </div>
+            </div>
+            <div class="popup-footer">
+                <a href="#" id="delete-cancel">відмінити</a>
+                <button value="submit" name="codebase-delete" type="submit">Видалити</button>
+            </div>
+        </form>
+    </div>
+
+    <script type="text/javascript" src="{{.BasePath}}/static/js/datatables.min.js"></script>
+    <script type="text/javascript" src="{{.BasePath}}/static/js/registry.js"></script>
+    {{template "footer" .}}
+        
+{{ end }}
+
