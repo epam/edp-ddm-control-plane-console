@@ -56,7 +56,7 @@ type config struct {
 }
 
 func main() {
-	configPath := flag.String("c", ".env", "config file path")
+	configPath := flag.String("c", "default.env", "config file path")
 	flag.Parse()
 
 	cnf, err := loadConfig(*configPath)
