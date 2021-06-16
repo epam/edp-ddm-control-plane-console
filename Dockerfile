@@ -20,7 +20,7 @@ ENV PATH=/go/bin
 COPY control-plane-console .
 COPY static static
 COPY templates templates
-COPY .env .env
+COPY .env .
 COPY locale locale
 
 USER ${USER_UID}
