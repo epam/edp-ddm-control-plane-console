@@ -97,7 +97,7 @@
 
             $("#edit-key").change(function (e) {
                 let checked = $("#edit-key").prop('checked');
-                $(".optional-key").prop('required', true);
+                $(".optional-key").prop('required', checked);
                 $("#key-block").toggle();
             });
 
