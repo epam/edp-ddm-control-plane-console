@@ -20,7 +20,7 @@
             </div>
             <div class="rc-form-group {{ if .errorsMap.Admins }}error{{end}}">
                 <label for="admins">Адміністратори</label>
-                <input type="text" id="admins" name="admins" pattern="^[a-zA-Z0-9@._-,]+$"
+                <input type="text" id="admins" name="admins" pattern="^[a-zA-Z0-9@._\-,]+$"
                        value="{{.registry.Admins}}" />
                 <span>
                     {{range $key, $val := .errorsMap.Admins}}
@@ -40,7 +40,7 @@
                 <hr />
                 <div class="rc-form-group {{ if .errorsMap.Key6 }}error{{end}}">
                     <label for="key6">Файловий ключ (розширення .dat)</label>
-                    <input type="file" name="key6" id="key6" accept=".dat" />
+                    <input class="optional-key" type="file" name="key6" id="key6" accept=".dat" />
                     <span>
                         {{range $key, $val := .errorsMap.Key6}}
                             {{ $val.Error | i18n }}
@@ -49,7 +49,7 @@
                 </div>
                 <div class="rc-form-group {{ if .errorsMap.SignKeyIssuer }}error{{end}}">
                     <label for="sign-key-issuer">АЦСК, що видав ключ</label>
-                    <input type="text" id="sign-key-issuer" name="sign-key-issuer" value="{{.model.SignKeyIssuer}}" />
+                    <input class="optional-key" type="text" id="sign-key-issuer" name="sign-key-issuer" value="{{.model.SignKeyIssuer}}" />
                     <span>
                         {{range $key, $val := .errorsMap.SignKeyIssuer}}
                             {{ $val.Error | i18n }}
@@ -58,7 +58,7 @@
                 </div>
                 <div class="rc-form-group {{ if .errorsMap.SignKeyPwd }}error{{end}}">
                     <label for="sign-key-pwd">Пароль до файлового ключа</label>
-                    <input type="password" id="sign-key-pwd" name="sign-key-pwd" value="{{.model.SignKeyPwd}}" />
+                    <input class="optional-key" type="password" id="sign-key-pwd" name="sign-key-pwd" value="{{.model.SignKeyPwd}}" />
                     <span>
                         {{range $key, $val := .errorsMap.SignKeyPwd}}
                             {{ $val.Error | i18n }}
@@ -69,7 +69,7 @@
                 <hr />
                 <div class="rc-form-group {{ if .errorsMap.CACertificate }}error{{end}}">
                     <label for="ca-cert">Публічні сертифікати АЦСК (розширення .p7b)</label>
-                    <input type="file" name="ca-cert" id="ca-cert" accept=".p7b" />
+                    <input class="optional-key" type="file" name="ca-cert" id="ca-cert" accept=".p7b" />
                     <span>
                         {{range $key, $val := .errorsMap.CACertificate}}
                             {{ $val.Error | i18n }}
@@ -78,7 +78,7 @@
                 </div>
                 <div class="rc-form-group {{ if .errorsMap.CAsJSON }}error{{end}}">
                     <label for="ca-json">Список АЦСК (розширення .json)</label>
-                    <input type="file" name="ca-json" id="ca-json" accept=".json" />
+                    <input class="optional-key" type="file" name="ca-json" id="ca-json" accept=".json" />
                     <span>
                         {{range $key, $val := .errorsMap.CAsJSON}}
                             {{ $val.Error | i18n }}
@@ -96,7 +96,32 @@
             $("#edit-key").prop( "checked", false );
 
             $("#edit-key").change(function (e) {
+                let checked = $("#edit-key").prop('checked');
+                $(".optional-key").prop('required', true);
                 $("#key-block").toggle();
+            });
+
+            $("input").on('change invalid', function(){
+                let input = $(this).get(0);
+                input.scrollIntoView();
+                input.setCustomValidity('');
+                let inputName = $(input).attr("name");
+
+                if (!input.validity.valid) {
+                    let errorMessages = {
+                        'name':   'Будь-ласка вкажіть назву у відповідному форматі',
+                        'key6': 'Будь-ласка оберіть файловий ключ',
+                        'sign-key-issuer': 'Будь-ласка вкажіть АЦСК, що видав ключ',
+                        'sign-key-pwd': 'Будь-ласка вкажіть пароль до файлового ключа',
+                        'ca-cert': 'Будь-ласка оберіть публічні сертифікати АЦСК',
+                        'ca-json': 'Будь-ласка оберіть список АЦСК',
+                        'admins': 'Будь-ласка вкажіть адміністраторів у відповідному форматі',
+                    };
+                    let errorMessage = errorMessages[inputName];
+                    if (errorMessage) {
+                        input.setCustomValidity(errorMessage);
+                    }
+                }
             });
         })
 
