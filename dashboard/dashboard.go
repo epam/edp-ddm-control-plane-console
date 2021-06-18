@@ -11,7 +11,7 @@ func (a *App) main(_ *gin.Context) (response *router.Response, retErr error) {
 	return router.MakeResponse(200, "dashboard/index.html", gin.H{}), nil
 }
 
-func (a *App) dashboard(_ *gin.Context) (response *router.Response, retErr error) {
+func (a *App) dashboard(ctx *gin.Context) (response *router.Response, retErr error) {
 	components, err := a.edpComponentService.GetAll()
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get edp components")
@@ -27,9 +27,11 @@ func (a *App) dashboard(_ *gin.Context) (response *router.Response, retErr error
 			gerritLink = comp.Spec.Url
 		}
 	}
+
 	return router.MakeResponse(200, "dashboard/dashboard.html", gin.H{
 		"page":        "dashboard",
 		"gerritLink":  gerritLink,
 		"jenkinsLink": jenkinsLink,
+		"username":    ctx.GetString(router.UserNameSessionKey),
 	}), nil
 }

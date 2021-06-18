@@ -34,7 +34,8 @@ const (
 
 func (a *App) createRegistryGet(ctx *gin.Context) (response *router.Response, retErr error) {
 	return router.MakeResponse(200, "registry/create.html", gin.H{
-		"page": "registry",
+		"page":     "registry",
+		"username": ctx.GetString(router.UserNameSessionKey),
 	}), nil
 }
 

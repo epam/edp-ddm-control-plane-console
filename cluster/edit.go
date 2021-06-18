@@ -26,7 +26,7 @@ type BackupConfig struct {
 	StorageCredentials string `form:"storage-credentials" binding:"required"`
 }
 
-func (a *App) editGet(*gin.Context) (*router.Response, error) {
+func (a *App) editGet(ctx *gin.Context) (*router.Response, error) {
 	var backupConfig BackupConfig
 	secret, err := a.k8sService.GetSecret(a.backupSecretName)
 	if err != nil && !k8sErrors.IsNotFound(err) {
@@ -43,6 +43,7 @@ func (a *App) editGet(*gin.Context) (*router.Response, error) {
 	return router.MakeResponse(200, "cluster/edit.html", gin.H{
 		"backupConf": backupConfig,
 		"page":       "cluster",
+		"username":   ctx.GetString(router.UserNameSessionKey),
 	}), nil
 }
 

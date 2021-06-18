@@ -9,12 +9,13 @@ import (
 )
 
 const (
-	UserTokenKey = "access-token"
+	AuthTokenSessionKey = "access-token"
+	UserNameSessionKey  = "user-full-name"
 )
 
 func (r *Router) ContextWithUserAccessToken(ctx *gin.Context) context.Context {
 	session := sessions.Default(ctx)
-	token := session.Get(r.authTokenSessionKey)
+	token := session.Get(AuthTokenSessionKey)
 	if token == nil {
 		return context.Background()
 	}
@@ -24,5 +25,21 @@ func (r *Router) ContextWithUserAccessToken(ctx *gin.Context) context.Context {
 		return context.Background()
 	}
 
-	return context.WithValue(context.Background(), UserTokenKey, tokenData.AccessToken)
+	return context.WithValue(context.Background(), AuthTokenSessionKey, tokenData.AccessToken)
+}
+
+func UserNameMiddleware(ctx *gin.Context) {
+	session := sessions.Default(ctx)
+
+	userName := session.Get(UserNameSessionKey)
+	if userName == nil {
+		return
+	}
+
+	val, ok := userName.(string)
+	if !ok {
+		return
+	}
+
+	ctx.Set(UserNameSessionKey, val)
 }

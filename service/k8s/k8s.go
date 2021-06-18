@@ -83,15 +83,16 @@ func (s *Service) GetSecret(name string) (*v1.Secret, error) {
 	return secret, nil
 }
 
-func (s *Service) CanCreateCodebase() (bool, error) {
+func (s *Service) CanI(resource, verb, name string) (bool, error) {
 	review := authorizationv1.SelfSubjectAccessReview{
 		Spec: authorizationv1.SelfSubjectAccessReviewSpec{
 			ResourceAttributes: &authorizationv1.ResourceAttributes{
 				Namespace: s.namespace,
-				Verb:      "create",
+				Verb:      verb,
 				Group:     "*",
 				Version:   "*",
-				Resource:  "codebase",
+				Resource:  resource,
+				Name:      name,
 			},
 		},
 	}

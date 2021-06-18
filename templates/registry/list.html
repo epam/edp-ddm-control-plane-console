@@ -26,37 +26,44 @@
                 </thead>
                 <tbody>
                     {{range $key, $registry := .registries}}
-                    <tr {{if $registry.ForegroundDeletion}}class="disabled"{{end}}>
+                    <tr {{if $registry.Registry.ForegroundDeletion}}class="disabled"{{end}}>
                         <td>
-                            {{if $registry.ForegroundDeletion}}
+                            {{if $registry.Registry.ForegroundDeletion}}
                                 <img src="{{ $.BasePath }}/static/img/action-delete.png" alt="delete registry" />
                             {{else}}
-                                <img src="{{ $.BasePath }}/static/img/status-{{$registry.StrStatus}}.png" alt="status {{$registry.StrStatus}}" />
+                                <img src="{{ $.BasePath }}/static/img/status-{{$registry.Registry.StrStatus}}.png"
+                                     alt="status {{$registry.Registry.StrStatus}}" />
                             {{end}}
                         </td>
                         <td>
-                            <a href="{{ $.BasePath }}/admin/registry/view/{{$registry.Name}}">{{$registry.Name}}</a>
+                            <a href="{{ $.BasePath }}/admin/registry/view/{{$registry.Registry.Name}}">
+                                {{$registry.Registry.Name}}
+                            </a>
                         </td>
                         <td>
-                            {{$registry.Description}}
+                            {{$registry.Registry.Description}}
                         </td>
                         <td>
-                            {{$registry.FormattedCreatedAt}}
+                            {{$registry.Registry.FormattedCreatedAt}}
                         </td>
                         <td>
-                            {{if not $registry.ForegroundDeletion}}
-                            <a href="{{ $.BasePath }}/admin/registry/edit/{{$registry.Name}}">
+                            {{if $registry.CanUpdate}}
+                            {{if not $registry.Registry.ForegroundDeletion}}
+                            <a href="{{ $.BasePath }}/admin/registry/edit/{{$registry.Registry.Name}}">
                                 <img src="{{ $.BasePath }}/static/img/action-edit.png" alt="edit registry" />
                             </a>
                             {{end}}
+                            {{end}}
                         </td>
                         <td>
-                            {{if $registry.CanBeDeleted}}
-                            {{if not $registry.ForegroundDeletion}}
+                            {{if $registry.CanDelete}}
+                            {{if $registry.Registry.CanBeDeleted}}
+                            {{if not $registry.Registry.ForegroundDeletion}}
                             <a href="#" class="delete-registry"
-                               data-name="{{$registry.Name}}">
+                               data-name="{{$registry.Registry.Name}}">
                                 <img src="{{ $.BasePath }}/static/img/action-delete.png" alt="delete registry" />
                             </a>
+                            {{end}}
                             {{end}}
                             {{end}}
                         </td>

@@ -11,6 +11,7 @@ import (
 	edpComponent "ddm-admin-console/service/edp_component"
 	"ddm-admin-console/service/jenkins"
 	"ddm-admin-console/service/k8s"
+	"ddm-admin-console/service/openshift"
 	"encoding/gob"
 	"flag"
 	"fmt"
@@ -32,10 +33,6 @@ import (
 	"go.uber.org/zap/zapcore"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-)
-
-const (
-	AuthTokenSessionKey = "access_token"
 )
 
 type config struct {
@@ -80,7 +77,7 @@ func main() {
 
 	logger.Info("init apps")
 	if err := initApps(logger, cnf, r); err != nil {
-		panic(err)
+		panic(fmt.Sprintf("%+v", err))
 	}
 
 	logger.Info("init i18n")
@@ -173,9 +170,14 @@ func initApps(logger *zap.Logger, cnf *config, r *gin.Engine) error {
 		return errors.Wrap(err, "unable to init jenkins service")
 	}
 
-	appRouter := router.Make(r, logger, AuthTokenSessionKey)
+	openShiftService, err := openshift.Make(restConf, cnf.Namespace)
+	if err != nil {
+		return errors.Wrap(err, "unable to init open shift service")
+	}
 
-	_, err = dashboard.Make(appRouter, edpComponentService, oa, AuthTokenSessionKey, k8sService)
+	appRouter := router.Make(r, logger)
+
+	_, err = dashboard.Make(appRouter, edpComponentService, oa, k8sService, openShiftService)
 	if err != nil {
 		return errors.Wrap(err, "unable to make dashboard app")
 	}
@@ -226,7 +228,8 @@ func initOauth(k8sConfig *rest.Config, cfg *config, r *gin.Engine) (*auth.OAuth2
 	}
 
 	gob.Register(&oauth2.Token{})
-	r.Use(oauth.MakeGinMiddleware(oa, AuthTokenSessionKey, "/admin/"))
+	r.Use(oauth.MakeGinMiddleware(oa, router.AuthTokenSessionKey, "/admin/"))
+	r.Use(router.UserNameMiddleware)
 
 	return oa, nil
 }

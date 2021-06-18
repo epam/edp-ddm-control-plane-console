@@ -25,7 +25,12 @@
     </div>
     <h2>Міністерство цифрової трансформації України
     </h2>
-    <div class="info-margin-right">{{.Username}}</div>
+    <div class="info-margin-right">
+        {{if .username}}
+            <span class="username">{{.username}}</span> |
+            <a href="/admin/logout">Вихід</a>
+        {{end}}
+    </div>
 </header>
     <section class="content d-flex">
         <aside class="p-0 bg-dark active js-aside-menu aside-menu active">

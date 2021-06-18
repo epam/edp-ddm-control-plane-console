@@ -14,6 +14,11 @@ func (a *App) viewRegistry(ctx *gin.Context) (*router.Response, error) {
 		return nil, errors.Wrap(err, "unable to init service for user context")
 	}
 
+	k8sService, err := a.k8sService.ServiceForContext(userCtx)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to init service for user context")
+	}
+
 	registryName := ctx.Param("name")
 	registry, err := cbService.Get(registryName)
 	if err != nil {
@@ -41,6 +46,11 @@ func (a *App) viewRegistry(ctx *gin.Context) (*router.Response, error) {
 		return nil, errors.Wrap(err, "unable to list namespaced edp components")
 	}
 
+	allowedToEdit, err := k8sService.CanI("codebase", "update", registry.Name)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to check codebase creation access")
+	}
+
 	return router.MakeResponse(200, "registry/view.html", gin.H{
 		"branches":      branches,
 		"registry":      registry,
@@ -48,5 +58,7 @@ func (a *App) viewRegistry(ctx *gin.Context) (*router.Response, error) {
 		"gerritURL":     gerritComponent.Spec.Url,
 		"page":          "registry",
 		"edpComponents": namespacedEDPComponents,
+		"allowedToEdit": allowedToEdit,
+		"username":      ctx.GetString(router.UserNameSessionKey),
 	}), nil
 }

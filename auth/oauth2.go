@@ -58,7 +58,7 @@ func InitOauth2(clientID, secret, discoveryURL, redirectURL string, httpClient *
 	}
 
 	if rsp.StatusCode != http.StatusOK {
-		return nil, errors.Errorf("%s: %s", rsp.Status, body)
+		return nil, errors.Errorf("%s: %s", rsp.Status, string(body))
 	}
 
 	if err := json.Unmarshal(body, &oa2.providerInfo); err != nil {

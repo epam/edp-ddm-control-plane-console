@@ -6,6 +6,7 @@ import (
 	"ddm-admin-console/router"
 	edpComponent "ddm-admin-console/service/edp_component"
 	"ddm-admin-console/service/k8s"
+	"ddm-admin-console/service/openshift"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -31,18 +32,18 @@ type App struct {
 	logger              Logger
 	edpComponentService EDPComponentService
 	oauth               *auth.OAuth2 //TODO: interface
-	authTokenSessionKey string
 	k8sService          k8s.ServiceInterface
+	openShiftService    openshift.ServiceInterface
 }
 
 func Make(router Router, edpComponentService EDPComponentService, oauth *auth.OAuth2,
-	authTokenSessionKey string, k8sService k8s.ServiceInterface) (*App, error) {
+	k8sService k8s.ServiceInterface, openShiftService openshift.ServiceInterface) (*App, error) {
 	app := App{
 		router:              router,
 		edpComponentService: edpComponentService,
 		oauth:               oauth,
-		authTokenSessionKey: authTokenSessionKey,
 		k8sService:          k8sService,
+		openShiftService:    openShiftService,
 	}
 
 	app.createRoutes()

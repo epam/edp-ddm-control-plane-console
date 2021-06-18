@@ -28,7 +28,7 @@ const (
 	gerritCreatorPassword = "password"
 )
 
-func (a *App) view(*gin.Context) (*router.Response, error) {
+func (a *App) view(ctx *gin.Context) (*router.Response, error) {
 	cb, err := a.codebaseService.Get(a.codebaseName)
 	if err != nil && !k8sErrors.IsNotFound(err) {
 		return nil, errors.Wrap(err, "unable to get cluster codebase")
@@ -69,6 +69,7 @@ func (a *App) view(*gin.Context) (*router.Response, error) {
 		"gerritURL":     gerritComponent.Spec.Url,
 		"page":          "cluster",
 		"edpComponents": namespacedEDPComponents,
+		"username":      ctx.GetString(router.UserNameSessionKey),
 	}), nil
 }
 

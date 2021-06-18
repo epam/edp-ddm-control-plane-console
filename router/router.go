@@ -12,9 +12,8 @@ type Logger interface {
 }
 
 type Router struct {
-	engine              *gin.Engine
-	logger              Logger
-	authTokenSessionKey string
+	engine *gin.Engine
+	logger Logger
 }
 
 type Response struct {
@@ -74,10 +73,9 @@ func (r *Router) POST(relativePath string, handler func(ctx *gin.Context) (*Resp
 	r.engine.POST(relativePath, r.makeViewResponder(handler))
 }
 
-func Make(engine *gin.Engine, logger Logger, authTokenSessionKey string) *Router {
+func Make(engine *gin.Engine, logger Logger) *Router {
 	return &Router{
-		engine:              engine,
-		logger:              logger,
-		authTokenSessionKey: authTokenSessionKey,
+		engine: engine,
+		logger: logger,
 	}
 }

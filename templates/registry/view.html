@@ -9,10 +9,12 @@
     </div>
     <div class="registry-header registry-header-view">
         <h1>Реєстр "{{.registry.Name}}"</h1>
+        {{if .allowedToEdit}}
         <a href="{{ .BasePath }}/admin/registry/edit/{{.registry.Name}}" class="registry-add">
             <img alt="add registry" src="{{ .BasePath }}/static/img/action-edit.png" />
             <span>Редагувати</span>
         </a>
+        {{end}}
     </div>
     <div class="registry-description">Перелік реєстрів та їх статусів.</div>
 
