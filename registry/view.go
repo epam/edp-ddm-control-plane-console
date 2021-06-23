@@ -59,6 +59,5 @@ func (a *App) viewRegistry(ctx *gin.Context) (*router.Response, error) {
 		"page":          "registry",
 		"edpComponents": namespacedEDPComponents,
 		"allowedToEdit": allowedToEdit,
-		"username":      ctx.GetString(router.UserNameSessionKey),
 	}), nil
 }

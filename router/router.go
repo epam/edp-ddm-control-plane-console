@@ -60,9 +60,18 @@ func (r *Router) makeViewResponder(handler func(ctx *gin.Context) (*Response, er
 		}
 
 		rsp.params = r.parseValidationErrors(rsp.params)
+		rsp.params = r.includeSessionVars(ctx, rsp.params)
 
 		ctx.HTML(rsp.code, rsp.viewTemplate, rsp.params)
 	}
+}
+
+func (r *Router) includeSessionVars(ctx *gin.Context, params gin.H) gin.H {
+	params["username"] = ctx.GetString(UserNameSessionKey)
+	params["canViewRegistries"] = ctx.GetBool(CanViewRegistriesSessionKey)
+	params["canViewClusterManagement"] = ctx.GetBool(CanViewClusterManagementSessionKey)
+
+	return params
 }
 
 func (r *Router) GET(relativePath string, handler func(ctx *gin.Context) (*Response, error)) {

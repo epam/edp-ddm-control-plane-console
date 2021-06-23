@@ -177,7 +177,7 @@ func initApps(logger *zap.Logger, cnf *config, r *gin.Engine) error {
 
 	appRouter := router.Make(r, logger)
 
-	_, err = dashboard.Make(appRouter, edpComponentService, oa, k8sService, openShiftService)
+	_, err = dashboard.Make(appRouter, edpComponentService, oa, k8sService, openShiftService, cnf.ClusterCodebaseName)
 	if err != nil {
 		return errors.Wrap(err, "unable to make dashboard app")
 	}
@@ -228,8 +228,8 @@ func initOauth(k8sConfig *rest.Config, cfg *config, r *gin.Engine) (*auth.OAuth2
 	}
 
 	gob.Register(&oauth2.Token{})
-	r.Use(oauth.MakeGinMiddleware(oa, router.AuthTokenSessionKey, "/admin/"))
-	r.Use(router.UserNameMiddleware)
+	r.Use(oauth.MakeGinMiddleware(oa, router.AuthTokenSessionKey, router.AuthTokenValidSessionKey, "/admin/"))
+	r.Use(router.UserDataMiddleware)
 
 	return oa, nil
 }

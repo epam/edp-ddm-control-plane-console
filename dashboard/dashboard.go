@@ -32,6 +32,5 @@ func (a *App) dashboard(ctx *gin.Context) (response *router.Response, retErr err
 		"page":        "dashboard",
 		"gerritLink":  gerritLink,
 		"jenkinsLink": jenkinsLink,
-		"username":    ctx.GetString(router.UserNameSessionKey),
 	}), nil
 }

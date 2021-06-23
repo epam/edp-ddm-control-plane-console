@@ -31,7 +31,6 @@ func (a *App) editRegistryGet(ctx *gin.Context) (response *router.Response, retE
 	return router.MakeResponse(200, "registry/edit.html", gin.H{
 		"registry": registry,
 		"page":     "registry",
-		"username": ctx.GetString(router.UserNameSessionKey),
 	}), nil
 }
 

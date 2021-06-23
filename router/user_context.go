@@ -9,8 +9,11 @@ import (
 )
 
 const (
-	AuthTokenSessionKey = "access-token"
-	UserNameSessionKey  = "user-full-name"
+	AuthTokenSessionKey                = "access-token"
+	AuthTokenValidSessionKey           = "access-token-valid"
+	UserNameSessionKey                 = "user-full-name"
+	CanViewClusterManagementSessionKey = "can-view-cluster-management"
+	CanViewRegistriesSessionKey        = "can-view-registries"
 )
 
 func (r *Router) ContextWithUserAccessToken(ctx *gin.Context) context.Context {
@@ -28,18 +31,38 @@ func (r *Router) ContextWithUserAccessToken(ctx *gin.Context) context.Context {
 	return context.WithValue(context.Background(), AuthTokenSessionKey, tokenData.AccessToken)
 }
 
-func UserNameMiddleware(ctx *gin.Context) {
+func UserDataMiddleware(ctx *gin.Context) {
+	tokenIsValid := ctx.GetBool(AuthTokenValidSessionKey)
+	if !tokenIsValid {
+		ctx.Next()
+		return
+	}
+
 	session := sessions.Default(ctx)
 
-	userName := session.Get(UserNameSessionKey)
-	if userName == nil {
-		return
+	sessVal := session.Get(UserNameSessionKey)
+	if sessVal != nil {
+		val, ok := sessVal.(string)
+		if ok {
+			ctx.Set(UserNameSessionKey, val)
+		}
 	}
 
-	val, ok := userName.(string)
-	if !ok {
-		return
+	sessVal = session.Get(CanViewClusterManagementSessionKey)
+	if sessVal != nil {
+		val, ok := sessVal.(bool)
+		if ok {
+			ctx.Set(CanViewClusterManagementSessionKey, val)
+		}
 	}
 
-	ctx.Set(UserNameSessionKey, val)
+	sessVal = session.Get(CanViewRegistriesSessionKey)
+	if sessVal != nil {
+		val, ok := sessVal.(bool)
+		if ok {
+			ctx.Set(CanViewRegistriesSessionKey, val)
+		}
+	}
+
+	ctx.Next()
 }

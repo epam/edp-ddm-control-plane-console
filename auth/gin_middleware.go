@@ -9,33 +9,38 @@ import (
 	"golang.org/x/oauth2"
 )
 
-func MakeGinMiddleware(o *OAuth2, sessionKey, filterPath string) func(ctx *gin.Context) {
+func MakeGinMiddleware(o *OAuth2, tokenSessionKey, tokenValidSessionKey, filterPath string) func(ctx *gin.Context) {
 	return func(ctx *gin.Context) {
+		tokenValid := tokenIsValid(ctx, tokenSessionKey)
+		ctx.Set(tokenValidSessionKey, tokenValid)
+
 		if !strings.Contains(ctx.Request.RequestURI, filterPath) {
 			ctx.Next()
 			return
 		}
 
-		session := sessions.Default(ctx)
-		tsRaw := session.Get(sessionKey)
-		if tsRaw == nil {
-			ginStartAuth(o, ctx)
-			return
-		}
-
-		token, ok := tsRaw.(*oauth2.Token)
-		if !ok {
-			ginStartAuth(o, ctx)
-			return
-		}
-
-		if !token.Valid() {
+		if !tokenValid {
 			ginStartAuth(o, ctx)
 			return
 		}
 
 		ctx.Next()
 	}
+}
+
+func tokenIsValid(ctx *gin.Context, tokenSessionKey string) bool {
+	session := sessions.Default(ctx)
+	tsRaw := session.Get(tokenSessionKey)
+	if tsRaw == nil {
+		return false
+	}
+
+	token, ok := tsRaw.(*oauth2.Token)
+	if !ok {
+		return false
+	}
+
+	return token.Valid()
 }
 
 func ginStartAuth(o *OAuth2, ctx *gin.Context) {

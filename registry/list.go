@@ -56,6 +56,5 @@ func (a *App) listRegistry(ctx *gin.Context) (response *router.Response, retErr 
 		"registries":      registries,
 		"page":            "registry",
 		"allowedToCreate": allowedToCreate,
-		"username":        ctx.GetString(router.UserNameSessionKey),
 	}), nil
 }

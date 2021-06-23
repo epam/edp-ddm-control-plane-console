@@ -43,7 +43,6 @@ func (a *App) editGet(ctx *gin.Context) (*router.Response, error) {
 	return router.MakeResponse(200, "cluster/edit.html", gin.H{
 		"backupConf": backupConfig,
 		"page":       "cluster",
-		"username":   ctx.GetString(router.UserNameSessionKey),
 	}), nil
 }
 

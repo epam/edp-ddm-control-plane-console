@@ -34,16 +34,19 @@ type App struct {
 	oauth               *auth.OAuth2 //TODO: interface
 	k8sService          k8s.ServiceInterface
 	openShiftService    openshift.ServiceInterface
+
+	clusterCodebaseName string
 }
 
 func Make(router Router, edpComponentService EDPComponentService, oauth *auth.OAuth2,
-	k8sService k8s.ServiceInterface, openShiftService openshift.ServiceInterface) (*App, error) {
+	k8sService k8s.ServiceInterface, openShiftService openshift.ServiceInterface, clusterCodebaseName string) (*App, error) {
 	app := App{
 		router:              router,
 		edpComponentService: edpComponentService,
 		oauth:               oauth,
 		k8sService:          k8sService,
 		openShiftService:    openShiftService,
+		clusterCodebaseName: clusterCodebaseName,
 	}
 
 	app.createRoutes()

@@ -30,6 +30,19 @@ func (a *App) auth(ctx *gin.Context) (response *router.Response, retErr error) {
 
 	session = sessions.Default(ctx)
 	session.Set(router.UserNameSessionKey, user.FullName)
+
+	canGetClusterCodebase, err := a.k8sService.CanI("codebase", "get", a.clusterCodebaseName)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to check access to cluster codebase")
+	}
+	session.Set(router.CanViewClusterManagementSessionKey, canGetClusterCodebase)
+
+	canListCodebases, err := a.k8sService.CanI("codebase", "list", "")
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to check access to codebases list")
+	}
+	session.Set(router.CanViewRegistriesSessionKey, canListCodebases)
+
 	if err := session.Save(); err != nil {
 		return nil, errors.Wrap(err, "unable to save session")
 	}

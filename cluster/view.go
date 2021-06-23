@@ -69,7 +69,6 @@ func (a *App) view(ctx *gin.Context) (*router.Response, error) {
 		"gerritURL":     gerritComponent.Spec.Url,
 		"page":          "cluster",
 		"edpComponents": namespacedEDPComponents,
-		"username":      ctx.GetString(router.UserNameSessionKey),
 	}), nil
 }
 
