@@ -3,6 +3,7 @@ package cluster
 import (
 	"ddm-admin-console/router"
 	"ddm-admin-console/service/codebase"
+	"ddm-admin-console/service/k8s"
 	"fmt"
 	"strings"
 	"time"
@@ -29,19 +30,35 @@ const (
 )
 
 func (a *App) view(ctx *gin.Context) (*router.Response, error) {
-	cb, err := a.codebaseService.Get(a.codebaseName)
+	userCtx := a.router.ContextWithUserAccessToken(ctx)
+	k8sService, err := a.k8sService.ServiceForContext(userCtx)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to init k8s service for user")
+	}
+
+	canUpdateCluster, err := k8sService.CanI("codebase", "update", a.codebaseName)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to check access to cluster codebase")
+	}
+
+	cbService, err := a.codebaseService.ServiceForContext(userCtx)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to init codebase service for user")
+	}
+
+	cb, err := cbService.Get(a.codebaseName)
 	if err != nil && !k8sErrors.IsNotFound(err) {
 		return nil, errors.Wrap(err, "unable to get cluster codebase")
 	}
 
 	if err != nil && k8sErrors.IsNotFound(err) {
-		cb, err = a.createClusterCodebase()
+		cb, err = a.createClusterCodebase(cbService, k8sService)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to create cluster codebase")
 		}
 	}
 
-	branches, err := a.codebaseService.GetBranchesByCodebase(cb.Name)
+	branches, err := cbService.GetBranchesByCodebase(cb.Name)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get registry branches")
 	}
@@ -63,16 +80,19 @@ func (a *App) view(ctx *gin.Context) (*router.Response, error) {
 	}
 
 	return router.MakeResponse(200, "cluster/view.html", gin.H{
-		"branches":      branches,
-		"codebase":      cb,
-		"jenkinsURL":    jenkinsComponent.Spec.Url,
-		"gerritURL":     gerritComponent.Spec.Url,
-		"page":          "cluster",
-		"edpComponents": namespacedEDPComponents,
+		"branches":         branches,
+		"codebase":         cb,
+		"jenkinsURL":       jenkinsComponent.Spec.Url,
+		"gerritURL":        gerritComponent.Spec.Url,
+		"page":             "cluster",
+		"edpComponents":    namespacedEDPComponents,
+		"canUpdateCluster": canUpdateCluster,
 	}), nil
 }
 
-func (a *App) createClusterCodebase() (*codebase.Codebase, error) {
+func (a *App) createClusterCodebase(cbService codebase.ServiceInterface,
+	k8sService k8s.ServiceInterface) (*codebase.Codebase, error) {
+
 	//username, _ := c.Ctx.Input.Session("username").(string)
 	jobProvisioning := "default"
 	startVersion := "0.0.1"
@@ -114,23 +134,23 @@ func (a *App) createClusterCodebase() (*codebase.Codebase, error) {
 		},
 	}
 
-	if err := a.codebaseService.Create(&cb); err != nil {
+	if err := cbService.Create(&cb); err != nil {
 		return nil, errors.Wrap(err, "unable to create cluster codebase")
 	}
 
-	if err := a.createTempSecrets(&cb); err != nil {
+	if err := a.createTempSecrets(&cb, k8sService); err != nil {
 		return nil, errors.Wrap(err, "unable to create temp secrets")
 	}
 
-	if err := a.codebaseService.CreateDefaultBranch(&cb); err != nil {
+	if err := cbService.CreateDefaultBranch(&cb); err != nil {
 		return nil, errors.Wrap(err, "unable to create default branch for codebase")
 	}
 
 	return &cb, nil
 }
 
-func (a *App) createTempSecrets(cb *codebase.Codebase) error {
-	secret, err := a.k8sService.GetSecret(a.gerritCreatorSecretName)
+func (a *App) createTempSecrets(cb *codebase.Codebase, k8sService k8s.ServiceInterface) error {
+	secret, err := k8sService.GetSecret(a.gerritCreatorSecretName)
 	if err != nil {
 		return errors.Wrap(err, "unable to get secret")
 	}
@@ -146,7 +166,7 @@ func (a *App) createTempSecrets(cb *codebase.Codebase) error {
 	}
 
 	repoSecretName := fmt.Sprintf("repository-codebase-%s-temp", cb.Name)
-	if err := a.k8sService.RecreateSecret(repoSecretName, map[string][]byte{
+	if err := k8sService.RecreateSecret(repoSecretName, map[string][]byte{
 		"username": username,
 		"password": pwd,
 	}); err != nil {

@@ -33,6 +33,20 @@ const (
 )
 
 func (a *App) createRegistryGet(ctx *gin.Context) (response *router.Response, retErr error) {
+	k8sService, err := a.k8sService.ServiceForContext(a.router.ContextWithUserAccessToken(ctx))
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to init service for user context")
+	}
+
+	allowedToCreate, err := k8sService.CanI("codebase", "create", "")
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to check codebase creation access")
+	}
+
+	if !allowedToCreate {
+		return nil, errors.Wrap(err, "access denied")
+	}
+
 	return router.MakeResponse(200, "registry/create.html", gin.H{
 		"page": "registry",
 	}), nil
@@ -48,6 +62,15 @@ func (a *App) createRegistryPost(ctx *gin.Context) (response *router.Response, r
 	k8sService, err := a.k8sService.ServiceForContext(userCtx)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to init service for user context")
+	}
+
+	allowedToCreate, err := k8sService.CanI("codebase", "create", "")
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to check codebase creation access")
+	}
+
+	if !allowedToCreate {
+		return nil, errors.Wrap(err, "access denied")
 	}
 
 	var r registry

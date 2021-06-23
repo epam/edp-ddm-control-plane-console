@@ -5,12 +5,13 @@ import (
 	"ddm-admin-console/router"
 	"ddm-admin-console/service/codebase"
 	edpComponent "ddm-admin-console/service/edp_component"
+	"ddm-admin-console/service/jenkins"
+	"ddm-admin-console/service/k8s"
 	"errors"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
-	v1 "k8s.io/api/core/v1"
 )
 
 type Logger interface {
@@ -24,13 +25,6 @@ type Router interface {
 	ContextWithUserAccessToken(ctx *gin.Context) context.Context
 }
 
-type CodebaseService interface {
-	Create(cb *codebase.Codebase) error
-	CreateDefaultBranch(cb *codebase.Codebase) error
-	Get(name string) (*codebase.Codebase, error)
-	GetBranchesByCodebase(codebaseName string) ([]codebase.CodebaseBranch, error)
-}
-
 type JenkinsService interface {
 	CreateJobBuildRun(name, jobPath string, jobParams map[string]string) error
 }
@@ -40,17 +34,12 @@ type EDPComponentService interface {
 	GetAllNamespace(ns string) ([]edpComponent.EDPComponent, error)
 }
 
-type K8SService interface {
-	RecreateSecret(secretName string, data map[string][]byte) error
-	GetSecret(name string) (*v1.Secret, error)
-}
-
 type App struct {
 	router              Router
 	logger              Logger
-	codebaseService     CodebaseService
-	jenkinsService      JenkinsService
-	k8sService          K8SService
+	codebaseService     codebase.ServiceInterface
+	jenkinsService      jenkins.ServiceInterface
+	k8sService          k8s.ServiceInterface
 	edpComponentService EDPComponentService
 
 	codebaseName            string
@@ -59,8 +48,8 @@ type App struct {
 	backupSecretName        string
 }
 
-func Make(router Router, logger Logger, codebaseService CodebaseService, jenkinsService JenkinsService,
-	edpComponentService EDPComponentService, k8sService K8SService, codebaseName, repo, gerritCreatorSecretName,
+func Make(router Router, logger Logger, codebaseService codebase.ServiceInterface, jenkinsService jenkins.ServiceInterface,
+	edpComponentService EDPComponentService, k8sService k8s.ServiceInterface, codebaseName, repo, gerritCreatorSecretName,
 	backupSecretName string) (*App, error) {
 
 	if !strings.Contains(repo, "//") || !strings.Contains(repo, "/") {

@@ -27,8 +27,21 @@ type BackupConfig struct {
 }
 
 func (a *App) editGet(ctx *gin.Context) (*router.Response, error) {
+	k8sService, err := a.k8sService.ServiceForContext(a.router.ContextWithUserAccessToken(ctx))
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to init service for user context")
+	}
+
+	canUpdateCluster, err := k8sService.CanI("codebase", "update", a.codebaseName)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to check access to cluster codebase")
+	}
+	if !canUpdateCluster {
+		return nil, errors.Wrap(err, "access denied")
+	}
+
 	var backupConfig BackupConfig
-	secret, err := a.k8sService.GetSecret(a.backupSecretName)
+	secret, err := k8sService.GetSecret(a.backupSecretName)
 	if err != nil && !k8sErrors.IsNotFound(err) {
 		return nil, errors.Wrap(err, "unable to get backup config secret")
 	}
@@ -47,6 +60,26 @@ func (a *App) editGet(ctx *gin.Context) (*router.Response, error) {
 }
 
 func (a *App) editPost(ctx *gin.Context) (*router.Response, error) {
+	userCtx := a.router.ContextWithUserAccessToken(ctx)
+
+	k8sService, err := a.k8sService.ServiceForContext(userCtx)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to init service for user context")
+	}
+
+	canUpdateCluster, err := k8sService.CanI("codebase", "update", a.codebaseName)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to check access to cluster codebase")
+	}
+	if !canUpdateCluster {
+		return nil, errors.Wrap(err, "access denied")
+	}
+
+	jenkinsService, err := a.jenkinsService.ServiceForContext(userCtx)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to init jenkins client")
+	}
+
 	var backupConfig BackupConfig
 	if err := ctx.ShouldBind(&backupConfig); err != nil {
 		validationErrors, ok := err.(validator.ValidationErrors)
@@ -58,7 +91,7 @@ func (a *App) editPost(ctx *gin.Context) (*router.Response, error) {
 			gin.H{"page": "cluster", "errorsMap": validationErrors, "backupConf": backupConfig}), nil
 	}
 
-	if err := a.k8sService.RecreateSecret(a.backupSecretName, map[string][]byte{
+	if err := k8sService.RecreateSecret(a.backupSecretName, map[string][]byte{
 		StorageLocation:    []byte(backupConfig.StorageLocation),
 		StorageType:        []byte(backupConfig.StorageType),
 		StorageCredentials: []byte(backupConfig.StorageCredentials),
@@ -66,7 +99,7 @@ func (a *App) editPost(ctx *gin.Context) (*router.Response, error) {
 		return nil, errors.Wrap(err, "unable to recreate backup secret")
 	}
 
-	if err := a.jenkinsService.CreateJobBuildRun(fmt.Sprintf("cluster-update-%d", time.Now().Unix()),
+	if err := jenkinsService.CreateJobBuildRun(fmt.Sprintf("cluster-update-%d", time.Now().Unix()),
 		fmt.Sprintf("%s/job/MASTER-Build-%s/", a.codebaseName, a.codebaseName), nil); err != nil {
 		return nil, errors.Wrap(err, "unable to trigger jenkins job build run")
 	}

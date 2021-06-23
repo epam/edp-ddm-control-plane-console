@@ -3,10 +3,12 @@
     <div class="registry cluster">
         <div class="registry-header registry-header-view cluster">
             <h1>Керування кластером</h1>
+            {{if .canUpdateCluster}}
             <a href="{{ .BasePath }}/admin/cluster/edit" class="registry-add">
                 <img alt="add registry" src="{{ .BasePath }}/static/img/action-edit.png" />
                 <span>Редагувати</span>
             </a>
+            {{end}}
         </div>
         <div class="registry-description cluster">Керавання обчислювальними ресурсами кластера, мережою кластеру, налаштування компонентів кластеру, доступу до них.</div>
 

@@ -2,6 +2,7 @@ package jenkins
 
 import (
 	"context"
+	"ddm-admin-console/service"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -17,6 +18,7 @@ type Service struct {
 	k8sClient client.Client
 	scheme    *runtime.Scheme
 	namespace string
+	service.UserConfig
 }
 
 func Make(k8sConfig *rest.Config, namespace string) (*Service, error) {
@@ -40,6 +42,9 @@ func Make(k8sConfig *rest.Config, namespace string) (*Service, error) {
 		k8sClient: cl,
 		scheme:    s,
 		namespace: namespace,
+		UserConfig: service.UserConfig{
+			RestConfig: k8sConfig,
+		},
 	}, nil
 }
 
@@ -75,4 +80,18 @@ func (s *Service) CreateJobBuildRun(name, jobPath string, jobParams map[string]s
 	}
 
 	return nil
+}
+
+func (s *Service) ServiceForContext(ctx context.Context) (ServiceInterface, error) {
+	userConfig, changed := s.UserConfig.CreateConfig(ctx)
+	if !changed {
+		return s, nil
+	}
+
+	svc, err := Make(userConfig, s.namespace)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to create service for context")
+	}
+
+	return svc, nil
 }

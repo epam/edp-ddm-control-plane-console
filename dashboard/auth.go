@@ -23,7 +23,9 @@ func (a *App) auth(ctx *gin.Context) (response *router.Response, retErr error) {
 		return nil, errors.Wrap(err, "unable to save session")
 	}
 
-	user, err := a.openShiftService.GetMe(a.router.ContextWithUserAccessToken(ctx))
+	userCtx := a.router.ContextWithUserAccessToken(ctx)
+
+	user, err := a.openShiftService.GetMe(userCtx)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get open shift user")
 	}
@@ -31,13 +33,18 @@ func (a *App) auth(ctx *gin.Context) (response *router.Response, retErr error) {
 	session = sessions.Default(ctx)
 	session.Set(router.UserNameSessionKey, user.FullName)
 
-	canGetClusterCodebase, err := a.k8sService.CanI("codebase", "get", a.clusterCodebaseName)
+	k8sSevice, err := a.k8sService.ServiceForContext(userCtx)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to init k8s service for user")
+	}
+
+	canGetClusterCodebase, err := k8sSevice.CanI("codebase", "get", a.clusterCodebaseName)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to check access to cluster codebase")
 	}
 	session.Set(router.CanViewClusterManagementSessionKey, canGetClusterCodebase)
 
-	canListCodebases, err := a.k8sService.CanI("codebase", "list", "")
+	canListCodebases, err := k8sSevice.CanI("codebase", "list", "")
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to check access to codebases list")
 	}
