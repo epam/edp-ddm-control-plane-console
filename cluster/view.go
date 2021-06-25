@@ -36,7 +36,7 @@ func (a *App) view(ctx *gin.Context) (*router.Response, error) {
 		return nil, errors.Wrap(err, "unable to init k8s service for user")
 	}
 
-	canUpdateCluster, err := k8sService.CanI("codebase", "update", a.codebaseName)
+	canUpdateCluster, err := k8sService.CanI("codebases", "update", a.codebaseName)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to check access to cluster codebase")
 	}

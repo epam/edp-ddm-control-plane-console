@@ -4,6 +4,7 @@ import (
 	"context"
 	"ddm-admin-console/auth"
 	"ddm-admin-console/router"
+	"ddm-admin-console/service/codebase"
 	edpComponent "ddm-admin-console/service/edp_component"
 	"ddm-admin-console/service/k8s"
 	"ddm-admin-console/service/openshift"
@@ -33,13 +34,15 @@ type App struct {
 	edpComponentService EDPComponentService
 	oauth               *auth.OAuth2 //TODO: interface
 	k8sService          k8s.ServiceInterface
+	codebaseService     codebase.ServiceInterface
 	openShiftService    openshift.ServiceInterface
 
 	clusterCodebaseName string
 }
 
 func Make(router Router, edpComponentService EDPComponentService, oauth *auth.OAuth2,
-	k8sService k8s.ServiceInterface, openShiftService openshift.ServiceInterface, clusterCodebaseName string) (*App, error) {
+	k8sService k8s.ServiceInterface, openShiftService openshift.ServiceInterface, cbService codebase.ServiceInterface,
+	clusterCodebaseName string) (*App, error) {
 	app := App{
 		router:              router,
 		edpComponentService: edpComponentService,
@@ -47,6 +50,7 @@ func Make(router Router, edpComponentService EDPComponentService, oauth *auth.OA
 		k8sService:          k8sService,
 		openShiftService:    openShiftService,
 		clusterCodebaseName: clusterCodebaseName,
+		codebaseService:     cbService,
 	}
 
 	app.createRoutes()

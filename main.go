@@ -177,7 +177,8 @@ func initApps(logger *zap.Logger, cnf *config, r *gin.Engine) error {
 
 	appRouter := router.Make(r, logger)
 
-	_, err = dashboard.Make(appRouter, edpComponentService, oa, k8sService, openShiftService, cnf.ClusterCodebaseName)
+	_, err = dashboard.Make(appRouter, edpComponentService, oa, k8sService, openShiftService, codebaseService,
+		cnf.ClusterCodebaseName)
 	if err != nil {
 		return errors.Wrap(err, "unable to make dashboard app")
 	}
