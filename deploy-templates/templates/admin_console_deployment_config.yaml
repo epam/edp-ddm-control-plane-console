@@ -62,16 +62,8 @@ spec:
               value: "Jenkins,GitLab CI"
             - name: PERF_DATA_SOURCES
               value: "Sonar,Jenkins,GitLab"
-            - name: VCS_INTEGRATION_ENABLED
-              valueFrom:
-                configMapKeyRef:
-                  key: vcs_integration_enabled
-                  name: edp-config
             - name: EDP_NAME
-              valueFrom:
-                configMapKeyRef:
-                  key: edp_name
-                  name: edp-config
+              value: {{ .Values.namespace }}
             - name: OC_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
