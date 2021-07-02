@@ -138,7 +138,11 @@ func (s *Service) Delete(name string) error {
 		return errors.Wrapf(err, "unable to get codebase: %s", name)
 	}
 
-	if err := s.k8sClient.Delete(context.Background(), cb); err != nil {
+	fg := metav1.DeletePropagationForeground
+
+	if err := s.k8sClient.Delete(context.Background(), cb, &client.DeleteOptions{
+		PropagationPolicy: &fg,
+	}); err != nil {
 		return errors.Wrapf(err, "unable to delete codebase: %+v", cb)
 	}
 
