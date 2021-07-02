@@ -1,4 +1,6 @@
-FROM nexus-docker-registry.apps.cicd2.mdtu-ddm.projects.epam.com/golang:1.13.15-stretch
+FROM alpine
+
+RUN apk update && apk add ca-certificates
 
 ENV USER_UID=1001 \
     USER_NAME=admin-console \
@@ -7,12 +9,19 @@ ENV USER_UID=1001 \
 RUN addgroup --gid ${USER_UID} ${USER_NAME} \
     && adduser --disabled-password --uid ${USER_UID} --ingroup ${USER_NAME} --home ${HOME} ${USER_NAME}
 
+FROM scratch
+COPY --from=0 /etc/passwd /etc/passwd
+COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+
 WORKDIR /go/bin
+ENV PWD=/go/bin
+ENV PATH=/go/bin
 
 COPY control-plane-console .
 COPY static static
-COPY views views
-COPY conf conf
+COPY templates templates
+COPY default.env .
+COPY locale locale
 
 USER ${USER_UID}
 

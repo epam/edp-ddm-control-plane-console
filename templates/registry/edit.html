@@ -1,0 +1,130 @@
+{{ define "registry/edit.html" }}
+    {{template "header" .}}
+    <div class="registry registry-create">
+        <div class="registry-header">
+            <a href="{{ .BasePath }}/admin/registry/overview" class="registry-add">
+                <img alt="add registry" src="{{ .BasePath }}/static/img/action-back.png" />
+                <span>НАЗАД</span>
+            </a>
+        </div>
+        <h1>Редагувати реєстр "{{.registry.Name}}"</h1>
+        <div class="registry-description">Можлива зміна опису реєстру. Змінити назву неможливо.</div>
+
+        <form class="registry-create-form" method="post" action="" enctype="multipart/form-data">
+            <input type="hidden" name="_xsrf" value="{{ .xsrfdata }}" />
+            <div class="rc-form-group">
+                <label for="description">Опис</label>
+                <textarea rows="3" name="description" id="description" maxlength="250">{{ .registry.Description }}</textarea>
+                <span>{{range $key, $val := .errorsMap.Description}}{{ $val }}{{end}}</span>
+                <p>Опис може містити офіційну назву реєстру чи його призначення.</p>
+            </div>
+            <div class="rc-form-group {{ if .errorsMap.Admins }}error{{end}}">
+                <label for="admins">Адміністратори</label>
+                <input type="text" id="admins" name="admins" pattern="^[a-zA-Z0-9@._\-,]+$"
+                       value="{{.registry.Admins}}" />
+                <span>
+                    {{range $key, $val := .errorsMap.Admins}}
+                        {{ $val.Error | i18n }}
+                    {{end}}
+                </span>
+                <p>Допустимі символи: "0-9", "a-z", "_", "-", "@", ".", ",".</p>
+            </div>
+
+            <div>
+                <input type="checkbox" id="edit-key">
+                <label for="edit-key">Редагувати дані про ключ</label>
+            </div>
+
+            <div id="key-block" style="display: none;margin-bottom: 10px;">
+                <h3>Дані про ключ</h3>
+                <hr />
+                <div class="rc-form-group {{ if .errorsMap.Key6 }}error{{end}}">
+                    <label for="key6">Файловий ключ (розширення .dat)</label>
+                    <input class="optional-key" type="file" name="key6" id="key6" accept=".dat" />
+                    <span>
+                        {{range $key, $val := .errorsMap.Key6}}
+                            {{ $val.Error | i18n }}
+                        {{end}}
+                    </span>
+                </div>
+                <div class="rc-form-group {{ if .errorsMap.SignKeyIssuer }}error{{end}}">
+                    <label for="sign-key-issuer">АЦСК, що видав ключ</label>
+                    <input class="optional-key" type="text" id="sign-key-issuer" name="sign-key-issuer" value="{{.model.SignKeyIssuer}}" />
+                    <span>
+                        {{range $key, $val := .errorsMap.SignKeyIssuer}}
+                            {{ $val.Error | i18n }}
+                        {{end}}
+                    </span>
+                </div>
+                <div class="rc-form-group {{ if .errorsMap.SignKeyPwd }}error{{end}}">
+                    <label for="sign-key-pwd">Пароль до файлового ключа</label>
+                    <input class="optional-key" type="password" id="sign-key-pwd" name="sign-key-pwd" value="{{.model.SignKeyPwd}}" />
+                    <span>
+                        {{range $key, $val := .errorsMap.SignKeyPwd}}
+                            {{ $val.Error | i18n }}
+                        {{end}}
+                    </span>
+                </div>
+                <h3>Дані для перевірки ключа</h3>
+                <hr />
+                <div class="rc-form-group {{ if .errorsMap.CACertificate }}error{{end}}">
+                    <label for="ca-cert">Публічні сертифікати АЦСК (розширення .p7b)</label>
+                    <input class="optional-key" type="file" name="ca-cert" id="ca-cert" accept=".p7b" />
+                    <span>
+                        {{range $key, $val := .errorsMap.CACertificate}}
+                            {{ $val.Error | i18n }}
+                        {{end}}
+                    </span>
+                </div>
+                <div class="rc-form-group {{ if .errorsMap.CAsJSON }}error{{end}}">
+                    <label for="ca-json">Список АЦСК (розширення .json)</label>
+                    <input class="optional-key" type="file" name="ca-json" id="ca-json" accept=".json" />
+                    <span>
+                        {{range $key, $val := .errorsMap.CAsJSON}}
+                            {{ $val.Error | i18n }}
+                        {{end}}
+                    </span>
+                </div>
+            </div>
+            <div class="rc-form-group">
+                <button type="submit" name="submit">Підтвердити</button>
+            </div>
+        </form>
+    </div>
+    <script type="text/javascript">
+        $(function () {
+            $("#edit-key").prop( "checked", false );
+
+            $("#edit-key").change(function (e) {
+                let checked = $("#edit-key").prop('checked');
+                $(".optional-key").prop('required', checked);
+                $("#key-block").toggle();
+            });
+
+            $("input").on('change invalid', function(){
+                let input = $(this).get(0);
+                input.scrollIntoView();
+                input.setCustomValidity('');
+                let inputName = $(input).attr("name");
+
+                if (!input.validity.valid) {
+                    let errorMessages = {
+                        'name':   'Будь-ласка вкажіть назву у відповідному форматі',
+                        'key6': 'Будь-ласка оберіть файловий ключ',
+                        'sign-key-issuer': 'Будь-ласка вкажіть АЦСК, що видав ключ',
+                        'sign-key-pwd': 'Будь-ласка вкажіть пароль до файлового ключа',
+                        'ca-cert': 'Будь-ласка оберіть публічні сертифікати АЦСК',
+                        'ca-json': 'Будь-ласка оберіть список АЦСК',
+                        'admins': 'Будь-ласка вкажіть адміністраторів у відповідному форматі',
+                    };
+                    let errorMessage = errorMessages[inputName];
+                    if (errorMessage) {
+                        input.setCustomValidity(errorMessage);
+                    }
+                }
+            });
+        })
+
+    </script>
+    {{template "footer" .}}
+{{ end }}
