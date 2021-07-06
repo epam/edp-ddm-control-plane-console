@@ -20,7 +20,7 @@
             </div>
             <div class="rc-form-group {{ if .errorsMap.Admins }}error{{end}}">
                 <label for="admins">Адміністратори</label>
-                <input type="text" id="admins" name="admins" pattern="^[a-zA-Z0-9@._\-,]+$"
+                <input type="text" id="admins" name="admins" required pattern="^[a-zA-Z0-9@._\-,]+$"
                        value="{{.registry.Admins}}" />
                 <span>
                     {{range $key, $val := .errorsMap.Admins}}

@@ -19,7 +19,7 @@ func registryName(fl validator.FieldLevel) bool {
 }
 
 func registryAdmins(fl validator.FieldLevel) bool {
-	reg := regexp.MustCompile(`(^[a-zA-Z0-9@._,-]+$)|(^$)`)
+	reg := regexp.MustCompile(`^[a-zA-Z0-9@._,-]+$`)
 	value, ok := fl.Field().Interface().(string)
 	if !ok {
 		return false
