@@ -1,11 +1,11 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: {{ .Values.name }}-{{ .Values.namespace }}-cluster-role
+  name: {{ .Values.name }}-{{ .Release.Namespace }}-cluster-role
 subjects:
   - kind: ServiceAccount
     name: {{ .Values.operator.serviceAccountName }}
-    namespace: {{ .Values.namespace }}
+    namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
   name: edp-{{ .Values.name }}-clusterrole-{{ .Values.global.edpName }}
