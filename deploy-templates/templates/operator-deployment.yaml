@@ -37,7 +37,7 @@ spec:
             allowPrivilegeEscalation: false
           imagePullPolicy: IfNotPresent
           terminationMessagePolicy: File
-          image: "{{ template "dockerProxyRegistry" . -}}epamedp/admin-console-operator:v2.5.1"
+          image: "{{ template "imageRegistry" . -}}epamedp/admin-console-operator:v2.5.1"
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       dnsPolicy: ClusterFirst
