@@ -83,14 +83,13 @@ func (s *Service) GetSecret(name string) (*v1.Secret, error) {
 	return secret, nil
 }
 
-func (s *Service) CanI(resource, verb, name string) (bool, error) {
+func (s *Service) CanI(group, resource, verb, name string) (bool, error) {
 	review := authorizationv1.SelfSubjectAccessReview{
 		Spec: authorizationv1.SelfSubjectAccessReviewSpec{
 			ResourceAttributes: &authorizationv1.ResourceAttributes{
 				Namespace: s.namespace,
 				Verb:      verb,
-				Group:     "*",
-				Version:   "*",
+				Group:     group,
 				Resource:  resource,
 				Name:      name,
 			},

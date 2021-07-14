@@ -39,7 +39,7 @@ func (a *App) auth(ctx *gin.Context) (response *router.Response, retErr error) {
 		return nil, errors.Wrap(err, "unable to init k8s service for user")
 	}
 
-	canGetClusterCodebase, err := k8sService.CanI("codebases", "get", a.clusterCodebaseName)
+	canGetClusterCodebase, err := k8sService.CanI("v2.edp.epam.com", "codebases", "get", a.clusterCodebaseName)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to check access to cluster codebase")
 	}
@@ -65,7 +65,7 @@ func (a *App) hasAccessToRegistries(k8sService k8s.ServiceInterface) (bool, erro
 	}
 
 	for i := range cbs {
-		canGet, err := k8sService.CanI("codebases", "get", cbs[i].Name)
+		canGet, err := k8sService.CanI("v2.edp.epam.com", "codebases", "get", cbs[i].Name)
 		if err != nil {
 			return false, errors.Wrapf(err, "unable to check access for codebase: %s", cbs[i].Name)
 		}

@@ -21,7 +21,7 @@ func (a *App) listRegistry(ctx *gin.Context) (response *router.Response, retErr 
 		return nil, errors.Wrap(err, "unable to init service for user context")
 	}
 
-	allowedToCreate, err := k8sService.CanI("codebases", "create", "")
+	allowedToCreate, err := k8sService.CanI("v2.edp.epam.com", "codebases", "create", "")
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to check codebase creation access")
 	}
@@ -33,7 +33,7 @@ func (a *App) listRegistry(ctx *gin.Context) (response *router.Response, retErr 
 
 	registries := make([]registryWithPermissions, 0, len(cbs))
 	for i := range cbs {
-		canGet, err := k8sService.CanI("codebases", "get", cbs[i].Name)
+		canGet, err := k8sService.CanI("v2.edp.epam.com", "codebases", "get", cbs[i].Name)
 		if err != nil {
 			return nil, errors.Wrapf(err, "unable to check access for codebase: %s", cbs[i].Name)
 		}
@@ -41,12 +41,12 @@ func (a *App) listRegistry(ctx *gin.Context) (response *router.Response, retErr 
 			continue
 		}
 
-		canUpdate, err := k8sService.CanI("codebases", "update", cbs[i].Name)
+		canUpdate, err := k8sService.CanI("v2.edp.epam.com", "codebases", "update", cbs[i].Name)
 		if err != nil {
 			return nil, errors.Wrapf(err, "unable to check access for codebase: %s", cbs[i].Name)
 		}
 
-		canDelete, err := k8sService.CanI("codebases", "delete", cbs[i].Name)
+		canDelete, err := k8sService.CanI("v2.edp.epam.com", "codebases", "delete", cbs[i].Name)
 		if err != nil {
 			return nil, errors.Wrapf(err, "unable to check access for codebase: %s", cbs[i].Name)
 		}

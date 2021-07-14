@@ -10,5 +10,5 @@ type ServiceInterface interface {
 	ServiceForContext(ctx context.Context) (ServiceInterface, error)
 	GetSecret(name string) (*v1.Secret, error)
 	RecreateSecret(secretName string, data map[string][]byte) error
-	CanI(resource, verb, name string) (bool, error)
+	CanI(group, resource, verb, name string) (bool, error)
 }

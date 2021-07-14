@@ -38,7 +38,7 @@ func (a *App) createRegistryGet(ctx *gin.Context) (response *router.Response, re
 		return nil, errors.Wrap(err, "unable to init service for user context")
 	}
 
-	allowedToCreate, err := k8sService.CanI("codebases", "create", "")
+	allowedToCreate, err := k8sService.CanI("v2.edp.epam.com", "codebases", "create", "")
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to check codebase creation access")
 	}
@@ -64,7 +64,7 @@ func (a *App) createRegistryPost(ctx *gin.Context) (response *router.Response, r
 		return nil, errors.Wrap(err, "unable to init service for user context")
 	}
 
-	allowedToCreate, err := k8sService.CanI("codebases", "create", "")
+	allowedToCreate, err := k8sService.CanI("v2.edp.epam.com", "codebases", "create", "")
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to check codebase creation access")
 	}
