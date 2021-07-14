@@ -33,19 +33,19 @@ spec:
                   apiVersion: v1
                   fieldPath: metadata.namespace
             - name: HOST
-              value: "https://{{ .Values.name }}-{{ .Values.edpProject }}.{{ .Values.dnsWildcard }}"
+              value: "{{ template "control-plane-console.url" . }}"
             - name: BASE_PATH
               value: "{{if .Values.basePath}}/{{ .Values.basePath }}{{else}}{{end}}"
             - name: EDP_ADMIN_CONSOLE_VERSION
               value: "{{ .Values.version }}"
             - name: GERRIT_GLOBAL_LINK
-              value: "https://gerrit-{{ .Release.Namespace }}.{{ .Values.dnsWildcard }}"
+              value: "https://gerrit-{{ .Release.Namespace }}-{{ template "edp.hostnameSuffix" . }}"
             - name: CLUSTER_REPO
-              value: "https://gerrit-{{ .Release.Namespace }}.{{ .Values.dnsWildcard }}/cluster-mgmt"
+              value: "https://gerrit-{{ .Release.Namespace }}-{{ template "edp.hostnameSuffix" . }}/cluster-mgmt"
             - name: REGISTRY_REPO
-              value: "https://gerrit-{{ .Release.Namespace }}.{{ .Values.dnsWildcard }}/templates/registry-tenant-template"
+              value: "https://gerrit-{{ .Release.Namespace }}-{{ template "edp.hostnameSuffix" . }}/templates/registry-tenant-template"
             - name: JENKINS_GLOBAL_LINK
-              value: "https://jenkins-{{ .Release.Namespace }}.{{ .Values.dnsWildcard }}"
+              value: "https://jenkins-{{ .Release.Namespace }}-{{ template "edp.hostnameSuffix" . }}"
             - name: AUTH_ENABLED
               value: "true"
             - name: INTEGRATION_STRATEGIES
