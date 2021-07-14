@@ -1,6 +1,6 @@
 name: control-plane-console
-cdPipelineName: ""
-cdPipelineStageName: ""
+cdPipelineName: "platform"
+cdPipelineStageName: "main"
 global:
   platform: "openshift"
   edpName: mdtu-ddm-edp-cicd-control-plane-dev

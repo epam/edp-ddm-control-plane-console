@@ -4,7 +4,7 @@ metadata:
   name: cp-registry-creator
 rules:
   - apiGroups:
-      - "v2.edp.epam.com/v1alpha1"
+      - "v2.edp.epam.com"
     resources:
       - "codebases"
       - "codebasebranches"
