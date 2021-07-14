@@ -1,8 +1,6 @@
 name: control-plane-console
-namespace: ""
 cdPipelineName: ""
 cdPipelineStageName: ""
-dnsWildcard: apps.cicd.mdtu-ddm.projects.epam.com
 global:
   platform: "openshift"
   edpName: mdtu-ddm-edp-cicd-control-plane-dev
@@ -20,3 +18,14 @@ operator:
   clusterRoleName: edp-admin-console-operator-clusterrole-mdtu-ddm-edp-cicd
 
 oauthclientName: oauth-admin-console-client
+
+keycloak:
+  realm: admin
+
+keycloakIntegration:
+  enabled: true
+  realm: admin
+  client:
+    name: admin-console-client
+    public: false
+    secretName: admin-console-client
