@@ -1,7 +1,7 @@
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: cp-cluster-mgmt
+  name: cp-cluster-mgmt-admin
 rules:
   - verbs:
       - list
