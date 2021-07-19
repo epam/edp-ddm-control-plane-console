@@ -1,0 +1,10 @@
+apiVersion: v1.edp.epam.com/v1alpha1
+kind: KeycloakRealmGroup
+metadata:
+  annotations:
+    helm.sh/resource-policy: keep
+  name: cp-cluster-mgmt-admin
+spec:
+  name: cp-cluster-mgmt-admin
+  realm: admin
+  clientRoles: []
