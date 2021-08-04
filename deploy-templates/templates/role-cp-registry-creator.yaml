@@ -6,7 +6,23 @@ rules:
   - apiGroups:
       - "v2.edp.epam.com"
     resources:
-      - "codebases"
-      - "codebasebranches"
+      - codebases
+      - codebasebranches
+      - codebases/finalizers
+      - codebasebranches/finalizers
     verbs:
       - "*"
+  - apiGroups:
+      - '*'
+    verbs:
+      - create
+    resources:
+      - secrets
+  - apiGroups:
+      - '*'
+    verbs:
+      - get
+    resources:
+      - secrets
+    resourceNames:
+      - gerrit-project-creator-password
