@@ -16,7 +16,7 @@ const (
 	Create           Strategy       = "create"
 	Clone            Strategy       = "clone"
 	Default          VersioningType = "default"
-	viewTimeFormat                  = "02.01.2006 15:04"
+	ViewTimeFormat                  = "02.01.2006 15:04"
 	statusActive                    = "active"
 	AdminsAnnotation                = "registry-parameters/administrators"
 )
@@ -106,7 +106,7 @@ func (in *CodebaseBranch) CreateJenkinsLink(baseURL string) string {
 }
 
 func (in *Codebase) FormattedCreatedAt() string {
-	return in.CreationTimestamp.Format(viewTimeFormat)
+	return in.CreationTimestamp.Format(ViewTimeFormat)
 }
 
 func (in *Codebase) Description() string {

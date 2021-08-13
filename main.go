@@ -4,6 +4,7 @@ import (
 	"ddm-admin-console/auth"
 	oauth "ddm-admin-console/auth"
 	"ddm-admin-console/cluster"
+	"ddm-admin-console/config"
 	"ddm-admin-console/dashboard"
 	"ddm-admin-console/registry"
 	"ddm-admin-console/router"
@@ -34,23 +35,6 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
-
-type config struct {
-	HTTPPort                string `envconfig:"HTTP_PORT" default:"8080"`
-	LogLevel                string `envconfig:"LOG_LEVEL" default:"INFO"`
-	LogEncoding             string `envconfig:"LOG_ENCODING" default:"json"`
-	Namespace               string `envconfig:"NAMESPACE" default:"default"`
-	SessionSecret           string `envconfig:"SESSION_SECRET" default:"UdWaTEfULunPTkRC9sFLG26APz9W5gEC8x"`
-	OCClientID              string `envconfig:"OC_CLIENT_ID"`
-	OCClientSecret          string `envconfig:"OC_CLIENT_SECRET"`
-	Host                    string `envconfig:"HOST"`
-	RegistryRepo            string `envconfig:"REGISTRY_REPO"`
-	GerritCreatorSecretName string `envconfig:"GERRIT_CREATOR_SECRET_NAME"`
-	ClusterCodebaseName     string `envconfig:"CLUSTER_CODEBASE_NAME"`
-	ClusterRepo             string `envconfig:"CLUSTER_REPO"`
-	BackupSecretName        string `envconfig:"BACKUP_SECRET_NAME" default:"backup-credential"`
-	GinMode                 string `envconfig:"GIN_MODE"`
-}
 
 func main() {
 	configPath := flag.String("c", "default.env", "config file path")
@@ -89,12 +73,12 @@ func main() {
 	}
 }
 
-func loadConfig(path string) (*config, error) {
+func loadConfig(path string) (*config.Settings, error) {
 	if err := godotenv.Load(path); err != nil {
 		return nil, errors.Wrap(err, "unable to load config file")
 	}
 
-	var cnf config
+	var cnf config.Settings
 	if err := envconfig.Process("", &cnf); err != nil {
 		return nil, errors.Wrap(err, "unable to parse env variables")
 	}
@@ -139,7 +123,7 @@ func getLogger(level, encoding string) (*zap.Logger, error) {
 	return logger, nil
 }
 
-func initApps(logger *zap.Logger, cnf *config, r *gin.Engine) error {
+func initApps(logger *zap.Logger, cnf *config.Settings, r *gin.Engine) error {
 	restConf, err := initKubeConfig()
 	if err != nil {
 		return errors.Wrap(err, "unable to init kube config")
@@ -183,14 +167,12 @@ func initApps(logger *zap.Logger, cnf *config, r *gin.Engine) error {
 		return errors.Wrap(err, "unable to make dashboard app")
 	}
 
-	_, err = registry.Make(appRouter, logger, codebaseService, edpComponentService, k8sService, jenkinsService,
-		cnf.RegistryRepo, cnf.GerritCreatorSecretName)
+	_, err = registry.Make(appRouter, logger, codebaseService, edpComponentService, k8sService, jenkinsService, cnf)
 	if err != nil {
 		return errors.Wrap(err, "unable to make registry app")
 	}
 
-	_, err = cluster.Make(appRouter, logger, codebaseService, jenkinsService, edpComponentService, k8sService,
-		cnf.ClusterCodebaseName, cnf.ClusterRepo, cnf.GerritCreatorSecretName, cnf.BackupSecretName)
+	_, err = cluster.Make(appRouter, logger, codebaseService, jenkinsService, edpComponentService, k8sService, cnf)
 	if err != nil {
 		return errors.Wrap(err, "unable to init cluster app")
 	}
@@ -212,7 +194,7 @@ func initKubeConfig() (*rest.Config, error) {
 	return restConfig, nil
 }
 
-func initOauth(k8sConfig *rest.Config, cfg *config, r *gin.Engine) (*auth.OAuth2, error) {
+func initOauth(k8sConfig *rest.Config, cfg *config.Settings, r *gin.Engine) (*auth.OAuth2, error) {
 	transport, err := rest.TransportFor(k8sConfig)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create transport for k8s config")

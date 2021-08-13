@@ -3,6 +3,7 @@ package registry
 import (
 	"ddm-admin-console/router"
 	"ddm-admin-console/service/codebase"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
@@ -12,6 +13,11 @@ type registryWithPermissions struct {
 	Registry  *codebase.Codebase
 	CanUpdate bool
 	CanDelete bool
+}
+
+func (r registryWithPermissions) FormattedCreatedAtTimezone(timezone string) string {
+	loc, _ := time.LoadLocation(timezone)
+	return r.Registry.CreationTimestamp.In(loc).Format(codebase.ViewTimeFormat)
 }
 
 func (a *App) listRegistry(ctx *gin.Context) (response *router.Response, retErr error) {
@@ -59,5 +65,6 @@ func (a *App) listRegistry(ctx *gin.Context) (response *router.Response, retErr 
 		"registries":      registries,
 		"page":            "registry",
 		"allowedToCreate": allowedToCreate,
+		"timezone":        a.timezone,
 	}), nil
 }

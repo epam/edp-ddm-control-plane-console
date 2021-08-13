@@ -44,7 +44,7 @@
                             {{$registry.Registry.Description}}
                         </td>
                         <td>
-                            {{$registry.Registry.FormattedCreatedAt}}
+                            {{ $registry.FormattedCreatedAtTimezone $.timezone }}
                         </td>
                         <td>
                             {{if $registry.CanUpdate}}

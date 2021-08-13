@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"context"
+	"ddm-admin-console/config"
 	"ddm-admin-console/router"
 	"ddm-admin-console/service/codebase"
 	edpComponent "ddm-admin-console/service/edp_component"
@@ -49,10 +50,9 @@ type App struct {
 }
 
 func Make(router Router, logger Logger, codebaseService codebase.ServiceInterface, jenkinsService jenkins.ServiceInterface,
-	edpComponentService EDPComponentService, k8sService k8s.ServiceInterface, codebaseName, repo, gerritCreatorSecretName,
-	backupSecretName string) (*App, error) {
+	edpComponentService EDPComponentService, k8sService k8s.ServiceInterface, cnf *config.Settings) (*App, error) {
 
-	if !strings.Contains(repo, "//") || !strings.Contains(repo, "/") {
+	if !strings.Contains(cnf.ClusterRepo, "//") || !strings.Contains(cnf.ClusterRepo, "/") {
 		return nil, errors.New("wrong git repo")
 	}
 
@@ -60,12 +60,12 @@ func Make(router Router, logger Logger, codebaseService codebase.ServiceInterfac
 		router:                  router,
 		logger:                  logger,
 		codebaseService:         codebaseService,
-		codebaseName:            codebaseName,
-		repo:                    repo,
+		codebaseName:            cnf.ClusterCodebaseName,
+		repo:                    cnf.ClusterRepo,
 		jenkinsService:          jenkinsService,
-		gerritCreatorSecretName: gerritCreatorSecretName,
+		gerritCreatorSecretName: cnf.GerritCreatorSecretName,
 		edpComponentService:     edpComponentService,
-		backupSecretName:        backupSecretName,
+		backupSecretName:        cnf.BackupSecretName,
 		k8sService:              k8sService,
 	}
 
