@@ -2,6 +2,7 @@ package registry
 
 import (
 	"context"
+	"ddm-admin-console/config"
 	"ddm-admin-console/router"
 	"ddm-admin-console/service/codebase"
 	edpComponent "ddm-admin-console/service/edp_component"
@@ -42,19 +43,21 @@ type App struct {
 	registryGitRepo         string
 	gerritCreatorSecretName string
 	jenkinsService          JenkinsService
+	timezone                string
 }
 
 func Make(router Router, logger Logger, codebaseService codebase.ServiceInterface, edpComponentService EDPComponentService,
-	k8sService k8s.ServiceInterface, jenkinsService JenkinsService, registryGitRepo, gerritCreatorSecretName string) (*App, error) {
+	k8sService k8s.ServiceInterface, jenkinsService JenkinsService, cnf *config.Settings) (*App, error) {
 	app := &App{
 		logger:                  logger,
 		router:                  router,
 		codebaseService:         codebaseService,
 		edpComponentService:     edpComponentService,
 		k8sService:              k8sService,
-		registryGitRepo:         registryGitRepo,
-		gerritCreatorSecretName: gerritCreatorSecretName,
+		registryGitRepo:         cnf.RegistryRepo,
+		gerritCreatorSecretName: cnf.GerritCreatorSecretName,
 		jenkinsService:          jenkinsService,
+		timezone:                cnf.Timezone,
 	}
 
 	app.createRoutes()
