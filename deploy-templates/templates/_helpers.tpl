@@ -6,9 +6,9 @@
 {{- end }}
 
 {{- define "edp.hostnameSuffix" -}}
-{{- printf "%s-%s-%s.%s" .Release.Namespace .Values.cdPipelineName .Values.cdPipelineStageName | trunc 32 | trimSuffix "-" .Values.dnsWildcard }}
+{{- $prefix := printf "%s-%s" .Release.Namespace .Values.cdPipelineName .Values.cdPipelineStageName | trunc 32 | trimSuffix "-" }}
+{{- printf "%s.%s" $prefix .Values.dnsWildcard }}
 {{- end }}
-
 
 {{- define "control-plane-console.hostname" -}}
 {{- printf "%s-%s" .Chart.Name (include "edp.hostnameSuffix" .) }}
