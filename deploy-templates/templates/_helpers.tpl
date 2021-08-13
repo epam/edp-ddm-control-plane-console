@@ -6,12 +6,12 @@
 {{- end }}
 
 {{- define "edp.hostnameSuffix" -}}
-{{- printf "%s-%s.%s" .Values.cdPipelineName .Values.cdPipelineStageName .Values.dnsWildcard }}
+{{- printf "%s-%s-%s.%s" .Release.Namespace .Values.cdPipelineName .Values.cdPipelineStageName | trunc 32 | trimSuffix "-" .Values.dnsWildcard }}
 {{- end }}
 
+
 {{- define "control-plane-console.hostname" -}}
-{{- $hostname := printf "%s-%s" "control-plane-console" .Release.Namespace }}
-{{- printf "%s-%s" $hostname (include "edp.hostnameSuffix" .) }}
+{{- printf "%s-%s" .Chart.Name (include "edp.hostnameSuffix" .) }}
 {{- end }}
 
 {{- define "control-plane-console.url" -}}
