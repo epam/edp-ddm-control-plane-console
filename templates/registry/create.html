@@ -107,21 +107,13 @@
             $("#create-form").submit(function () {
                 let registryNameInput = $("#name");
                 if (registryNameInput.val().length < 3) {
-                    // let htmlInput = registryNameInput.get(0);
-                    // htmlInput.validity.valid = false;
-                    // htmlInput.scrollIntoView();
-                    // htmlInput.setCustomValidity('');
-                    // htmlInput.setCustomValidity('Будь-ласка вкажіть назву у відповідному форматі');
                     registryNameInput.change();
-
                     return false;
                 }
             });
 
             $("input").on('change invalid', function(){
                 let input = $(this).get(0);
-                console.log(input);
-
                 input.setCustomValidity('');
                 let inputName = $(input).attr("name");
 

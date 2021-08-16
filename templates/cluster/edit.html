@@ -9,7 +9,7 @@
         </div>
         <h1>Налаштування резервного копіювання</h1>
         <br />
-        <form class="registry-create-form" method="post" action="">
+        <form id="cluster-form" class="registry-create-form" method="post" action="">
             {{ if .error }}
                 <div class="rc-global-error">{{.error}}</div>
             {{ end }}
@@ -17,7 +17,7 @@
             <div class="rc-form-group {{ if .errorsMap.StorageLocation }}error{{end}}">
                 <label for="storage-location">Місце зберігання бекапу</label>
                 <input type="text" id="storage-location" name="storage-location"
-                       value="{{.backupConf.StorageLocation}}" />
+                       value="{{.backupConf.StorageLocation}}" required />
                 <span>
                     {{range $key, $val := .errorsMap.StorageLocation}}
                         {{i18n "uk" $val.Error}}
@@ -27,19 +27,29 @@
             <div class="rc-form-group {{ if .errorsMap.StorageType }}error{{end}}">
                 <label for="storage-type">Тип сховища для бекапу</label>
                 <input type="text" id="storage-type" name="storage-type"
-                       value="{{.backupConf.StorageType}}" />
+                       value="{{.backupConf.StorageType}}" required />
                 <span>
                     {{range $key, $val := .errorsMap.StorageType}}
                         {{i18n "uk" $val.Error}}
                     {{end}}
                 </span>
             </div>
-            <div class="rc-form-group {{ if .errorsMap.StorageCredentials }}error{{end}}">
-                <label for="storage-credentials">Параметри доступу</label>
-                <input type="text" id="storage-credentials" name="storage-credentials"
-                       value="{{.backupConf.StorageCredentials}}" />
+            <div class="rc-form-group {{ if .errorsMap.StorageCredentialsKey }}error{{end}}">
+                <label for="storage-credentials-key">Логін</label>
+                <input type="text" id="storage-credentials-key" name="storage-credentials-key"
+                       value="{{.backupConf.StorageCredentialsKey}}" required />
                 <span>
-                    {{range $key, $val := .errorsMap.StorageCredentials}}
+                    {{range $key, $val := .errorsMap.StorageCredentialsKey}}
+                        {{i18n "uk" $val.Error}}
+                    {{end}}
+                </span>
+            </div>
+            <div class="rc-form-group {{ if .errorsMap.StorageCredentialsSecret }}error{{end}}">
+                <label for="storage-credentials-secret">Пароль</label>
+                <input type="password" id="storage-credentials-secret" name="storage-credentials-secret"
+                       value="{{.backupConf.StorageCredentialsSecret}}" required />
+                <span>
+                    {{range $key, $val := .errorsMap.StorageCredentialsSecret}}
                         {{i18n "uk" $val.Error}}
                     {{end}}
                 </span>
@@ -49,5 +59,18 @@
             </div>
         </form>
     </div>
+
+    <script type="text/javascript">
+        $(function (){
+            $("input").on('change invalid', function(){
+                let input = $(this).get(0);
+                input.setCustomValidity('');
+                if (!input.validity.valid) {
+                    input.scrollIntoView();
+                    input.setCustomValidity('Не може бути порожнім');
+                }
+            });
+        });
+    </script>
     {{template "footer" .}}
 {{ end }}
