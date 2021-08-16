@@ -15,15 +15,17 @@ import (
 )
 
 const (
-	StorageLocation    = "backup-s3-like-storage-location"
-	StorageType        = "backup-s3-like-storage-type"
-	StorageCredentials = "backup-s3-like-storage-credentials"
+	StorageLocation          = "backup-s3-like-storage-location"
+	StorageType              = "backup-s3-like-storage-type"
+	StorageCredentialsKey    = "backup-s3-like-storage-credentials-key"
+	StorageCredentialsSecret = "backup-s3-like-storage-credentials-secret"
 )
 
 type BackupConfig struct {
-	StorageLocation    string `form:"storage-location" binding:"required"`
-	StorageType        string `form:"storage-type" binding:"required"`
-	StorageCredentials string `form:"storage-credentials" binding:"required"`
+	StorageLocation          string `form:"storage-location" binding:"required"`
+	StorageType              string `form:"storage-type" binding:"required"`
+	StorageCredentialsKey    string `form:"storage-credentials-key" binding:"required"`
+	StorageCredentialsSecret string `form:"storage-credentials-secret" binding:"required"`
 }
 
 func (a *App) editGet(ctx *gin.Context) (*router.Response, error) {
@@ -47,9 +49,10 @@ func (a *App) editGet(ctx *gin.Context) (*router.Response, error) {
 	}
 	if err == nil {
 		backupConfig = BackupConfig{
-			StorageLocation:    string(secret.Data[StorageLocation]),
-			StorageType:        string(secret.Data[StorageType]),
-			StorageCredentials: string(secret.Data[StorageCredentials]),
+			StorageLocation:       string(secret.Data[StorageLocation]),
+			StorageType:           string(secret.Data[StorageType]),
+			StorageCredentialsKey: string(secret.Data[StorageCredentialsKey]),
+			//StorageCredentialsSecret: string(secret.Data[StorageCredentialsSecret]),
 		}
 	}
 
@@ -92,9 +95,10 @@ func (a *App) editPost(ctx *gin.Context) (*router.Response, error) {
 	}
 
 	if err := k8sService.RecreateSecret(a.backupSecretName, map[string][]byte{
-		StorageLocation:    []byte(backupConfig.StorageLocation),
-		StorageType:        []byte(backupConfig.StorageType),
-		StorageCredentials: []byte(backupConfig.StorageCredentials),
+		StorageLocation:          []byte(backupConfig.StorageLocation),
+		StorageType:              []byte(backupConfig.StorageType),
+		StorageCredentialsKey:    []byte(backupConfig.StorageCredentialsKey),
+		StorageCredentialsSecret: []byte(backupConfig.StorageCredentialsSecret),
 	}); err != nil {
 		return nil, errors.Wrap(err, "unable to recreate backup secret")
 	}
