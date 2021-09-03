@@ -6,7 +6,7 @@
 {{- end }}
 
 {{- define "edp.hostnameSuffix" -}}
-{{- $prefix := printf "%s-%s-%s" .Release.Namespace .Values.cdPipelineName .Values.cdPipelineStageName | trunc 32 | trimSuffix "-" }}
+{{- $prefix := printf "%s-%s-%s" .Release.Namespace .Values.cdPipelineName .Values.cdPipelineStageName | trunc 63 | trimSuffix "-" }}
 {{- printf "%s.%s" $prefix .Values.dnsWildcard }}
 {{- end }}
 
