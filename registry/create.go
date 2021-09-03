@@ -1,14 +1,17 @@
 package registry
 
 import (
+	"context"
 	"ddm-admin-console/router"
 	"ddm-admin-console/service/codebase"
+	"ddm-admin-console/service/gerrit"
 	"ddm-admin-console/service/k8s"
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -33,6 +36,12 @@ const (
 )
 
 func (a *App) createRegistryGet(ctx *gin.Context) (response *router.Response, retErr error) {
+	prjs, err := a.gerritService.GetProjects(context.Background())
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to list gerrit projects")
+	}
+	prjs = a.filterProjects(prjs)
+
 	k8sService, err := a.k8sService.ServiceForContext(a.router.ContextWithUserAccessToken(ctx))
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to init service for user context")
@@ -48,8 +57,20 @@ func (a *App) createRegistryGet(ctx *gin.Context) (response *router.Response, re
 	}
 
 	return router.MakeResponse(200, "registry/create.html", gin.H{
-		"page": "registry",
+		"page":           "registry",
+		"gerritProjects": prjs,
 	}), nil
+}
+
+func (a *App) filterProjects(projects []gerrit.GerritProject) []gerrit.GerritProject {
+	filteredProjects := make([]gerrit.GerritProject, 0, 4)
+	for _, prj := range projects {
+		if strings.Contains(prj.Spec.Name, a.gerritRegistryPrefix) {
+			filteredProjects = append(filteredProjects, prj)
+		}
+	}
+
+	return filteredProjects
 }
 
 func (a *App) createRegistryPost(ctx *gin.Context) (response *router.Response, retErr error) {
@@ -84,6 +105,10 @@ func (a *App) createRegistryPost(ctx *gin.Context) (response *router.Response, r
 			gin.H{"page": "registry", "errorsMap": validationErrors, "model": r}), nil
 	}
 
+	if err := a.validateCreateRegistryGitTemplate(&r); err != nil {
+		return nil, errors.Wrap(err, "unable to validate create registry git template")
+	}
+
 	if err := a.createRegistry(&r, ctx.Request, cbService, k8sService); err != nil {
 		validationErrors, ok := errors.Cause(err).(validator.ValidationErrors)
 		if !ok {
@@ -95,6 +120,26 @@ func (a *App) createRegistryPost(ctx *gin.Context) (response *router.Response, r
 	}
 
 	return router.MakeRedirectResponse(http.StatusFound, "/admin/registry/overview"), nil
+}
+
+func (a *App) validateCreateRegistryGitTemplate(r *registry) error {
+	prjs, err := a.gerritService.GetProjects(context.Background())
+	if err != nil {
+		return errors.Wrap(err, "unable to list gerrit projects")
+	}
+	prjs = a.filterProjects(prjs)
+
+	for _, prj := range prjs {
+		if prj.Spec.Name == r.RegistryGitTemplate {
+			for _, br := range prj.Status.Branches {
+				if br == fmt.Sprintf("refs/heads/%s", r.RegistryGitBranch) {
+					return nil
+				}
+			}
+		}
+	}
+
+	return errors.New("wrong registry template selected")
 }
 
 func (a *App) createRegistry(r *registry, request *http.Request, cbService codebase.ServiceInterface,
@@ -130,7 +175,7 @@ func (a *App) createRegistry(r *registry, request *http.Request, cbService codeb
 			Type:             "registry",
 			BuildTool:        "gitops",
 			Lang:             "other",
-			DefaultBranch:    "master",
+			DefaultBranch:    r.RegistryGitBranch,
 			Strategy:         "clone",
 			DeploymentScript: "openshift-template",
 			GitServer:        "gerrit",
@@ -141,7 +186,7 @@ func (a *App) createRegistry(r *registry, request *http.Request, cbService codeb
 				Type:      "edp",
 			},
 			Repository: &codebase.Repository{
-				Url: a.registryGitRepo,
+				Url: fmt.Sprintf("%s/%s", a.gerritRegistryHost, r.RegistryGitTemplate),
 			},
 			JenkinsSlave: &jenkinsSlave,
 		},

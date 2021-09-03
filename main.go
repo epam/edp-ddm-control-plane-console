@@ -10,6 +10,7 @@ import (
 	"ddm-admin-console/router"
 	"ddm-admin-console/service/codebase"
 	edpComponent "ddm-admin-console/service/edp_component"
+	"ddm-admin-console/service/gerrit"
 	"ddm-admin-console/service/jenkins"
 	"ddm-admin-console/service/k8s"
 	"ddm-admin-console/service/openshift"
@@ -159,6 +160,11 @@ func initApps(logger *zap.Logger, cnf *config.Settings, r *gin.Engine) error {
 		return errors.Wrap(err, "unable to init open shift service")
 	}
 
+	gerritService, err := gerrit.Make(restConf, cnf.Namespace)
+	if err != nil {
+		return errors.Wrap(err, "unable to create gerrit service")
+	}
+
 	appRouter := router.Make(r, logger)
 
 	_, err = dashboard.Make(appRouter, edpComponentService, oa, k8sService, openShiftService, codebaseService,
@@ -167,7 +173,8 @@ func initApps(logger *zap.Logger, cnf *config.Settings, r *gin.Engine) error {
 		return errors.Wrap(err, "unable to make dashboard app")
 	}
 
-	_, err = registry.Make(appRouter, logger, codebaseService, edpComponentService, k8sService, jenkinsService, cnf)
+	_, err = registry.Make(appRouter, logger, codebaseService, edpComponentService, k8sService, jenkinsService,
+		gerritService, cnf)
 	if err != nil {
 		return errors.Wrap(err, "unable to make registry app")
 	}

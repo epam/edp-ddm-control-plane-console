@@ -9,6 +9,7 @@ import (
 	"ddm-admin-console/service/jenkins"
 	"ddm-admin-console/service/k8s"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -52,7 +53,7 @@ type App struct {
 func Make(router Router, logger Logger, codebaseService codebase.ServiceInterface, jenkinsService jenkins.ServiceInterface,
 	edpComponentService EDPComponentService, k8sService k8s.ServiceInterface, cnf *config.Settings) (*App, error) {
 
-	if !strings.Contains(cnf.ClusterRepo, "//") || !strings.Contains(cnf.ClusterRepo, "/") {
+	if !strings.Contains(cnf.Host, "//") {
 		return nil, errors.New("wrong git repo")
 	}
 
@@ -61,7 +62,7 @@ func Make(router Router, logger Logger, codebaseService codebase.ServiceInterfac
 		logger:                  logger,
 		codebaseService:         codebaseService,
 		codebaseName:            cnf.ClusterCodebaseName,
-		repo:                    cnf.ClusterRepo,
+		repo:                    fmt.Sprintf("%s/%s", cnf.RegistryRepoHost, cnf.ClusterRepo),
 		jenkinsService:          jenkinsService,
 		gerritCreatorSecretName: cnf.GerritCreatorSecretName,
 		edpComponentService:     edpComponentService,

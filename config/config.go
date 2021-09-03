@@ -9,11 +9,12 @@ type Settings struct {
 	OCClientID              string `envconfig:"OC_CLIENT_ID"`
 	OCClientSecret          string `envconfig:"OC_CLIENT_SECRET"`
 	Host                    string `envconfig:"HOST"`
-	RegistryRepo            string `envconfig:"REGISTRY_REPO"`
 	GerritCreatorSecretName string `envconfig:"GERRIT_CREATOR_SECRET_NAME"`
 	ClusterCodebaseName     string `envconfig:"CLUSTER_CODEBASE_NAME"`
 	ClusterRepo             string `envconfig:"CLUSTER_REPO"`
 	BackupSecretName        string `envconfig:"BACKUP_SECRET_NAME" default:"backup-credential"`
 	GinMode                 string `envconfig:"GIN_MODE"`
 	Timezone                string `envconfig:"TIMEZONE" default:"Europe/Kiev"`
+	RegistryRepoPrefix      string `envconfig:"REGISTRY_REPO_PREFIX" default:"registry-tenant-template-"`
+	RegistryRepoHost        string `envconfig:"REGISTRY_REPO_HOST"`
 }

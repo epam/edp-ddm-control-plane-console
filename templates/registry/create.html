@@ -47,6 +47,23 @@
                 <span>{{range $key, $val := .errorsMap.Description}}{{ $val }}{{end}}</span>
                 <p>Опис може містити офіційну назву реєстру чи його призначення.</p>
             </div>
+            <div class="rc-form-group {{ if .errorsMap.RegistryGitTemplate }}error{{end}}">
+                <label for="registry-git-template">Шаблон реєстру</label>
+                <select name="registry-git-template" id="registry-git-template">
+                    {{range $key, $val := .gerritProjects}}
+                        <option>{{$val.Spec.Name}}</option>
+                    {{end}}
+                </select>
+                <span>{{range $key, $val := .errorsMap.RegistryGitTemplate}}{{ $val }}{{end}}</span>
+            </div>
+            <div class="rc-form-group {{ if .errorsMap.RegistryGitBranch }}error{{end}}">
+                <label for="registry-git-branch">Гілка шаблону реєстру</label>
+                <select name="registry-git-branch" id="registry-git-branch">
+
+                </select>
+                <span>{{range $key, $val := .errorsMap.RegistryGitTemplate}}{{ $val }}{{end}}</span>
+            </div>
+
             <h3>Дані про ключ</h3>
             <hr />
             <div class="rc-form-group {{ if .errorsMap.Key6 }}error{{end}}">
@@ -102,7 +119,33 @@
         </form>
     </div>
     <script type="text/javascript">
+        let registryBranches = {
+            {{range $projectKey, $project := .gerritProjects}}
+            "{{$project.Spec.Name}}": [
+                {{range $branchKey, $branch := $project.Status.Branches}}
+                "{{ $branch }}",
+                {{end}}
+            ],
+            {{end}}
+        };
+
         $(function (){
+            $("#registry-git-template").change(function (e) {
+                let tpl = $(e.target).val();
+                let branches = registryBranches[tpl];
+                let branchesSelect = $("#registry-git-branch");
+                branchesSelect.empty();
+                for (let branch in branches) {
+                    let branchVal = branches[branch];
+                    let headsIndex = branchVal.indexOf("heads/")
+                    if (headsIndex !== -1) {
+                        branchVal = branchVal.substring(headsIndex + 6)
+                        branchesSelect.append(new Option(branchVal, branchVal));
+                    }
+                }
+            });
+
+            $("#registry-git-template").change();
 
             $("#create-form").submit(function () {
                 let registryNameInput = $("#name");
