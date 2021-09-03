@@ -98,5 +98,5 @@ If you want to write a new migration please see `db/migrations` folder.
 ## Go tests
 Calculate test coverage
 ```
-go test -coverprofile=coverage.out && go tool cover -html=coverage.out
+go test -coverprofile=coverage.out && go tool cover -html=coverage.out && rm -rf coverage.out
 ```
