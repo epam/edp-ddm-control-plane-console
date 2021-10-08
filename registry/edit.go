@@ -53,7 +53,9 @@ func (a *App) editRegistryPost(ctx *gin.Context) (response *router.Response, ret
 	}
 
 	r := registry{
-		Name: registryName,
+		Name:                registryName,
+		RegistryGitBranch:   cb.Spec.DefaultBranch,
+		RegistryGitTemplate: cb.Spec.Repository.Url,
 	}
 
 	if err := ctx.ShouldBind(&r); err != nil {
