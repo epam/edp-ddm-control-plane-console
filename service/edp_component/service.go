@@ -50,13 +50,24 @@ func (s *Service) GetAll() ([]EDPComponent, error) {
 	return lst.Items, nil
 }
 
-func (s *Service) GetAllNamespace(ns string) ([]EDPComponent, error) {
+func (s *Service) GetAllNamespace(ns string, onlyVisible bool) ([]EDPComponent, error) {
 	var lst EDPComponentList
 	if err := s.k8sClient.List(context.Background(), &lst, &client.ListOptions{Namespace: ns}); err != nil {
 		return nil, errors.Wrap(err, "unable to list edp component")
 	}
 
-	return lst.Items, nil
+	if !onlyVisible {
+		return lst.Items, nil
+	}
+
+	items := make([]EDPComponent, 0, len(lst.Items))
+	for _, v := range lst.Items {
+		if v.Spec.Visible {
+			items = append(items, v)
+		}
+	}
+
+	return items, nil
 }
 
 func (s *Service) Get(name string) (*EDPComponent, error) {

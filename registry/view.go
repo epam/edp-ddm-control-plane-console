@@ -41,7 +41,7 @@ func (a *App) viewRegistry(ctx *gin.Context) (*router.Response, error) {
 		return nil, errors.Wrap(err, "unable to get gerrit edp component")
 	}
 
-	namespacedEDPComponents, err := a.edpComponentService.GetAllNamespace(registry.Name)
+	namespacedEDPComponents, err := a.edpComponentService.GetAllNamespace(registry.Name, true)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to list namespaced edp components")
 	}

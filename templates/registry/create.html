@@ -49,7 +49,8 @@
             </div>
             <div class="rc-form-group {{ if .errorsMap.RegistryGitTemplate }}error{{end}}">
                 <label for="registry-git-template">Шаблон реєстру</label>
-                <select name="registry-git-template" id="registry-git-template">
+                <select required name="registry-git-template" id="registry-git-template">
+                    <option></option>
                     {{range $key, $val := .gerritProjects}}
                         <option>{{$val.Spec.Name}}</option>
                     {{end}}
@@ -58,66 +59,30 @@
             </div>
             <div class="rc-form-group {{ if .errorsMap.RegistryGitBranch }}error{{end}}">
                 <label for="registry-git-branch">Гілка шаблону реєстру</label>
-                <select name="registry-git-branch" id="registry-git-branch">
+                <select required name="registry-git-branch" id="registry-git-branch">
 
                 </select>
                 <span>{{range $key, $val := .errorsMap.RegistryGitTemplate}}{{ $val }}{{end}}</span>
             </div>
 
-            <h3>Дані про ключ</h3>
-            <hr />
-            <div class="rc-form-group {{ if .errorsMap.Key6 }}error{{end}}">
-                <label for="key6">Файловий ключ (розширення .dat)</label>
-                <input required type="file" name="key6" id="key6" accept=".dat" />
-                <span>
-                    {{range $key, $val := .errorsMap.Key6}}
-                        {{ i18n $val.Tag $val.Param  }}
-                    {{end}}
-                </span>
-            </div>
-            <div class="rc-form-group {{ if .errorsMap.SignKeyIssuer }}error{{end}}">
-                <label for="sign-key-issuer">АЦСК, що видав ключ</label>
-                <input type="text" id="sign-key-issuer" name="sign-key-issuer" required value="{{.model.SignKeyIssuer}}" />
-                <span>
-                    {{range $key, $val := .errorsMap.SignKeyIssuer}}
-                        {{ i18n $val.Tag $val.Param }}
-                    {{end}}
-                </span>
-            </div>
-            <div class="rc-form-group {{ if .errorsMap.SignKeyPwd }}error{{end}}">
-                <label for="sign-key-pwd">Пароль до файлового ключа</label>
-                <input required type="password" id="sign-key-pwd" name="sign-key-pwd" value="{{.model.SignKeyPwd}}" />
-                <span>
-                    {{range $key, $val := .errorsMap.SignKeyPwd}}
-                        {{ i18n $val.Tag $val.Param }}
-                    {{end}}
-                </span>
-            </div>
-            <h3>Дані для перевірки ключа</h3>
-            <hr />
-            <div class="rc-form-group {{ if .errorsMap.CACertificate }}error{{end}}">
-                <label for="ca-cert">Публічні сертифікати АЦСК (розширення .p7b)</label>
-                <input required type="file" name="ca-cert" id="ca-cert" accept=".p7b" />
-                <span>
-                    {{range $key, $val := .errorsMap.CACertificate}}
-                        {{ i18n $val.Tag $val.Param }}
-                    {{end}}
-                </span>
-            </div>
-            <div class="rc-form-group {{ if .errorsMap.CAsJSON }}error{{end}}">
-                <label for="ca-json">Список АЦСК (розширення .json)</label>
-                <input required type="file" name="ca-json" id="ca-json" accept=".json" />
-                <span>
-                    {{range $key, $val := .errorsMap.CAsJSON}}
-                        {{ i18n $val.Tag $val.Param }}
-                    {{end}}
-                </span>
-            </div>
+            {{template "key-form" .}}
+
             <div class="rc-form-group">
                 <button type="submit" name="submit">Підтвердити</button>
             </div>
         </form>
     </div>
+    <script src="{{ .BasePath }}/static/js/mustache.js"></script>
+    <script id="ini-template" type="x-tmpl-mustache">
+        {{ .hwINITemplateContent }}
+    </script>
+    <script id="allowed-keys-template" type="x-tmpl-mustache">
+        <div class="allowed-keys-row">
+            <input name="allowed-keys-issuer[]" class="allowed-keys-input" required aria-label="key issuer" placeholder="Емітент ключа" class="allowed-keys-issuer" type="text" />
+            <input name="allowed-keys-serial[]" class="allowed-keys-input" required aria-label="key serial" placeholder="Серійний номер ключа" class="allowed-keys-serial" type="text" />
+            <button class="allowed-keys-remove-btn">-</button>
+        </div>
+    </script>
     <script type="text/javascript">
         let registryBranches = {
             {{range $projectKey, $project := .gerritProjects}}
@@ -129,8 +94,23 @@
             {{end}}
         };
 
+        // let renderINITemplate = function (){
+        //     let iniTemplate = document.getElementById('ini-template').innerHTML;
+        //     let rendered = Mustache.render(iniTemplate, {
+        //         "CA_NAME": $("#remote-ca-name").val(),
+        //         "CA_HOST": $("#remote-ca-host").val(),
+        //         "CA_PORT": $("#remote-ca-port").val(),
+        //         "KEY_SN": $("#remote-serial-number").val(),
+        //         "KEY_HOST": $("#remote-key-host").val(),
+        //         "KEY_ADDRESS_MASK": $("#remote-key-mask").val(),
+        //     });
+        //
+        //     $("#remote-ini-config").val(rendered.trim());
+        // };
+
         $(function (){
-            $("#registry-git-template").change(function (e) {
+            let registryGitTemplate = $("#registry-git-template");
+            registryGitTemplate.change(function (e) {
                 let tpl = $(e.target).val();
                 let branches = registryBranches[tpl];
                 let branchesSelect = $("#registry-git-branch");
@@ -144,8 +124,7 @@
                     }
                 }
             });
-
-            $("#registry-git-template").change();
+            registryGitTemplate.change();
 
             $("#create-form").submit(function () {
                 let registryNameInput = $("#name");
@@ -155,37 +134,76 @@
                 }
             });
 
-            $("input").on('change invalid', function(){
-                let input = $(this).get(0);
-                input.setCustomValidity('');
-                let inputName = $(input).attr("name");
+            // let setValidationMessages = function(){
+            //     let input = $(this).get(0);
+            //     input.setCustomValidity('');
+            //     let inputName = $(input).attr("name");
+            //
+            //     if (inputName === "name" && $(input).val().length < 3) {
+            //         input.setAttribute("isvalid", "true")
+            //         input.setCustomValidity('Будь-ласка вкажіть назву у відповідному форматі');
+            //     }
+            //
+            //     if (!input.validity.valid) {
+            //         input.scrollIntoView();
+            //
+            //         let errorMessages = {
+            //             'name':   'Будь-ласка вкажіть назву у відповідному форматі',
+            //             'key6': 'Будь-ласка оберіть файловий ключ',
+            //             'sign-key-issuer': 'Будь-ласка вкажіть АЦСК, що видав ключ',
+            //             'sign-key-pwd': 'Будь-ласка вкажіть пароль до файлового ключа',
+            //             'ca-cert': 'Будь-ласка оберіть публічні сертифікати АЦСК',
+            //             'ca-json': 'Будь-ласка оберіть список АЦСК',
+            //             'admins': 'Будь-ласка вкажіть адміністраторів у відповідному форматі',
+            //         };
+            //         let errorMessage = errorMessages[inputName];
+            //         if (errorMessage) {
+            //             input.setCustomValidity(errorMessage);
+            //         } else {
+            //             input.setCustomValidity('Обов’язкове поле');
+            //         }
+            //     }
+            // };
+            //
+            // $("input").on('change invalid', setValidationMessages);
 
-                if (inputName === "name" && $(input).val().length < 3) {
-                    input.setAttribute("isvalid", "true")
-                    input.setCustomValidity('Будь-ласка вкажіть назву у відповідному форматі');
-                }
+            // let keyTypeChanged = function(e){
+            //     let typeSections = $(".key-type-section");
+            //     typeSections.find("input").prop('disabled', true);
+            //     typeSections.hide();
+            //
+            //     let val = $(e.target).val(),
+            //         visibleSection = $(`.key-type-${val}`);
+            //     visibleSection.find('input').prop('disabled', false);
+            //     visibleSection.show();
+            // };
+            // let keyDeviceType = $("#key-device-type");
+            //
+            // keyDeviceType.change(keyTypeChanged);
+            // keyDeviceType.change();
+            //
+            // $(`.key-type-hardware`).find('input').change(renderINITemplate);
+            // renderINITemplate();
+            //
+            // let removeAllowedKeysRow = function (e){
+            //     $(e.target).parent().remove();
+            //     return false;
+            // };
 
-                if (!input.validity.valid) {
-                    input.scrollIntoView();
-
-                    let errorMessages = {
-                        'name':   'Будь-ласка вкажіть назву у відповідному форматі',
-                        'key6': 'Будь-ласка оберіть файловий ключ',
-                        'sign-key-issuer': 'Будь-ласка вкажіть АЦСК, що видав ключ',
-                        'sign-key-pwd': 'Будь-ласка вкажіть пароль до файлового ключа',
-                        'ca-cert': 'Будь-ласка оберіть публічні сертифікати АЦСК',
-                        'ca-json': 'Будь-ласка оберіть список АЦСК',
-                        'admins': 'Будь-ласка вкажіть адміністраторів у відповідному форматі',
-                    };
-                    let errorMessage = errorMessages[inputName];
-                    if (errorMessage) {
-                        console.log(errorMessage);
-                        input.setCustomValidity(errorMessage);
-                    }
-                }
-            });
+            // $("#allowed-keys-add").click(function () {
+            //     let iniTemplate = document.getElementById('allowed-keys-template').innerHTML;
+            //     $("#allowed-keys-body").append(iniTemplate);
+            //     let allowedKeysRemoveBtn = $(".allowed-keys-remove-btn");
+            //     allowedKeysRemoveBtn.off();
+            //     allowedKeysRemoveBtn.click(removeAllowedKeysRow);
+            //
+            //     $(".allowed-keys-input").on('change invalid', setValidationMessages);
+            //
+            //     return false;
+            // });
         });
     </script>
+    <script type="text/javascript" src="{{ .BasePath }}/static/js/registry-form.js"></script>
     {{template "footer" .}}
 
 {{ end }}

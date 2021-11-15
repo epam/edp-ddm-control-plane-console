@@ -36,95 +36,49 @@
             </div>
 
             <div id="key-block" style="display: none;margin-bottom: 10px;">
-                <h3>Дані про ключ</h3>
-                <hr />
-                <div class="rc-form-group {{ if .errorsMap.Key6 }}error{{end}}">
-                    <label for="key6">Файловий ключ (розширення .dat)</label>
-                    <input class="optional-key" type="file" name="key6" id="key6" accept=".dat" />
-                    <span>
-                        {{range $key, $val := .errorsMap.Key6}}
-                            {{ $val.Error | i18n }}
-                        {{end}}
-                    </span>
-                </div>
-                <div class="rc-form-group {{ if .errorsMap.SignKeyIssuer }}error{{end}}">
-                    <label for="sign-key-issuer">АЦСК, що видав ключ</label>
-                    <input class="optional-key" type="text" id="sign-key-issuer" name="sign-key-issuer" value="{{.model.SignKeyIssuer}}" />
-                    <span>
-                        {{range $key, $val := .errorsMap.SignKeyIssuer}}
-                            {{ $val.Error | i18n }}
-                        {{end}}
-                    </span>
-                </div>
-                <div class="rc-form-group {{ if .errorsMap.SignKeyPwd }}error{{end}}">
-                    <label for="sign-key-pwd">Пароль до файлового ключа</label>
-                    <input class="optional-key" type="password" id="sign-key-pwd" name="sign-key-pwd" value="{{.model.SignKeyPwd}}" />
-                    <span>
-                        {{range $key, $val := .errorsMap.SignKeyPwd}}
-                            {{ $val.Error | i18n }}
-                        {{end}}
-                    </span>
-                </div>
-                <h3>Дані для перевірки ключа</h3>
-                <hr />
-                <div class="rc-form-group {{ if .errorsMap.CACertificate }}error{{end}}">
-                    <label for="ca-cert">Публічні сертифікати АЦСК (розширення .p7b)</label>
-                    <input class="optional-key" type="file" name="ca-cert" id="ca-cert" accept=".p7b" />
-                    <span>
-                        {{range $key, $val := .errorsMap.CACertificate}}
-                            {{ $val.Error | i18n }}
-                        {{end}}
-                    </span>
-                </div>
-                <div class="rc-form-group {{ if .errorsMap.CAsJSON }}error{{end}}">
-                    <label for="ca-json">Список АЦСК (розширення .json)</label>
-                    <input class="optional-key" type="file" name="ca-json" id="ca-json" accept=".json" />
-                    <span>
-                        {{range $key, $val := .errorsMap.CAsJSON}}
-                            {{ $val.Error | i18n }}
-                        {{end}}
-                    </span>
-                </div>
+                {{ template "key-form" . }}
             </div>
             <div class="rc-form-group">
                 <button type="submit" name="submit">Підтвердити</button>
             </div>
         </form>
     </div>
+    <script src="{{ .BasePath }}/static/js/mustache.js"></script>
+    <script id="ini-template" type="x-tmpl-mustache">
+        {{ .hwINITemplateContent }}
+    </script>
+    <script id="allowed-keys-template" type="x-tmpl-mustache">
+        <div class="allowed-keys-row">
+            <input name="allowed-keys-issuer[]" class="allowed-keys-input" required aria-label="key issuer" placeholder="Емітент ключа" class="allowed-keys-issuer" type="text" />
+            <input name="allowed-keys-serial[]" class="allowed-keys-input" required aria-label="key serial" placeholder="Серійний номер ключа" class="allowed-keys-serial" type="text" />
+            <button class="allowed-keys-remove-btn">-</button>
+        </div>
+    </script>
     <script type="text/javascript">
+        let editKeyChecked = function(){
+            let checked = $("#edit-key").prop('checked'),
+                keyBlock = $("#key-block");
+            keyBlock.find("input").prop('disabled', !checked);
+
+            if (checked) {
+                keyBlock.show();
+                $("#key-device-type").change();
+            } else {
+                keyBlock.hide();
+            }
+
+
+        };
+
         $(function () {
-            $("#edit-key").prop( "checked", false );
+            let editKey = $("#edit-key");
 
-            $("#edit-key").change(function (e) {
-                let checked = $("#edit-key").prop('checked');
-                $(".optional-key").prop('required', checked);
-                $("#key-block").toggle();
-            });
-
-            $("input").on('change invalid', function(){
-                let input = $(this).get(0);
-                input.scrollIntoView();
-                input.setCustomValidity('');
-                let inputName = $(input).attr("name");
-
-                if (!input.validity.valid) {
-                    let errorMessages = {
-                        'name':   'Будь-ласка вкажіть назву у відповідному форматі',
-                        'key6': 'Будь-ласка оберіть файловий ключ',
-                        'sign-key-issuer': 'Будь-ласка вкажіть АЦСК, що видав ключ',
-                        'sign-key-pwd': 'Будь-ласка вкажіть пароль до файлового ключа',
-                        'ca-cert': 'Будь-ласка оберіть публічні сертифікати АЦСК',
-                        'ca-json': 'Будь-ласка оберіть список АЦСК',
-                        'admins': 'Будь-ласка вкажіть адміністраторів у відповідному форматі',
-                    };
-                    let errorMessage = errorMessages[inputName];
-                    if (errorMessage) {
-                        input.setCustomValidity(errorMessage);
-                    }
-                }
-            });
-        })
+            editKey.change(editKeyChecked);
+            editKey.prop("checked", false);
+            editKeyChecked();
+        });
 
     </script>
+    <script type="text/javascript" src="{{ .BasePath }}/static/js/registry-form.js"></script>
     {{template "footer" .}}
 {{ end }}

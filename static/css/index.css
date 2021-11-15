@@ -11833,3 +11833,39 @@ div#kubernetes-component {
 /*.dataTables_filter {*/
 /*    display: none;*/
 /*}*/
+
+.key-type-section {
+    margin-bottom: 24px;
+}
+
+#remote-ini-config {
+    font-size: 12px;
+}
+
+.allowed-keys-add {
+    width: 28px;
+    height: 28px;
+    margin-left: 10px;
+}
+
+.allowed-keys-row {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 10px;
+}
+
+.allowed-keys-body input {
+    width: 209px;
+}
+
+.allowed-keys-body input {
+    margin-right: 10px;
+}
+
+.allowed-keys-body button {
+    height: 40px;
+    width: 40px;
+    background: #EE5E73;
+    cursor: pointer;
+    display: inline;
+}
