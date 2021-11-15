@@ -33,7 +33,7 @@ type JenkinsService interface {
 
 type EDPComponentService interface {
 	Get(name string) (*edpComponent.EDPComponent, error)
-	GetAllNamespace(ns string) ([]edpComponent.EDPComponent, error)
+	GetAllNamespace(ns string, visibleOnly bool) ([]edpComponent.EDPComponent, error)
 }
 
 type App struct {

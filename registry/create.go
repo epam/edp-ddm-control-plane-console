@@ -11,8 +11,11 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
+	"os"
 	"strings"
 	"time"
+
+	"gopkg.in/yaml.v2"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -22,17 +25,9 @@ import (
 )
 
 const (
-	key6FormKey                          = "key6"
-	caCertFormKey                        = "ca-cert"
-	caJSONFormKey                        = "ca-json"
-	key6SecretKey                        = "Key-6.dat"
-	digitalSignatureKeyIssuerSecretKey   = "digital-signature-key-issuer"
-	digitalSignatureKeyPasswordSecretKey = "digital-signature-key-password"
-	caCertificatesSecretKey              = "CACertificates.p7b"
-	CAsJSONSecretKey                     = "CAs.json"
-	AdminsAnnotation                     = "registry-parameters/administrators"
-	gerritCreatorUsername                = "user"
-	gerritCreatorPassword                = "password"
+	AdminsAnnotation      = "registry-parameters/administrators"
+	gerritCreatorUsername = "user"
+	gerritCreatorPassword = "password"
 )
 
 func (a *App) createRegistryGet(ctx *gin.Context) (response *router.Response, retErr error) {
@@ -42,23 +37,26 @@ func (a *App) createRegistryGet(ctx *gin.Context) (response *router.Response, re
 	}
 	prjs = a.filterProjects(prjs)
 
-	k8sService, err := a.k8sService.ServiceForContext(a.router.ContextWithUserAccessToken(ctx))
+	userCtx := a.router.ContextWithUserAccessToken(ctx)
+	k8sService, err := a.k8sService.ServiceForContext(userCtx)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to init service for user context")
 	}
 
-	allowedToCreate, err := k8sService.CanI("v2.edp.epam.com", "codebases", "create", "")
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to check codebase creation access")
-	}
-
-	if !allowedToCreate {
+	if err := a.checkIsAllowedToCreate(k8sService); err != nil {
 		return nil, errors.Wrap(err, "access denied")
 	}
 
+	hwINITemplateContent, err := a.getINITemplateContent()
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to get ini template data")
+	}
+
 	return router.MakeResponse(200, "registry/create.html", gin.H{
-		"page":           "registry",
-		"gerritProjects": prjs,
+		"page":                 "registry",
+		"gerritProjects":       prjs,
+		"model":                registry{KeyDeviceType: KeyDeviceTypeFile},
+		"hwINITemplateContent": hwINITemplateContent,
 	}), nil
 }
 
@@ -73,28 +71,48 @@ func (a *App) filterProjects(projects []gerrit.GerritProject) []gerrit.GerritPro
 	return filteredProjects
 }
 
-func (a *App) createRegistryPost(ctx *gin.Context) (response *router.Response, retErr error) {
-	userCtx := a.router.ContextWithUserAccessToken(ctx)
-	cbService, err := a.codebaseService.ServiceForContext(userCtx)
+func (a *App) getINITemplateContent() (string, error) {
+	iniTemplate, err := os.Open(a.hardwareINITemplatePath)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to init service for user context")
+		return "", errors.Wrap(err, "unable to open ini template file")
 	}
 
+	data, err := ioutil.ReadAll(iniTemplate)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to read ini template data")
+	}
+
+	return string(data), nil
+}
+
+func (a *App) createRegistryPost(ctx *gin.Context) (response *router.Response, retErr error) {
+	userCtx := a.router.ContextWithUserAccessToken(ctx)
 	k8sService, err := a.k8sService.ServiceForContext(userCtx)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to init service for user context")
 	}
 
-	allowedToCreate, err := k8sService.CanI("v2.edp.epam.com", "codebases", "create", "")
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to check codebase creation access")
-	}
-
-	if !allowedToCreate {
+	if err := a.checkIsAllowedToCreate(k8sService); err != nil {
 		return nil, errors.Wrap(err, "access denied")
 	}
 
-	var r registry
+	cbService, err := a.codebaseService.ServiceForContext(userCtx)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to init service for user context")
+	}
+
+	hwINITemplateContent, err := a.getINITemplateContent()
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to get ini template data")
+	}
+
+	prjs, err := a.gerritService.GetProjects(context.Background())
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to list gerrit projects")
+	}
+	prjs = a.filterProjects(prjs)
+
+	r := registry{Scenario: ScenarioKeyRequired}
 	if err := ctx.ShouldBind(&r); err != nil {
 		validationErrors, ok := err.(validator.ValidationErrors)
 		if !ok {
@@ -102,7 +120,8 @@ func (a *App) createRegistryPost(ctx *gin.Context) (response *router.Response, r
 		}
 
 		return router.MakeResponse(200, "registry/create.html",
-			gin.H{"page": "registry", "errorsMap": validationErrors, "model": r}), nil
+			gin.H{"page": "registry", "errorsMap": validationErrors, "model": r,
+				"hwINITemplateContent": hwINITemplateContent, "gerritProjects": prjs}), nil
 	}
 
 	if err := a.validateCreateRegistryGitTemplate(&r); err != nil {
@@ -116,10 +135,24 @@ func (a *App) createRegistryPost(ctx *gin.Context) (response *router.Response, r
 		}
 
 		return router.MakeResponse(200, "registry/create.html",
-			gin.H{"page": "registry", "errorsMap": validationErrors, "model": r}), nil
+			gin.H{"page": "registry", "errorsMap": validationErrors, "model": r,
+				"hwINITemplateContent": hwINITemplateContent, "gerritProjects": prjs}), nil
 	}
 
 	return router.MakeRedirectResponse(http.StatusFound, "/admin/registry/overview"), nil
+}
+
+func (a *App) checkIsAllowedToCreate(k8sService k8s.ServiceInterface) error {
+	allowedToCreate, err := k8sService.CanI("v2.edp.epam.com", "codebases", "create", "")
+	if err != nil {
+		return errors.Wrap(err, "unable to check codebase creation access")
+	}
+
+	if !allowedToCreate {
+		return errors.Wrap(err, "access denied")
+	}
+
+	return nil
 }
 
 func (a *App) validateCreateRegistryGitTemplate(r *registry) error {
@@ -152,7 +185,7 @@ func (a *App) createRegistry(r *registry, request *http.Request, cbService codeb
 		return errors.Wrap(err, "unknown error")
 	}
 
-	if err := a.createRegistryKeys(r, request, true, k8sService); err != nil {
+	if err := a.createRegistryKeys(r, request, k8sService); err != nil {
 		return errors.Wrap(err, "unable to create registry keys")
 	}
 
@@ -201,6 +234,10 @@ func (a *App) createRegistry(r *registry, request *http.Request, cbService codeb
 
 	annotations := make(map[string]string)
 	if r.Admins != "" {
+		if err := validateAdmins(r.Admins); err != nil {
+			return err
+		}
+
 		annotations[AdminsAnnotation] = base64.StdEncoding.EncodeToString([]byte(r.Admins))
 	}
 	cb.Annotations = annotations
@@ -220,36 +257,30 @@ func (a *App) createRegistry(r *registry, request *http.Request, cbService codeb
 	return nil
 }
 
-func validateRegistryKeys(registry *registry, rq *http.Request, required bool) (createKeys bool, key6Fl, caCertFl,
+func validateRegistryKeys(rq *http.Request, r *registry) (createKeys bool, key6Fl, caCertFl,
 	caJSONFl multipart.File, err error) {
 
 	var fieldErrors []validator.FieldError
-	key6Fl, _, err = rq.FormFile(key6FormKey)
+	caCertFl, _, err = rq.FormFile("ca-cert")
 	if err != nil {
-		if !required {
+		if !r.KeysRequired() {
 			err = nil
 			return
 		}
 
-		fieldErrors = append(fieldErrors, router.MakeFieldError("Key6", "required"))
-	}
-
-	caCertFl, _, err = rq.FormFile(caCertFormKey)
-	if err != nil {
 		fieldErrors = append(fieldErrors, router.MakeFieldError("CACertificate", "required"))
 	}
 
-	caJSONFl, _, err = rq.FormFile(caJSONFormKey)
+	caJSONFl, _, err = rq.FormFile("ca-json")
 	if err != nil {
 		fieldErrors = append(fieldErrors, router.MakeFieldError("CAsJSON", "required"))
 	}
 
-	if registry.SignKeyPwd == "" {
-		fieldErrors = append(fieldErrors, router.MakeFieldError("SignKeyPwd", "required"))
-	}
-
-	if registry.SignKeyIssuer == "" {
-		fieldErrors = append(fieldErrors, router.MakeFieldError("SignKeyIssuer", "required"))
+	if r.KeyDeviceType == KeyDeviceTypeFile {
+		key6Fl, _, err = rq.FormFile("key6")
+		if err != nil {
+			fieldErrors = append(fieldErrors, router.MakeFieldError("Key6", "required"))
+		}
 	}
 
 	if len(fieldErrors) > 0 {
@@ -261,8 +292,8 @@ func validateRegistryKeys(registry *registry, rq *http.Request, required bool) (
 	return
 }
 
-func (a *App) createRegistryKeys(registry *registry, rq *http.Request, required bool, k8sService k8s.ServiceInterface) error {
-	createKeys, key6Fl, caCertFl, caJSONFl, err := validateRegistryKeys(registry, rq, required)
+func (a *App) createRegistryKeys(reg *registry, rq *http.Request, k8sService k8s.ServiceInterface) error {
+	createKeys, key6Fl, caCertFl, caJSONFl, err := validateRegistryKeys(rq, reg)
 	if err != nil {
 		return errors.Wrap(err, "unable to validate registry keys")
 	}
@@ -270,36 +301,89 @@ func (a *App) createRegistryKeys(registry *registry, rq *http.Request, required 
 		return nil
 	}
 
-	key6Bytes, err := ioutil.ReadAll(key6Fl)
-	if err != nil {
-		return errors.Wrap(err, "unable to read file")
+	filesSecretData := make(map[string][]byte)
+	envVarsSecretData := map[string][]byte{
+		"sign.key.device-type": []byte(reg.KeyDeviceType),
 	}
 
+	if err := a.setCASecretData(filesSecretData, caCertFl, caJSONFl); err != nil {
+		return errors.Wrap(err, "unable to set ca secret data for registry")
+	}
+
+	if err := a.setKeySecretDataFromRegistry(reg, key6Fl, filesSecretData, envVarsSecretData); err != nil {
+		return errors.Wrap(err, "unable to set key vars from registry form")
+	}
+
+	if err := a.setAllowedKeysSecretData(filesSecretData, reg); err != nil {
+		return errors.Wrap(err, "unable to set allowed keys secret data")
+	}
+
+	if err := k8sService.RecreateSecret(fmt.Sprintf("digital-signature-ops-%s-data", reg.Name),
+		filesSecretData); err != nil {
+		return errors.Wrap(err, "unable to create secret")
+	}
+
+	if err := k8sService.RecreateSecret(fmt.Sprintf("digital-signature-ops-%s-env-vars", reg.Name),
+		envVarsSecretData); err != nil {
+		return errors.Wrap(err, "unable to create secret")
+	}
+
+	return nil
+}
+
+func (a *App) setKeySecretDataFromRegistry(reg *registry, key6Fl multipart.File,
+	filesSecretData, envVarsSecretData map[string][]byte) error {
+
+	if reg.KeyDeviceType == KeyDeviceTypeFile {
+		key6Bytes, err := ioutil.ReadAll(key6Fl)
+		if err != nil {
+			return errors.Wrap(err, "unable to read file")
+		}
+		filesSecretData["Key-6.dat"] = key6Bytes
+
+		envVarsSecretData["sign.key.file.issuer"] = []byte(reg.SignKeyIssuer)
+		envVarsSecretData["sign.key.file.password"] = []byte(reg.SignKeyPwd)
+	} else if reg.KeyDeviceType == KeyDeviceTypeHardware {
+		envVarsSecretData["sign.key.hardware.type"] = []byte(reg.RemoteType)
+		envVarsSecretData["sign.key.hardware.device"] = []byte(fmt.Sprintf("%s:%s (%s)",
+			reg.RemoteSerialNumber, reg.RemoteKeyPort, reg.RemoteKeyHost))
+		envVarsSecretData["sign.key.hardware.password"] = []byte(reg.RemoteKeyPassword)
+		filesSecretData["osplm.ini"] = []byte(reg.INIConfig)
+	}
+
+	return nil
+}
+
+func (a *App) setCASecretData(filesSecretData map[string][]byte, caCertFl, caJSONFl multipart.File) error {
 	caCertBytes, err := ioutil.ReadAll(caCertFl)
 	if err != nil {
 		return errors.Wrap(err, "unable to read file")
 	}
+	filesSecretData["CACertificates.p7b"] = caCertBytes
 
 	casJSONBytes, err := ioutil.ReadAll(caJSONFl)
 	if err != nil {
 		return errors.Wrap(err, "unable to read file")
 	}
+	filesSecretData["CAs.json"] = casJSONBytes
 
-	if err := k8sService.RecreateSecret(fmt.Sprintf("system-digital-sign-%s-key", registry.Name),
-		map[string][]byte{
-			key6SecretKey:                        key6Bytes,
-			digitalSignatureKeyIssuerSecretKey:   []byte(registry.SignKeyIssuer),
-			digitalSignatureKeyPasswordSecretKey: []byte(registry.SignKeyPwd),
-		}); err != nil {
-		return errors.Wrap(err, "unable to create secret")
-	}
+	return nil
+}
 
-	if err := k8sService.RecreateSecret(fmt.Sprintf("system-digital-sign-%s-ca", registry.Name),
-		map[string][]byte{
-			caCertificatesSecretKey: caCertBytes,
-			CAsJSONSecretKey:        casJSONBytes,
-		}); err != nil {
-		return errors.Wrap(err, "unable to create secret")
+func (a *App) setAllowedKeysSecretData(filesSecretData map[string][]byte, reg *registry) error {
+	if len(reg.AllowedKeysIssuer) > 0 {
+		var allowedKeysConf allowedKeysConfig
+		for i := range reg.AllowedKeysIssuer {
+			allowedKeysConf.AllowedKeys = append(allowedKeysConf.AllowedKeys, allowedKey{
+				Issuer: reg.AllowedKeysIssuer[i],
+				Serial: reg.AllowedKeysSerial[i],
+			})
+		}
+		allowedKeysYaml, err := yaml.Marshal(&allowedKeysConf)
+		if err != nil {
+			return errors.Wrap(err, "unable to encode allowed keys to yaml")
+		}
+		filesSecretData["allowed-keys.yml"] = allowedKeysYaml
 	}
 
 	return nil
@@ -323,8 +407,8 @@ func (a *App) createTempSecrets(cb *codebase.Codebase, k8sService k8s.ServiceInt
 
 	repoSecretName := fmt.Sprintf("repository-codebase-%s-temp", cb.Name)
 	if err := k8sService.RecreateSecret(repoSecretName, map[string][]byte{
-		"username": username,
-		"password": pwd,
+		gerritCreatorUsername: username,
+		gerritCreatorPassword: pwd,
 	}); err != nil {
 		return errors.Wrapf(err, "unable to create secret: %s", repoSecretName)
 	}

@@ -28,7 +28,7 @@ type Router interface {
 
 type EDPComponentService interface {
 	Get(name string) (*edpComponent.EDPComponent, error)
-	GetAllNamespace(ns string) ([]edpComponent.EDPComponent, error)
+	GetAllNamespace(ns string, visibleOnly bool) ([]edpComponent.EDPComponent, error)
 }
 
 type JenkinsService interface {
@@ -47,6 +47,7 @@ type App struct {
 	gerritRegistryHost      string
 	jenkinsService          JenkinsService
 	timezone                string
+	hardwareINITemplatePath string
 }
 
 func Make(router Router, logger Logger, codebaseService codebase.ServiceInterface, edpComponentService EDPComponentService,
@@ -64,6 +65,7 @@ func Make(router Router, logger Logger, codebaseService codebase.ServiceInterfac
 		gerritService:           gerritService,
 		gerritRegistryPrefix:    cnf.RegistryRepoPrefix,
 		gerritRegistryHost:      cnf.RegistryRepoHost,
+		hardwareINITemplatePath: cnf.RegistryHardwareKeyINITemplatePath,
 	}
 
 	app.createRoutes()
