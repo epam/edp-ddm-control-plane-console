@@ -24,6 +24,7 @@ COPY static static
 COPY templates templates
 COPY default.env .
 COPY locale locale
+COPY osplm.ini .
 
 USER ${USER_UID}
 
