@@ -10,7 +10,7 @@
             </a>
             {{end}}
         </div>
-        <div class="registry-description cluster">Керавання обчислювальними ресурсами кластера, мережою кластеру, налаштування компонентів кластеру, доступу до них.</div>
+        <div class="registry-description cluster">Керування обчислювальними ресурсами кластеру, мережею кластеру, налаштування компонентів кластеру, доступу до них.</div>
 
         <div class="rg-info-block">
             <div class="rg-info-block-header">
@@ -47,8 +47,6 @@
                             <th>VCS</th>
                             <th>CI</th>
                             <th>Версія</th>
-                            <th>Номер збірки</th>
-                            <th>Остання вдала збірка</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -71,8 +69,6 @@
                                     </a>
                                 </td>
                                 <td>{{$br.Spec.Version}}</td>
-                                <td>{{$br.Status.Build}}</td>
-                                <td>{{if $br.Status.LastSuccessfulBuild}}{{$br.Status.LastSuccessfulBuild}}{{else}}-{{end}}</td>
                             </tr>
                         {{end}}
                         </tbody>
