@@ -407,7 +407,7 @@ func (a *App) createTempSecrets(cb *codebase.Codebase, k8sService k8s.ServiceInt
 
 	repoSecretName := fmt.Sprintf("repository-codebase-%s-temp", cb.Name)
 	if err := k8sService.RecreateSecret(repoSecretName, map[string][]byte{
-		gerritCreatorUsername: username,
+		"username":            username,
 		gerritCreatorPassword: pwd,
 	}); err != nil {
 		return errors.Wrapf(err, "unable to create secret: %s", repoSecretName)
