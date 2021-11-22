@@ -340,15 +340,28 @@ func (a *App) setKeySecretDataFromRegistry(reg *registry, key6Fl multipart.File,
 			return errors.Wrap(err, "unable to read file")
 		}
 		filesSecretData["Key-6.dat"] = key6Bytes
-
 		envVarsSecretData["sign.key.file.issuer"] = []byte(reg.SignKeyIssuer)
 		envVarsSecretData["sign.key.file.password"] = []byte(reg.SignKeyPwd)
+
+		//TODO: temporary hack, remote in future
+		envVarsSecretData["sign.key.hardware.type"] = []byte{}
+		envVarsSecretData["sign.key.hardware.device"] = []byte{}
+		envVarsSecretData["sign.key.hardware.password"] = []byte{}
+		filesSecretData["osplm.ini"] = []byte{}
+		// end todo
+
 	} else if reg.KeyDeviceType == KeyDeviceTypeHardware {
 		envVarsSecretData["sign.key.hardware.type"] = []byte(reg.RemoteType)
 		envVarsSecretData["sign.key.hardware.device"] = []byte(fmt.Sprintf("%s:%s (%s)",
 			reg.RemoteSerialNumber, reg.RemoteKeyPort, reg.RemoteKeyHost))
 		envVarsSecretData["sign.key.hardware.password"] = []byte(reg.RemoteKeyPassword)
 		filesSecretData["osplm.ini"] = []byte(reg.INIConfig)
+
+		//TODO: temporary hack, remote in future
+		filesSecretData["Key-6.dat"] = []byte{}
+		envVarsSecretData["sign.key.file.issuer"] = []byte{}
+		envVarsSecretData["sign.key.file.password"] = []byte{}
+		// end todo
 	}
 
 	return nil
@@ -371,6 +384,10 @@ func (a *App) setCASecretData(filesSecretData map[string][]byte, caCertFl, caJSO
 }
 
 func (a *App) setAllowedKeysSecretData(filesSecretData map[string][]byte, reg *registry) error {
+	//TODO tmp hack, remote in future
+	filesSecretData["allowed-keys.yml"] = []byte{}
+	//end todo
+
 	if len(reg.AllowedKeysIssuer) > 0 {
 		var allowedKeysConf allowedKeysConfig
 		for i := range reg.AllowedKeysIssuer {
