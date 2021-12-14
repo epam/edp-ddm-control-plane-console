@@ -161,5 +161,11 @@
     <h3>Список дозволених ключів <button class="allowed-keys-add" id="allowed-keys-add">+</button></h3>
     <hr />
     <div class="rc-form-group allowed-keys-body" id="allowed-keys-body">
+        <div class="allowed-keys-row">
+            <input name="allowed-keys-issuer[]" class="allowed-keys-input allowed-keys-issuer" required
+                   aria-label="key issuer" placeholder="Емітент ключа" type="text" />
+            <input name="allowed-keys-serial[]" class="allowed-keys-input allowed-keys-serial" required
+                   aria-label="key serial" placeholder="Серійний номер ключа" type="text" />
+        </div>
     </div>
 {{end}}

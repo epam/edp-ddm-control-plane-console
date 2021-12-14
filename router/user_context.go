@@ -14,6 +14,7 @@ const (
 	UserNameSessionKey                 = "user-full-name"
 	CanViewClusterManagementSessionKey = "can-view-cluster-management"
 	CanViewRegistriesSessionKey        = "can-view-registries"
+	CanCreateRegistriesSessionKey      = "can-create-registries"
 )
 
 func (r *Router) ContextWithUserAccessToken(ctx *gin.Context) context.Context {
@@ -39,28 +40,13 @@ func UserDataMiddleware(ctx *gin.Context) {
 	}
 
 	session := sessions.Default(ctx)
+	vars := []string{UserNameSessionKey, CanViewClusterManagementSessionKey, CanViewRegistriesSessionKey,
+		CanCreateRegistriesSessionKey}
 
-	sessVal := session.Get(UserNameSessionKey)
-	if sessVal != nil {
-		val, ok := sessVal.(string)
-		if ok {
-			ctx.Set(UserNameSessionKey, val)
-		}
-	}
-
-	sessVal = session.Get(CanViewClusterManagementSessionKey)
-	if sessVal != nil {
-		val, ok := sessVal.(bool)
-		if ok {
-			ctx.Set(CanViewClusterManagementSessionKey, val)
-		}
-	}
-
-	sessVal = session.Get(CanViewRegistriesSessionKey)
-	if sessVal != nil {
-		val, ok := sessVal.(bool)
-		if ok {
-			ctx.Set(CanViewRegistriesSessionKey, val)
+	for _, v := range vars {
+		val := session.Get(v)
+		if val != nil {
+			ctx.Set(v, val)
 		}
 	}
 

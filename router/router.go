@@ -68,7 +68,7 @@ func (r *Router) makeViewResponder(handler func(ctx *gin.Context) (*Response, er
 
 func (r *Router) includeSessionVars(ctx *gin.Context, params gin.H) gin.H {
 	params["username"] = ctx.GetString(UserNameSessionKey)
-	params["canViewRegistries"] = ctx.GetBool(CanViewRegistriesSessionKey)
+	params["canViewRegistries"] = ctx.GetBool(CanViewRegistriesSessionKey) || ctx.GetBool(CanCreateRegistriesSessionKey)
 	params["canViewClusterManagement"] = ctx.GetBool(CanViewClusterManagementSessionKey)
 
 	return params
