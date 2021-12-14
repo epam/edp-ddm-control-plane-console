@@ -27,8 +27,8 @@ type registry struct {
 	RemoteKeyMask       string   `form:"remote-key-mask" binding:"required_if=KeyDeviceType hardware Scenario key-required"`
 	Scenario            string   `binding:"oneof=key-required key-not-required"`
 	INIConfig           string   `form:"remote-ini-config" binding:"required_if=KeyDeviceType hardware Scenario key-required"`
-	AllowedKeysSerial   []string `form:"allowed-keys-serial[]"`
-	AllowedKeysIssuer   []string `form:"allowed-keys-issuer[]"`
+	AllowedKeysSerial   []string `form:"allowed-keys-serial[]" binding:"required_if=Scenario key-required"`
+	AllowedKeysIssuer   []string `form:"allowed-keys-issuer[]" binding:"required_if=Scenario key-required"`
 }
 
 func (r *registry) KeysRequired() bool {
