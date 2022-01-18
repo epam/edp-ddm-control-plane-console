@@ -13,6 +13,18 @@ rules:
       - codebases
       - codebasebranches
   - verbs:
+      - list
+      - get
+      - create
+      - patch
+      - watch
+      - update
+    apiGroups:
+      - '*'
+    resources:
+      - codebases/finalizers
+      - codebasebranches/finalizers
+  - verbs:
       - get
       - watch
       - list
@@ -24,5 +36,21 @@ rules:
     resources:
       - codebases
       - codebasebranches
+      - codebases/finalizers
+      - codebasebranches/finalizers
     resourceNames:
       - cluster-mgmt
+  - apiGroups:
+      - '*'
+    verbs:
+      - create
+    resources:
+      - secrets
+  - apiGroups:
+      - '*'
+    verbs:
+      - get
+    resources:
+      - secrets
+    resourceNames:
+      - gerrit-project-creator-password
