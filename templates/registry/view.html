@@ -126,6 +126,42 @@
         </div>
     </div>
     {{end}}
+    {{ if .mergeRequests}}
+        <div class="rg-info-block">
+            <div class="rg-info-block-header">
+                <span>Запити на оновлення</span>
+                <img src="{{ .BasePath }}/static/img/action-toggle.png" alt="toggle block" />
+            </div>
+            <div class="rg-info-block-body">
+                <table class="rg-info-table rg-info-table-config">
+                    <thead>
+                    <tr>
+                        <th>Дата</th>
+                        <th>Назва</th>
+                        <th>Статус</th>
+                        <th>Посилання</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {{range $index, $al := .mergeRequests}}
+                        <tr>
+                            <td>{{$al.FormattedCreatedAt}}</td>
+                            <td>{{$al.Name}}</td>
+                            <td>{{$al.Status.Value}}</td>
+                            <td>
+                                {{if $al.Status.ChangeURL}}
+                                    <a href="{{$al.Status.ChangeURL}}" target="_blank">
+                                        <img alt="vcs" src="{{ $.BasePath }}/static/img/action-link.png" />
+                                    </a>
+                                {{end}}
+                            </td>
+                        </tr>
+                    {{end}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {{end}}
     {{ if .edpComponents}}
     <div class="dashboard-panel registry-dashboard-panel">
         <ul>
@@ -141,6 +177,7 @@
         </ul>
     </div>
     {{end}}
+
 </div>
 
     {{template "footer" .}}

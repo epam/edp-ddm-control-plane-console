@@ -30,6 +30,19 @@
                 <p>Допустимі символи: "0-9", "a-z", "_", "-", "@", ".", ",".</p>
             </div>
 
+            {{ if .hasUpdate }}
+            <div class="rc-form-group {{ if .errorsMap.UpdateBranch }}error{{end}}">
+                <label for="registry-update-branch">Оновити реєстр</label>
+                <select required name="registry-update-branch" id="registry-update-branch">
+                    <option></option>
+                    {{range $key, $val := .updateBranches}}
+                        <option>{{$val}}</option>
+                    {{end}}
+                </select>
+                <span>{{range $key, $val := .errorsMap.UpdateBranch}}{{ $val }}{{end}}</span>
+            </div>
+            {{ end }}
+
             <div>
                 <input type="checkbox" id="edit-key">
                 <label for="edit-key">Редагувати дані про ключ</label>

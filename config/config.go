@@ -1,5 +1,14 @@
 package config
 
+import (
+	"ddm-admin-console/service/codebase"
+	edpcomponent "ddm-admin-console/service/edp_component"
+	"ddm-admin-console/service/gerrit"
+	"ddm-admin-console/service/jenkins"
+	"ddm-admin-console/service/k8s"
+	"ddm-admin-console/service/openshift"
+)
+
 type Settings struct {
 	HTTPPort                           string `envconfig:"HTTP_PORT" default:"8080"`
 	LogLevel                           string `envconfig:"LOG_LEVEL" default:"INFO"`
@@ -18,4 +27,14 @@ type Settings struct {
 	RegistryRepoPrefix                 string `envconfig:"REGISTRY_REPO_PREFIX" default:"registry-tenant-template-"`
 	RegistryRepoHost                   string `envconfig:"REGISTRY_REPO_HOST"`
 	RegistryHardwareKeyINITemplatePath string `envconfig:"REGISTRY_HW_KEY_INI_TPL_PATH" default:"osplm.ini"`
+	RootGerritName                     string `envconfig:"ROOT_GERRIT_NAME" default:"gerrit"`
+}
+
+type Services struct {
+	Codebase     codebase.ServiceInterface
+	EDPComponent edpcomponent.ServiceInterface
+	K8S          k8s.ServiceInterface
+	OpenShift    openshift.ServiceInterface
+	Gerrit       gerrit.ServiceInterface
+	Jenkins      jenkins.ServiceInterface
 }

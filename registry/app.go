@@ -1,17 +1,16 @@
 package registry
 
 import (
-	"context"
 	"ddm-admin-console/config"
 	"ddm-admin-console/router"
 	"ddm-admin-console/service/codebase"
 	edpComponent "ddm-admin-console/service/edp_component"
 	"ddm-admin-console/service/gerrit"
+	"ddm-admin-console/service/jenkins"
 	"ddm-admin-console/service/k8s"
 
 	"github.com/pkg/errors"
 
-	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
 
@@ -20,49 +19,32 @@ type Logger interface {
 	Info(msg string, fields ...zap.Field)
 }
 
-type Router interface {
-	GET(relativePath string, handler func(ctx *gin.Context) (*router.Response, error))
-	POST(relativePath string, handler func(ctx *gin.Context) (*router.Response, error))
-	ContextWithUserAccessToken(ctx *gin.Context) context.Context
-}
-
-type EDPComponentService interface {
-	Get(name string) (*edpComponent.EDPComponent, error)
-	GetAllNamespace(ns string, visibleOnly bool) ([]edpComponent.EDPComponent, error)
-}
-
-type JenkinsService interface {
-	CreateJobBuildRun(name, jobPath string, jobParams map[string]string) error
-}
-
 type App struct {
-	router                  Router
+	router                  router.Interface
 	logger                  Logger
 	codebaseService         codebase.ServiceInterface
 	gerritService           gerrit.ServiceInterface
-	edpComponentService     EDPComponentService
+	edpComponentService     edpComponent.ServiceInterface
 	k8sService              k8s.ServiceInterface
 	gerritCreatorSecretName string
 	gerritRegistryPrefix    string
 	gerritRegistryHost      string
-	jenkinsService          JenkinsService
+	jenkinsService          jenkins.ServiceInterface
 	timezone                string
 	hardwareINITemplatePath string
 }
 
-func Make(router Router, logger Logger, codebaseService codebase.ServiceInterface, edpComponentService EDPComponentService,
-	k8sService k8s.ServiceInterface, jenkinsService JenkinsService, gerritService gerrit.ServiceInterface,
-	cnf *config.Settings) (*App, error) {
+func Make(router router.Interface, logger Logger, services *config.Services, cnf *config.Settings) (*App, error) {
 	app := &App{
 		logger:                  logger,
 		router:                  router,
-		codebaseService:         codebaseService,
-		edpComponentService:     edpComponentService,
-		k8sService:              k8sService,
+		codebaseService:         services.Codebase,
+		edpComponentService:     services.EDPComponent,
+		k8sService:              services.K8S,
 		gerritCreatorSecretName: cnf.GerritCreatorSecretName,
-		jenkinsService:          jenkinsService,
+		jenkinsService:          services.Jenkins,
 		timezone:                cnf.Timezone,
-		gerritService:           gerritService,
+		gerritService:           services.Gerrit,
 		gerritRegistryPrefix:    cnf.RegistryRepoPrefix,
 		gerritRegistryHost:      cnf.RegistryRepoHost,
 		hardwareINITemplatePath: cnf.RegistryHardwareKeyINITemplatePath,

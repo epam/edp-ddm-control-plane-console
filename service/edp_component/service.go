@@ -1,4 +1,4 @@
-package jenkins
+package edpcomponent
 
 import (
 	"context"

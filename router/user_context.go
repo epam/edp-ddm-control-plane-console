@@ -12,6 +12,7 @@ const (
 	AuthTokenSessionKey                = "access-token"
 	AuthTokenValidSessionKey           = "access-token-valid"
 	UserNameSessionKey                 = "user-full-name"
+	UserEmailSessionKey                = "user-email"
 	CanViewClusterManagementSessionKey = "can-view-cluster-management"
 	CanViewRegistriesSessionKey        = "can-view-registries"
 	CanCreateRegistriesSessionKey      = "can-create-registries"
@@ -41,7 +42,7 @@ func UserDataMiddleware(ctx *gin.Context) {
 
 	session := sessions.Default(ctx)
 	vars := []string{UserNameSessionKey, CanViewClusterManagementSessionKey, CanViewRegistriesSessionKey,
-		CanCreateRegistriesSessionKey}
+		CanCreateRegistriesSessionKey, UserEmailSessionKey}
 
 	for _, v := range vars {
 		val := session.Get(v)
