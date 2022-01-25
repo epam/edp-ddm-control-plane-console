@@ -2,9 +2,10 @@ package dashboard
 
 import (
 	"context"
+	"net/http"
+
 	"ddm-admin-console/router"
 	"ddm-admin-console/service/k8s"
-	"net/http"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -27,7 +28,9 @@ func (a *App) auth(ctx *gin.Context) (response *router.Response, retErr error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get open shift user")
 	}
+
 	session.Set(router.UserNameSessionKey, user.FullName)
+	session.Set(router.UserEmailSessionKey, user.ObjectMeta.Name)
 
 	if err := a.setRegistryPermissionsToSession(userCtx, session); err != nil {
 		return nil, errors.Wrap(err, "unable to set registry permissions to session")

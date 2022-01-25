@@ -46,6 +46,11 @@ func (a *App) viewRegistry(ctx *gin.Context) (*router.Response, error) {
 		return nil, errors.Wrap(err, "unable to list namespaced edp components")
 	}
 
+	mrs, err := a.gerritService.GetMergeRequestByProject(ctx, registry.Name)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to list gerrit merge requests")
+	}
+
 	allowedToEdit, err := k8sService.CanI("v2.edp.epam.com", "codebases", "update", registry.Name)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to check codebase creation access")
@@ -59,5 +64,6 @@ func (a *App) viewRegistry(ctx *gin.Context) (*router.Response, error) {
 		"page":          "registry",
 		"edpComponents": namespacedEDPComponents,
 		"allowedToEdit": allowedToEdit,
+		"mergeRequests": mrs,
 	}), nil
 }

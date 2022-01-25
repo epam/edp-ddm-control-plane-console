@@ -2,14 +2,17 @@ package dashboard
 
 import (
 	"context"
-	"ddm-admin-console/auth"
+	"net/http"
+
+	"ddm-admin-console/config"
 	"ddm-admin-console/router"
 	"ddm-admin-console/service/codebase"
 	edpComponent "ddm-admin-console/service/edp_component"
 	"ddm-admin-console/service/k8s"
 	"ddm-admin-console/service/openshift"
 
-	"github.com/gin-gonic/gin"
+	"golang.org/x/oauth2"
+
 	"go.uber.org/zap"
 )
 
@@ -18,21 +21,15 @@ type Logger interface {
 	Info(msg string, fields ...zap.Field)
 }
 
-type Router interface {
-	GET(relativePath string, handler func(ctx *gin.Context) (*router.Response, error))
-	POST(relativePath string, handler func(ctx *gin.Context) (*router.Response, error))
-	ContextWithUserAccessToken(ctx *gin.Context) context.Context
-}
-
-type EDPComponentService interface {
-	GetAll() ([]edpComponent.EDPComponent, error)
+type OAuth interface {
+	GetTokenClient(ctx context.Context, code string) (token *oauth2.Token, oauthClient *http.Client, err error)
 }
 
 type App struct {
-	router              Router
+	router              router.Interface
 	logger              Logger
-	edpComponentService EDPComponentService
-	oauth               *auth.OAuth2 //TODO: interface
+	edpComponentService edpComponent.ServiceInterface
+	oauth               OAuth
 	k8sService          k8s.ServiceInterface
 	codebaseService     codebase.ServiceInterface
 	openShiftService    openshift.ServiceInterface
@@ -40,17 +37,15 @@ type App struct {
 	clusterCodebaseName string
 }
 
-func Make(router Router, edpComponentService EDPComponentService, oauth *auth.OAuth2,
-	k8sService k8s.ServiceInterface, openShiftService openshift.ServiceInterface, cbService codebase.ServiceInterface,
-	clusterCodebaseName string) (*App, error) {
+func Make(router router.Interface, oauth OAuth, services *config.Services, clusterCodebaseName string) (*App, error) {
 	app := App{
 		router:              router,
-		edpComponentService: edpComponentService,
+		edpComponentService: services.EDPComponent,
 		oauth:               oauth,
-		k8sService:          k8sService,
-		openShiftService:    openShiftService,
+		k8sService:          services.K8S,
+		openShiftService:    services.OpenShift,
 		clusterCodebaseName: clusterCodebaseName,
-		codebaseService:     cbService,
+		codebaseService:     services.Codebase,
 	}
 
 	app.createRoutes()

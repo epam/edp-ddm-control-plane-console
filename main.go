@@ -1,6 +1,13 @@
 package main
 
 import (
+	"encoding/gob"
+	"flag"
+	"fmt"
+	"html/template"
+	"net/http"
+	"strings"
+
 	"ddm-admin-console/auth"
 	oauth "ddm-admin-console/auth"
 	"ddm-admin-console/cluster"
@@ -14,25 +21,17 @@ import (
 	"ddm-admin-console/service/jenkins"
 	"ddm-admin-console/service/k8s"
 	"ddm-admin-console/service/openshift"
-	"encoding/gob"
-	"flag"
-	"fmt"
-	"html/template"
-	"net/http"
-	"strings"
-
-	"github.com/leonelquinteros/gotext"
-
-	"golang.org/x/oauth2"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
+	"github.com/leonelquinteros/gotext"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"golang.org/x/oauth2"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -124,6 +123,43 @@ func getLogger(level, encoding string) (*zap.Logger, error) {
 	return logger, nil
 }
 
+func initServices(restConf *rest.Config, appConf *config.Settings) (*config.Services, error) {
+	var err error
+	serviceItems := config.Services{}
+
+	serviceItems.EDPComponent, err = edpComponent.Make(restConf, appConf.Namespace)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to init edp component service")
+	}
+
+	serviceItems.Codebase, err = codebase.Make(restConf, appConf.Namespace)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to init codebase service")
+	}
+
+	serviceItems.K8S, err = k8s.Make(restConf, appConf.Namespace)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to init k8s service")
+	}
+
+	serviceItems.Jenkins, err = jenkins.Make(restConf, appConf.Namespace)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to init jenkins service")
+	}
+
+	serviceItems.OpenShift, err = openshift.Make(restConf, appConf.Namespace)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to init open shift service")
+	}
+
+	serviceItems.Gerrit, err = gerrit.Make(restConf, appConf.Namespace, appConf.RootGerritName)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to create gerrit service")
+	}
+
+	return &serviceItems, nil
+}
+
 func initApps(logger *zap.Logger, cnf *config.Settings, r *gin.Engine) error {
 	restConf, err := initKubeConfig()
 	if err != nil {
@@ -135,51 +171,23 @@ func initApps(logger *zap.Logger, cnf *config.Settings, r *gin.Engine) error {
 		return errors.Wrap(err, "unable to init oauth")
 	}
 
-	edpComponentService, err := edpComponent.Make(restConf, cnf.Namespace)
-	if err != nil {
-		return errors.Wrap(err, "unable to init edp component service")
-	}
-
-	codebaseService, err := codebase.Make(restConf, cnf.Namespace)
-	if err != nil {
-		return errors.Wrap(err, "unable to init codebase service")
-	}
-
-	k8sService, err := k8s.Make(restConf, cnf.Namespace)
-	if err != nil {
-		return errors.Wrap(err, "unable to init k8s service")
-	}
-
-	jenkinsService, err := jenkins.Make(restConf, cnf.Namespace)
-	if err != nil {
-		return errors.Wrap(err, "unable to init jenkins service")
-	}
-
-	openShiftService, err := openshift.Make(restConf, cnf.Namespace)
-	if err != nil {
-		return errors.Wrap(err, "unable to init open shift service")
-	}
-
-	gerritService, err := gerrit.Make(restConf, cnf.Namespace)
-	if err != nil {
-		return errors.Wrap(err, "unable to create gerrit service")
-	}
-
 	appRouter := router.Make(r, logger)
+	serviceItems, err := initServices(restConf, cnf)
+	if err != nil {
+		return errors.Wrap(err, "unable to init services")
+	}
 
-	_, err = dashboard.Make(appRouter, edpComponentService, oa, k8sService, openShiftService, codebaseService,
-		cnf.ClusterCodebaseName)
+	_, err = dashboard.Make(appRouter, oa, serviceItems, cnf.ClusterCodebaseName)
 	if err != nil {
 		return errors.Wrap(err, "unable to make dashboard app")
 	}
 
-	_, err = registry.Make(appRouter, logger, codebaseService, edpComponentService, k8sService, jenkinsService,
-		gerritService, cnf)
+	_, err = registry.Make(appRouter, logger, serviceItems, cnf)
 	if err != nil {
 		return errors.Wrap(err, "unable to make registry app")
 	}
 
-	_, err = cluster.Make(appRouter, logger, codebaseService, jenkinsService, edpComponentService, k8sService, cnf)
+	_, err = cluster.Make(appRouter, logger, serviceItems, cnf)
 	if err != nil {
 		return errors.Wrap(err, "unable to init cluster app")
 	}

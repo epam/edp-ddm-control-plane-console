@@ -2,10 +2,6 @@ package registry
 
 import (
 	"context"
-	"ddm-admin-console/router"
-	"ddm-admin-console/service/codebase"
-	"ddm-admin-console/service/gerrit"
-	"ddm-admin-console/service/k8s"
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
@@ -14,6 +10,11 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"ddm-admin-console/router"
+	"ddm-admin-console/service/codebase"
+	"ddm-admin-console/service/gerrit"
+	"ddm-admin-console/service/k8s"
 
 	"gopkg.in/yaml.v2"
 
@@ -26,6 +27,7 @@ import (
 
 const (
 	AdminsAnnotation      = "registry-parameters/administrators"
+	GroupAnnotation       = "registry-parameters/group"
 	gerritCreatorUsername = "user"
 	gerritCreatorPassword = "password"
 )
