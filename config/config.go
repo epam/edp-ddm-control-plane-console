@@ -1,6 +1,8 @@
 package config
 
 import (
+	"go.uber.org/zap"
+
 	"ddm-admin-console/service/codebase"
 	edpcomponent "ddm-admin-console/service/edp_component"
 	"ddm-admin-console/service/gerrit"
@@ -28,6 +30,7 @@ type Settings struct {
 	RegistryRepoHost                   string `envconfig:"REGISTRY_REPO_HOST"`
 	RegistryHardwareKeyINITemplatePath string `envconfig:"REGISTRY_HW_KEY_INI_TPL_PATH" default:"osplm.ini"`
 	RootGerritName                     string `envconfig:"ROOT_GERRIT_NAME" default:"gerrit"`
+	GroupGitRepo                       string `envconfig:"GROUP_GIT_REPO"`
 }
 
 type Services struct {
@@ -37,4 +40,9 @@ type Services struct {
 	OpenShift    openshift.ServiceInterface
 	Gerrit       gerrit.ServiceInterface
 	Jenkins      jenkins.ServiceInterface
+}
+
+type Logger interface {
+	Error(msg string, fields ...zap.Field)
+	Info(msg string, fields ...zap.Field)
 }

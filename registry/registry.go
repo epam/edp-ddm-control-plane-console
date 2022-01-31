@@ -15,6 +15,7 @@ type registry struct {
 	SignKeyPwd          string   `form:"sign-key-pwd" binding:"required_if=KeyDeviceType file Scenario key-required"`
 	RegistryGitTemplate string   `form:"registry-git-template" binding:"required"`
 	RegistryGitBranch   string   `form:"registry-git-branch" binding:"required"`
+	RegistryGroup       string   `form:"registry-group"`
 	KeyDeviceType       string   `form:"key-device-type" binding:"oneof=file hardware"`
 	RemoteType          string   `form:"remote-type" binding:"required_if=KeyDeviceType hardware Scenario key-required"`
 	RemoteKeyPassword   string   `form:"remote-key-pwd" binding:"required_if=KeyDeviceType hardware Scenario key-required"`

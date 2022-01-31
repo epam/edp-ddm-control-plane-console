@@ -47,8 +47,15 @@
                             {{if .canViewRegistries}}
                             <li class="nav-item {{if eq .page "registry"}}active{{end}}" >
                                 <a class="nav-link pl-0" href="{{ .BasePath }}/admin/registry/overview">
-                                    <i class="icon-dashboard" style="background: url('{{ .BasePath }}/static/img/dash.png')"></i>
+                                    <i class="icon-dashboard"
+                                       style="margin-top: 5px;background: url('{{ .BasePath }}/static/img/list_bullet.png') no-repeat"></i>
                                     <span class="link-name">РЕЄСТРИ</span>
+                                </a>
+                            </li>
+                            <li class="nav-item {{if eq .page "group"}}active{{end}}" >
+                                <a class="nav-link pl-0" href="{{ .BasePath }}/admin/group/overview">
+                                    <i class="icon-dashboard" style="width: 22px;margin-left:-1px;margin-top:-4px;background: url('{{ .BasePath }}/static/img/groups.png')"></i>
+                                    <span style="word-spacing: 0;width: 125px;" class="link-name">ГРУПИ РЕЄСТРІВ</span>
                                 </a>
                             </li>
                             {{end}}

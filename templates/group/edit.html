@@ -1,0 +1,28 @@
+{{ define "group/edit.html" }}
+{{template "header" .}}
+<div class="registry registry-create">
+    <div class="registry-header">
+        <a href="{{ .BasePath }}/admin/group/overview" class="registry-add">
+            <img alt="add registry" src="{{ .BasePath }}/static/img/action-back.png" />
+            <span>НАЗАД</span>
+        </a>
+    </div>
+    <h1>Редагувати групу "{{.group.Name}}"</h1>
+    <div class="registry-description">Можлива зміна опису групи. Змінити назву неможливо.</div>
+
+    <form class="registry-create-form" method="post" action="" enctype="multipart/form-data">
+        <input type="hidden" name="_xsrf" value="{{ .xsrfdata }}" />
+        <div class="rc-form-group">
+            <label for="description">Опис</label>
+            <textarea rows="3" name="description" id="description" maxlength="250">{{ .group.Description }}</textarea>
+            <span>{{range $key, $val := .errorsMap.Description}}{{ $val }}{{end}}</span>
+            <p>Опис може містити офіційну назву групи чи її призначення.</p>
+        </div>
+
+        <div class="rc-form-group">
+            <button type="submit" name="submit">Підтвердити</button>
+        </div>
+    </form>
+</div>
+{{template "footer" .}}
+{{end}}

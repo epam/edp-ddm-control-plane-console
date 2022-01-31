@@ -87,7 +87,7 @@ func (s *Service) GetProject(ctx context.Context, name string) (*GerritProject, 
 		}
 	}
 
-	return nil, errors.New("unable to find gerrit project")
+	return nil, service.ErrNotFound("unable to find gerrit project")
 }
 
 func (s *Service) GetMergeRequest(ctx context.Context, name string) (*GerritMergeRequest, error) {

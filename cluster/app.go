@@ -26,7 +26,6 @@ type JenkinsService interface {
 
 type App struct {
 	router                  router.Interface
-	logger                  Logger
 	codebaseService         codebase.ServiceInterface
 	jenkinsService          jenkins.ServiceInterface
 	k8sService              k8s.ServiceInterface
@@ -37,14 +36,13 @@ type App struct {
 	backupSecretName        string
 }
 
-func Make(router router.Interface, logger Logger, services *config.Services, cnf *config.Settings) (*App, error) {
+func Make(router router.Interface, services *config.Services, cnf *config.Settings) (*App, error) {
 	if !strings.Contains(cnf.Host, "//") {
 		return nil, errors.New("wrong git repo")
 	}
 
 	app := App{
 		router:                  router,
-		logger:                  logger,
 		codebaseService:         services.Codebase,
 		codebaseName:            cnf.ClusterCodebaseName,
 		repo:                    fmt.Sprintf("%s/%s", cnf.RegistryRepoHost, cnf.ClusterRepo),

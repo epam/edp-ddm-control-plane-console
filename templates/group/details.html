@@ -1,0 +1,114 @@
+{{ define "group/details.html" }}
+    {{template "header" .}}
+    <div class="registry">
+        <div class="registry-header">
+            <a href="{{ .BasePath }}/admin/group/overview" class="registry-add">
+                <img alt="add registry" src="{{ .BasePath }}/static/img/action-back.png" />
+                <span>НАЗАД</span>
+            </a>
+        </div>
+        <div class="registry-header registry-header-view">
+            <h1>Група "{{.group.Name}}"</h1>
+            {{if .allowedToEdit}}
+                <a href="{{ .BasePath }}/admin/group/edit/{{.group.Name}}" class="registry-add">
+                    <img alt="add registry" src="{{ .BasePath }}/static/img/action-edit.png" />
+                    <span>Редагувати</span>
+                </a>
+            {{end}}
+        </div>
+        <div class="registry-description">Інформація про групу</div>
+
+        <div class="rg-info-block">
+            <div class="rg-info-block-header">
+                <span>Загальна інформація</span>
+                <img src="{{ .BasePath }}/static/img/action-toggle.png" alt="toggle block" />
+            </div>
+            <div class="rg-info-block-body">
+                <div class="rg-info-line-horizontal">
+                    <span>Назва</span>
+                    <span>{{ .group.Name }}</span>
+                </div>
+                {{if .group.Description}}
+                    <div class="rg-info-line-horizontal">
+                        <span>Опис</span>
+                        <span>{{ .group.Description }}</span>
+                    </div>
+                {{end}}
+
+                <div class="rg-info-line-horizontal">
+                    <span>Час створення</span>
+                    <span>{{ .group.FormattedCreatedAtTimezone $.timezone }}</span>
+                </div>
+            </div>
+        </div>
+        {{if .branches }}
+            <div class="rg-info-block">
+                <div class="rg-info-block-header">
+                    <span>Конфігурація</span>
+                    <img src="{{ .BasePath }}/static/img/action-toggle.png" alt="toggle block" />
+                </div>
+                <div class="rg-info-block-body">
+                    <table class="rg-info-table rg-info-table-config">
+                        <thead>
+                        <tr>
+                            <th>Статус</th>
+                            <th>Конфігурація</th>
+                            <th>VCS</th>
+                            <th>CI</th>
+                            <th>Версія</th>
+                            <th>Номер збірки</th>
+                            <th>Остання вдала збірка</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {{range $index, $br := .branches}}
+                            <tr>
+                                <td>
+                                    <img alt="status" src="{{ $.BasePath }}/static/img/status-{{$br.Status.Value}}.png" />
+                                </td>
+                                <td>
+                                    {{$br.Name}}
+                                </td>
+                                <td>
+                                    <a href="{{ $br.CreateGerritLink $.gerritURL }}" target="_blank">
+                                        <img alt="vcs" src="{{ $.BasePath }}/static/img/action-link.png" />
+                                    </a>
+                                </td>
+                                <td>
+                                    <a href="{{ $br.CreateJenkinsLink $.jenkinsURL }}" target="_blank">
+                                        <img alt="ci" src="{{ $.BasePath }}/static/img/action-link.png" />
+                                    </a>
+                                </td>
+                                <td>{{$br.Spec.Version}}</td>
+                                <td>{{$br.Status.Build}}</td>
+                                <td>{{if $br.Status.LastSuccessfulBuild}}{{$br.Status.LastSuccessfulBuild}}{{else}}-{{end}}</td>
+                            </tr>
+                        {{end}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {{end}}
+
+
+        {{ if .edpComponents}}
+            <div class="dashboard-panel registry-dashboard-panel">
+                <ul>
+                    {{range $index, $ec := .edpComponents}}
+                        <li>
+                            <img src="data:image/svg+xml;base64,{{$ec.Spec.Icon}}" alt="{{$ec.Spec.Type}} logo" />
+                            <div class="dashboard-item-content">
+                                <a target="_blank" href="{{$ec.Spec.Url}}">{{$ec.Spec.Type}} <img src="{{$.BasePath}}/static/img/action-link.png"
+                                                                                                  alt="{{$ec.Spec.Type}} link"></a>
+                            </div>
+                        </li>
+                    {{end}}
+                </ul>
+            </div>
+        {{end}}
+
+    </div>
+
+    {{template "footer" .}}
+
+{{ end }}

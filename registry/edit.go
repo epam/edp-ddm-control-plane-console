@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"ddm-admin-console/service"
+
 	"ddm-admin-console/service/gerrit"
 
 	"ddm-admin-console/router"
@@ -27,7 +29,17 @@ func (a *App) editRegistryGet(ctx *gin.Context) (response *router.Response, retE
 		return nil, errors.Wrap(err, "unable to init service for user context")
 	}
 
+	k8sService, err := a.k8sService.ServiceForContext(userCtx)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to init service for user context")
+	}
+
 	registryName := ctx.Param("name")
+
+	if err := a.checkUpdateAccess(registryName, k8sService); err != nil {
+		return nil, errors.New("access denied")
+	}
+
 	reg, err := cbService.Get(registryName)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get registry")
@@ -38,12 +50,7 @@ func (a *App) editRegistryGet(ctx *gin.Context) (response *router.Response, retE
 		return nil, errors.Wrap(err, "unable to get ini template data")
 	}
 
-	gerritProject, err := a.gerritService.GetProject(userCtx, registryName)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to get gerrit project")
-	}
-
-	hasUpdate, branches, err := a.hasUpdate(userCtx, gerritProject)
+	hasUpdate, branches, err := a.hasUpdate(userCtx, registryName)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to check for updates")
 	}
@@ -58,7 +65,28 @@ func (a *App) editRegistryGet(ctx *gin.Context) (response *router.Response, retE
 	}), nil
 }
 
-func (a *App) hasUpdate(ctx context.Context, gerritProject *gerrit.GerritProject) (bool, []string, error) {
+func (a *App) checkUpdateAccess(codebaseName string, userK8sService k8s.ServiceInterface) error {
+	allowedToUpdate, err := a.codebaseService.CheckIsAllowedToUpdate(codebaseName, userK8sService)
+	if err != nil {
+		return errors.Wrap(err, "unable to check create access")
+	}
+	if !allowedToUpdate {
+		return errors.New("access denied")
+	}
+
+	return nil
+}
+
+func (a *App) hasUpdate(ctx context.Context, registryName string) (bool, []string, error) {
+	gerritProject, err := a.gerritService.GetProject(ctx, registryName)
+	if service.IsErrNotFound(err) {
+		return false, []string{}, nil
+	}
+
+	if err != nil {
+		return false, nil, errors.Wrap(err, "unable to get gerrit project")
+	}
+
 	branches := updateBranches(gerritProject.Status.Branches)
 
 	if len(branches) == 0 {
@@ -117,6 +145,15 @@ func (a *App) editRegistryPost(ctx *gin.Context) (response *router.Response, ret
 	}
 
 	registryName := ctx.Param("name")
+
+	allowed, err := cbService.CheckIsAllowedToUpdate(registryName, k8sService)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to check access")
+	}
+	if !allowed {
+		return nil, errors.New("access denied")
+	}
+
 	cb, err := cbService.Get(registryName)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get registry")
