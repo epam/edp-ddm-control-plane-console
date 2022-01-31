@@ -10,18 +10,10 @@ import (
 	"ddm-admin-console/service/k8s"
 
 	"github.com/pkg/errors"
-
-	"go.uber.org/zap"
 )
-
-type Logger interface {
-	Error(msg string, fields ...zap.Field)
-	Info(msg string, fields ...zap.Field)
-}
 
 type App struct {
 	router                  router.Interface
-	logger                  Logger
 	codebaseService         codebase.ServiceInterface
 	gerritService           gerrit.ServiceInterface
 	edpComponentService     edpComponent.ServiceInterface
@@ -34,9 +26,8 @@ type App struct {
 	hardwareINITemplatePath string
 }
 
-func Make(router router.Interface, logger Logger, services *config.Services, cnf *config.Settings) (*App, error) {
+func Make(router router.Interface, services *config.Services, cnf *config.Settings) (*App, error) {
 	app := &App{
-		logger:                  logger,
 		router:                  router,
 		codebaseService:         services.Codebase,
 		edpComponentService:     services.EDPComponent,

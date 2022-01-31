@@ -11533,6 +11533,7 @@ div#kubernetes-component {
     display: block;
     border: none;
     font-family: "Oswald", sans-serif;
+    margin-top: 8px;
 }
 
 .rc-form-group button:focus {

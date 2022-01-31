@@ -16,7 +16,7 @@
         </a>
         {{end}}
     </div>
-    <div class="registry-description">Перелік реєстрів та їх статусів.</div>
+    <div class="registry-description">Інформація про реєстр.</div>
 
     <div class="rg-info-block">
         <div class="rg-info-block-header">
@@ -42,7 +42,7 @@
             {{end}}
             <div class="rg-info-line-horizontal">
                 <span>Час створення</span>
-                <span>{{ .registry.FormattedCreatedAt }}</span>
+                <span>{{ .registry.FormattedCreatedAtTimezone $.timezone }}</span>
             </div>
         </div>
     </div>

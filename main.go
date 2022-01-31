@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"strings"
 
+	"ddm-admin-console/group"
+
 	"ddm-admin-console/auth"
 	oauth "ddm-admin-console/auth"
 	"ddm-admin-console/cluster"
@@ -182,15 +184,17 @@ func initApps(logger *zap.Logger, cnf *config.Settings, r *gin.Engine) error {
 		return errors.Wrap(err, "unable to make dashboard app")
 	}
 
-	_, err = registry.Make(appRouter, logger, serviceItems, cnf)
+	_, err = registry.Make(appRouter, serviceItems, cnf)
 	if err != nil {
 		return errors.Wrap(err, "unable to make registry app")
 	}
 
-	_, err = cluster.Make(appRouter, logger, serviceItems, cnf)
+	_, err = cluster.Make(appRouter, serviceItems, cnf)
 	if err != nil {
 		return errors.Wrap(err, "unable to init cluster app")
 	}
+
+	_ = group.Make(appRouter, serviceItems, cnf)
 
 	return nil
 }

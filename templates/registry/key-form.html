@@ -150,7 +150,7 @@
                 </span>
     </div>
     <div class="rc-form-group {{ if .errorsMap.CAsJSON }}error{{end}}">
-        <label for="ca-json">Список АЦСК (розширення .json)</label>
+        <label for="ca-json">Перелік АЦСК (розширення .json)</label>
         <input required type="file" name="ca-json" id="ca-json" accept=".json" />
         <span>
                     {{range $key, $val := .errorsMap.CAsJSON}}
@@ -158,7 +158,7 @@
                     {{end}}
                 </span>
     </div>
-    <h3>Список дозволених ключів <button class="allowed-keys-add" id="allowed-keys-add">+</button></h3>
+    <h3>Перелік дозволених ключів <button class="allowed-keys-add" id="allowed-keys-add">+</button></h3>
     <hr />
     <div class="rc-form-group allowed-keys-body" id="allowed-keys-body">
         <div class="allowed-keys-row">

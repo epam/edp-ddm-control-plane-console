@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 
+	"ddm-admin-console/service/codebase"
+
 	"ddm-admin-console/router"
 	"ddm-admin-console/service/k8s"
 
@@ -71,7 +73,7 @@ func (a *App) setRegistryPermissionsToSession(userCtx context.Context, session s
 }
 
 func (a *App) hasAccessToRegistries(k8sService k8s.ServiceInterface) (bool, error) {
-	cbs, err := a.codebaseService.GetAllByType("registry")
+	cbs, err := a.codebaseService.GetAllByType(codebase.RegistryCodebaseType)
 	if err != nil {
 		return false, errors.Wrap(err, "")
 	}

@@ -87,6 +87,11 @@ func (in *Codebase) ForegroundDeletion() bool {
 	return in.DeletionTimestamp != nil
 }
 
+func (in *Codebase) FormattedCreatedAtTimezone(timezone string) string {
+	loc, _ := time.LoadLocation(timezone)
+	return in.CreationTimestamp.In(loc).Format(ViewTimeFormat)
+}
+
 func (in *Codebase) StrStatus() string {
 	status := in.Status.Value
 	if status == "" {

@@ -26,30 +26,30 @@
                 </thead>
                 <tbody>
                     {{range $key, $registry := .registries}}
-                    <tr {{if $registry.Registry.ForegroundDeletion}}class="disabled"{{end}}>
+                    <tr {{if $registry.Codebase.ForegroundDeletion}}class="disabled"{{end}}>
                         <td>
-                            {{if $registry.Registry.ForegroundDeletion}}
+                            {{if $registry.Codebase.ForegroundDeletion}}
                                 <img src="{{ $.BasePath }}/static/img/action-delete.png" alt="delete registry" />
                             {{else}}
-                                <img src="{{ $.BasePath }}/static/img/status-{{$registry.Registry.StrStatus}}.png"
-                                     alt="status {{$registry.Registry.StrStatus}}" />
+                                <img src="{{ $.BasePath }}/static/img/status-{{$registry.Codebase.StrStatus}}.png"
+                                     alt="status {{$registry.Codebase.StrStatus}}" />
                             {{end}}
                         </td>
                         <td>
-                            <a href="{{ $.BasePath }}/admin/registry/view/{{$registry.Registry.Name}}">
-                                {{$registry.Registry.Name}}
+                            <a href="{{ $.BasePath }}/admin/registry/view/{{$registry.Codebase.Name}}">
+                                {{$registry.Codebase.Name}}
                             </a>
                         </td>
                         <td>
-                            {{$registry.Registry.Description}}
+                            {{$registry.Codebase.Description}}
                         </td>
                         <td>
-                            {{ $registry.FormattedCreatedAtTimezone $.timezone }}
+                            {{ $registry.Codebase.FormattedCreatedAtTimezone $.timezone }}
                         </td>
                         <td>
                             {{if $registry.CanUpdate}}
-                            {{if not $registry.Registry.ForegroundDeletion}}
-                            <a href="{{ $.BasePath }}/admin/registry/edit/{{$registry.Registry.Name}}">
+                            {{if not $registry.Codebase.ForegroundDeletion}}
+                            <a href="{{ $.BasePath }}/admin/registry/edit/{{$registry.Codebase.Name}}">
                                 <img src="{{ $.BasePath }}/static/img/action-edit.png" alt="edit registry" />
                             </a>
                             {{end}}
@@ -57,10 +57,10 @@
                         </td>
                         <td>
                             {{if $registry.CanDelete}}
-                            {{if $registry.Registry.CanBeDeleted}}
-                            {{if not $registry.Registry.ForegroundDeletion}}
+                            {{if $registry.Codebase.CanBeDeleted}}
+                            {{if not $registry.Codebase.ForegroundDeletion}}
                             <a href="#" class="delete-registry"
-                               data-name="{{$registry.Registry.Name}}">
+                               data-name="{{$registry.Codebase.Name}}">
                                 <img src="{{ $.BasePath }}/static/img/action-delete.png" alt="delete registry" />
                             </a>
                             {{end}}
@@ -74,31 +74,7 @@
         </div>
     </div>
 
-    <div class="popup-backdrop"></div>
-    <div class="popup-window">
-        <div class="popup-header">
-            <p>Видалити "<span id="delete-name">business-pro</span>"?</p>
-            <a href="#" class="popup-close">
-                <img alt="close popup window" src="{{.BasePath}}/static/img/close.png" />
-            </a>
-        </div>
-        <form id="delete-form" method="post" action="">
-            <input type="hidden" name="_xsrf" value="{{ .xsrfdata }}" />
-            <div class="popup-body">
-                <p>Щоб уникнути випадкової втрати даних, введіть назву реєстру перш,
-                    ніж ви зможете його видалити.</p>
-
-                <div class="rc-form-group">
-                    <input aria-label="registry name" type="text" id="registry-name" name="registry-name" required
-                           placeholder="Назва реєстру" autocomplete="off" />
-                </div>
-            </div>
-            <div class="popup-footer">
-                <a href="#" id="delete-cancel">відмінити</a>
-                <button value="submit" name="codebase-delete" type="submit">Видалити</button>
-            </div>
-        </form>
-    </div>
+    {{template "delete-block" .}}
 
     <script type="text/javascript" src="{{.BasePath}}/static/js/datatables.min.js"></script>
     <script type="text/javascript" src="{{.BasePath}}/static/js/registry.js"></script>

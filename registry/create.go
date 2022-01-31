@@ -26,10 +26,8 @@ import (
 )
 
 const (
-	AdminsAnnotation      = "registry-parameters/administrators"
-	GroupAnnotation       = "registry-parameters/group"
-	gerritCreatorUsername = "user"
-	gerritCreatorPassword = "password"
+	AdminsAnnotation = "registry-parameters/administrators"
+	GroupAnnotation  = "registry-parameters/group"
 )
 
 func (a *App) createRegistryGet(ctx *gin.Context) (response *router.Response, retErr error) {
@@ -45,8 +43,13 @@ func (a *App) createRegistryGet(ctx *gin.Context) (response *router.Response, re
 		return nil, errors.Wrap(err, "unable to init service for user context")
 	}
 
-	if err := a.checkIsAllowedToCreate(k8sService); err != nil {
-		return nil, errors.Wrap(err, "access denied")
+	if err := a.checkCreateAccess(k8sService); err != nil {
+		return nil, errors.Wrap(err, "error during create access check")
+	}
+
+	groups, err := a.codebaseService.GetAllByType(codebase.GroupCodebaseType)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to get groups")
 	}
 
 	hwINITemplateContent, err := a.getINITemplateContent()
@@ -59,6 +62,7 @@ func (a *App) createRegistryGet(ctx *gin.Context) (response *router.Response, re
 		"gerritProjects":       prjs,
 		"model":                registry{KeyDeviceType: KeyDeviceTypeFile},
 		"hwINITemplateContent": hwINITemplateContent,
+		"groups":               groups,
 	}), nil
 }
 
@@ -89,13 +93,14 @@ func (a *App) getINITemplateContent() (string, error) {
 
 func (a *App) createRegistryPost(ctx *gin.Context) (response *router.Response, retErr error) {
 	userCtx := a.router.ContextWithUserAccessToken(ctx)
+
 	k8sService, err := a.k8sService.ServiceForContext(userCtx)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to init service for user context")
+		return nil, errors.Wrap(err, "unable to get k8s service for user")
 	}
 
-	if err := a.checkIsAllowedToCreate(k8sService); err != nil {
-		return nil, errors.Wrap(err, "access denied")
+	if err := a.checkCreateAccess(k8sService); err != nil {
+		return nil, errors.Wrap(err, "error during create access check")
 	}
 
 	cbService, err := a.codebaseService.ServiceForContext(userCtx)
@@ -144,14 +149,13 @@ func (a *App) createRegistryPost(ctx *gin.Context) (response *router.Response, r
 	return router.MakeRedirectResponse(http.StatusFound, "/admin/registry/overview"), nil
 }
 
-func (a *App) checkIsAllowedToCreate(k8sService k8s.ServiceInterface) error {
-	allowedToCreate, err := k8sService.CanI("v2.edp.epam.com", "codebases", "create", "")
+func (a *App) checkCreateAccess(userK8sService k8s.ServiceInterface) error {
+	allowedToCreate, err := a.codebaseService.CheckIsAllowedToCreate(userK8sService)
 	if err != nil {
-		return errors.Wrap(err, "unable to check codebase creation access")
+		return errors.Wrap(err, "unable to check create access")
 	}
-
 	if !allowedToCreate {
-		return errors.Wrap(err, "access denied")
+		return errors.New("access denied")
 	}
 
 	return nil
@@ -191,13 +195,41 @@ func (a *App) createRegistry(r *registry, request *http.Request, cbService codeb
 		return errors.Wrap(err, "unable to create registry keys")
 	}
 
-	//username, _ := r.Ctx.Input.Session("username").(string)
-	//TODO: get username from session
+	cb := prepareRegistryCodebase(a.gerritRegistryHost, r)
 
+	annotations := make(map[string]string)
+	if r.Admins != "" {
+		if err := validateAdmins(r.Admins); err != nil {
+			return err
+		}
+
+		annotations[AdminsAnnotation] = base64.StdEncoding.EncodeToString([]byte(r.Admins))
+	}
+	if r.RegistryGroup != "" {
+		annotations[GroupAnnotation] = base64.StdEncoding.EncodeToString([]byte(r.RegistryGroup))
+	}
+	cb.Annotations = annotations
+
+	if err := cbService.Create(cb); err != nil {
+		return errors.Wrap(err, "unable to create codebase")
+	}
+
+	if err := cbService.CreateTempSecrets(cb, k8sService, a.gerritCreatorSecretName); err != nil {
+		return errors.Wrap(err, "unable to create temp secrets")
+	}
+
+	if err := cbService.CreateDefaultBranch(cb); err != nil {
+		return errors.Wrap(err, "unable to create default branch")
+	}
+
+	return nil
+}
+
+func prepareRegistryCodebase(gerritRegistryHost string, r *registry) *codebase.Codebase {
 	jobProvisioning := "default"
 	startVersion := "0.0.1"
 	jenkinsSlave := "gitops"
-	cb := codebase.Codebase{
+	return &codebase.Codebase{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v2.edp.epam.com/v1alpha1",
 			Kind:       "Codebase",
@@ -221,7 +253,7 @@ func (a *App) createRegistry(r *registry, request *http.Request, cbService codeb
 				Type:      "edp",
 			},
 			Repository: &codebase.Repository{
-				Url: fmt.Sprintf("%s/%s", a.gerritRegistryHost, r.RegistryGitTemplate),
+				Url: fmt.Sprintf("%s/%s", gerritRegistryHost, r.RegistryGitTemplate),
 			},
 			JenkinsSlave: &jenkinsSlave,
 		},
@@ -233,30 +265,6 @@ func (a *App) createRegistry(r *registry, request *http.Request, cbService codeb
 			Value:           "inactive",
 		},
 	}
-
-	annotations := make(map[string]string)
-	if r.Admins != "" {
-		if err := validateAdmins(r.Admins); err != nil {
-			return err
-		}
-
-		annotations[AdminsAnnotation] = base64.StdEncoding.EncodeToString([]byte(r.Admins))
-	}
-	cb.Annotations = annotations
-
-	if err := cbService.Create(&cb); err != nil {
-		return errors.Wrap(err, "unable to create codebase")
-	}
-
-	if err := a.createTempSecrets(&cb, k8sService); err != nil {
-		return errors.Wrap(err, "unable to create temp secrets")
-	}
-
-	if err := cbService.CreateDefaultBranch(&cb); err != nil {
-		return errors.Wrap(err, "unable to create default branch")
-	}
-
-	return nil
 }
 
 func validateRegistryKeys(rq *http.Request, r *registry) (createKeys bool, key6Fl, caCertFl,
@@ -403,33 +411,6 @@ func (a *App) setAllowedKeysSecretData(filesSecretData map[string][]byte, reg *r
 			return errors.Wrap(err, "unable to encode allowed keys to yaml")
 		}
 		filesSecretData["allowed-keys.yml"] = allowedKeysYaml
-	}
-
-	return nil
-}
-
-func (a *App) createTempSecrets(cb *codebase.Codebase, k8sService k8s.ServiceInterface) error {
-	secret, err := k8sService.GetSecret(a.gerritCreatorSecretName)
-	if err != nil {
-		return errors.Wrap(err, "unable to get secret")
-	}
-
-	username, ok := secret.Data[gerritCreatorUsername]
-	if !ok {
-		return errors.Wrap(err, "gerrit creator secret does not have username")
-	}
-
-	pwd, ok := secret.Data[gerritCreatorPassword]
-	if !ok {
-		return errors.Wrap(err, "gerrit creator secret does not have password")
-	}
-
-	repoSecretName := fmt.Sprintf("repository-codebase-%s-temp", cb.Name)
-	if err := k8sService.RecreateSecret(repoSecretName, map[string][]byte{
-		"username":            username,
-		gerritCreatorPassword: pwd,
-	}); err != nil {
-		return errors.Wrapf(err, "unable to create secret: %s", repoSecretName)
 	}
 
 	return nil

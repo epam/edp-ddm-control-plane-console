@@ -3,29 +3,36 @@ $(function (){
     let registryInput = $("#registry-name");
     let popupFooter = $(".popup-footer");
 
-    let hidePopup = function (){
+    let hidePopup = function (e){
         $(".popup-backdrop").hide();
-        $(".popup-window").hide();
+        // $(".delete-popup").hide();
+        $(e.target).closest(".popup-window").hide();
         registryInput.val('');
     };
 
-    let showPopup = function (){
+    let showPopup = function (deletePopupName){
         $(".popup-backdrop").show();
-        $(".popup-window").show();
+        // $("#delete-popup").show();
+        $(deletePopupName).show();
         popupFooter.removeClass('active');
         registryInput.val('');
     };
 
-    $(".popup-close").click(function (){
-        hidePopup();
-
+    $(".hide-popup").click(function (e){
+        hidePopup(e);
         return false;
     });
 
-    $("#delete-cancel").click(function () {
-        hidePopup();
-        return false;
-    })
+    // $(".popup-close").click(function (){
+    //     hidePopup();
+    //
+    //     return false;
+    // });
+
+    // $("#delete-cancel").click(function () {
+    //     hidePopup();
+    //     return false;
+    // })
 
     registryInput.val('');
     registryInput.keyup(function (e) {
@@ -39,7 +46,14 @@ $(function (){
         registryName = $(e.currentTarget).data('name');
         $("#delete-name").html(registryName);
 
-        showPopup();
+        showPopup("#delete-popup");
+    });
+
+    $(".no-delete-registry").click(function (e){
+        registryName = $(e.currentTarget).data('name');
+        $("#no-delete-name").html(registryName);
+
+        showPopup("#no-delete-popup");
     });
 
     $("#delete-form").submit(function () {

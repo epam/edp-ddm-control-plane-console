@@ -2,9 +2,11 @@ package codebase
 
 import (
 	"context"
-	"ddm-admin-console/service"
 	"fmt"
 	"time"
+
+	"ddm-admin-console/service"
+	"ddm-admin-console/service/k8s"
 
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,7 +19,11 @@ import (
 )
 
 const (
-	defaultBranch = "master"
+	defaultBranch         = "master"
+	gerritCreatorUsername = "user"
+	gerritCreatorPassword = "password"
+	GroupCodebaseType     = "registry-group"
+	RegistryCodebaseType  = "registry"
 )
 
 type Service struct {
@@ -232,4 +238,31 @@ func (s *Service) ServiceForContext(ctx context.Context) (ServiceInterface, erro
 	}
 
 	return svc, nil
+}
+
+func (s *Service) CreateTempSecrets(cb *Codebase, k8sService k8s.ServiceInterface, gerritCreatorSecretName string) error {
+	secret, err := k8sService.GetSecret(gerritCreatorSecretName)
+	if err != nil {
+		return errors.Wrap(err, "unable to get secret")
+	}
+
+	username, ok := secret.Data[gerritCreatorUsername]
+	if !ok {
+		return errors.Wrap(err, "gerrit creator secret does not have username")
+	}
+
+	pwd, ok := secret.Data[gerritCreatorPassword]
+	if !ok {
+		return errors.Wrap(err, "gerrit creator secret does not have password")
+	}
+
+	repoSecretName := fmt.Sprintf("repository-codebase-%s-temp", cb.Name)
+	if err := k8sService.RecreateSecret(repoSecretName, map[string][]byte{
+		"username":            username,
+		gerritCreatorPassword: pwd,
+	}); err != nil {
+		return errors.Wrapf(err, "unable to create secret: %s", repoSecretName)
+	}
+
+	return nil
 }
