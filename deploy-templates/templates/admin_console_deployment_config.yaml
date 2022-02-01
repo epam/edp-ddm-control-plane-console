@@ -42,6 +42,8 @@ spec:
               value: "https://gerrit-{{ template "edp.hostnameSuffix" . }}"
             - name: CLUSTER_REPO
               value: "cluster-mgmt"
+            - name: GROUP_GIT_REPO
+              value: "registry-group"
             - name: REGISTRY_REPO_HOST
               value: "https://gerrit-{{ template "edp.hostnameSuffix" . }}"
             - name: REGISTRY_REPO_PREFIX
