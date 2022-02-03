@@ -70,6 +70,14 @@ func (a *App) filterProjects(projects []gerrit.GerritProject) []gerrit.GerritPro
 	filteredProjects := make([]gerrit.GerritProject, 0, 4)
 	for _, prj := range projects {
 		if strings.Contains(prj.Spec.Name, a.gerritRegistryPrefix) {
+			var branches []string
+			for _, br := range prj.Status.Branches {
+				if br != "master" {
+					branches = append(branches, br)
+				}
+			}
+			prj.Status.Branches = branches
+
 			filteredProjects = append(filteredProjects, prj)
 		}
 	}
