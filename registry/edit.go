@@ -50,7 +50,7 @@ func (a *App) editRegistryGet(ctx *gin.Context) (response *router.Response, retE
 		return nil, errors.Wrap(err, "unable to get ini template data")
 	}
 
-	hasUpdate, branches, err := a.hasUpdate(userCtx, registryName)
+	hasUpdate, branches, err := HasUpdate(userCtx, a.gerritService, registryName)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to check for updates")
 	}
@@ -77,8 +77,8 @@ func (a *App) checkUpdateAccess(codebaseName string, userK8sService k8s.ServiceI
 	return nil
 }
 
-func (a *App) hasUpdate(ctx context.Context, registryName string) (bool, []string, error) {
-	gerritProject, err := a.gerritService.GetProject(ctx, registryName)
+func HasUpdate(ctx context.Context, gerritService gerrit.ServiceInterface, registryName string) (bool, []string, error) {
+	gerritProject, err := gerritService.GetProject(ctx, registryName)
 	if service.IsErrNotFound(err) {
 		return false, []string{}, nil
 	}
@@ -93,7 +93,7 @@ func (a *App) hasUpdate(ctx context.Context, registryName string) (bool, []strin
 		return false, branches, nil
 	}
 
-	mrs, err := a.gerritService.GetMergeRequestByProject(ctx, gerritProject.Spec.Name)
+	mrs, err := gerritService.GetMergeRequestByProject(ctx, gerritProject.Spec.Name)
 	if err != nil {
 		return false, branches, errors.Wrap(err, "unable to get merge requests")
 	}

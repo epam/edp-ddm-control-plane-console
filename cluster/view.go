@@ -1,12 +1,13 @@
 package cluster
 
 import (
-	"ddm-admin-console/router"
-	"ddm-admin-console/service/codebase"
-	"ddm-admin-console/service/k8s"
 	"fmt"
 	"strings"
 	"time"
+
+	"ddm-admin-console/router"
+	"ddm-admin-console/service/codebase"
+	"ddm-admin-console/service/k8s"
 
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 
@@ -79,6 +80,11 @@ func (a *App) view(ctx *gin.Context) (*router.Response, error) {
 		return nil, errors.Wrap(err, "unable to list namespaced edp components")
 	}
 
+	mrs, err := a.gerritService.GetMergeRequestByProject(ctx, a.codebaseName)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to list gerrit merge requests")
+	}
+
 	return router.MakeResponse(200, "cluster/view.html", gin.H{
 		"branches":         branches,
 		"codebase":         cb,
@@ -87,6 +93,7 @@ func (a *App) view(ctx *gin.Context) (*router.Response, error) {
 		"page":             "cluster",
 		"edpComponents":    namespacedEDPComponents,
 		"canUpdateCluster": canUpdateCluster,
+		"mergeRequests":    mrs,
 	}), nil
 }
 
