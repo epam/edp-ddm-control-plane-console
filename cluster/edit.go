@@ -1,10 +1,13 @@
 package cluster
 
 import (
-	"ddm-admin-console/router"
 	"fmt"
 	"net/http"
 	"time"
+
+	"ddm-admin-console/registry"
+
+	"ddm-admin-console/router"
 
 	"github.com/go-playground/validator/v10"
 
@@ -29,7 +32,9 @@ type BackupConfig struct {
 }
 
 func (a *App) editGet(ctx *gin.Context) (*router.Response, error) {
-	k8sService, err := a.k8sService.ServiceForContext(a.router.ContextWithUserAccessToken(ctx))
+	userCtx := a.router.ContextWithUserAccessToken(ctx)
+
+	k8sService, err := a.k8sService.ServiceForContext(userCtx)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to init service for user context")
 	}
@@ -52,13 +57,19 @@ func (a *App) editGet(ctx *gin.Context) (*router.Response, error) {
 			StorageLocation:       string(secret.Data[StorageLocation]),
 			StorageType:           string(secret.Data[StorageType]),
 			StorageCredentialsKey: string(secret.Data[StorageCredentialsKey]),
-			//StorageCredentialsSecret: string(secret.Data[StorageCredentialsSecret]),
 		}
 	}
 
+	hasUpdate, branches, err := registry.HasUpdate(userCtx, a.gerritService, a.codebaseName)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to check for updates")
+	}
+
 	return router.MakeResponse(200, "cluster/edit.html", gin.H{
-		"backupConf": backupConfig,
-		"page":       "cluster",
+		"backupConf":     backupConfig,
+		"page":           "cluster",
+		"updateBranches": branches,
+		"hasUpdate":      hasUpdate,
 	}), nil
 }
 

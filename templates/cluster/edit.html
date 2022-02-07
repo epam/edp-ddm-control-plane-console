@@ -58,6 +58,31 @@
                 <button type="submit" name="submit">Підтвердити</button>
             </div>
         </form>
+
+        {{if .hasUpdate}}
+        <h1>Оновлення кластеру</h1>
+        <br />
+        <form id="cluster-update-form" class="registry-create-form" method="post" action="/admin/cluster/upgrade">
+            <div class="rc-form-group {{ if .errorsMap.Branch }}error{{end}}">
+                <label for="branch">Оновити кластер</label>
+                <select id="branch" name="branch" required>
+                    <option></option>
+                    {{range $key, $val := .updateBranches}}
+                        <option>{{$val}}</option>
+                    {{end}}
+                </select>
+
+                <span>
+                    {{range $key, $val := .errorsMap.Branch}}
+                        {{i18n "uk" $val.Error}}
+                    {{end}}
+                </span>
+            </div>
+            <div class="rc-form-group">
+                <button type="submit" name="submit">Підтвердити</button>
+            </div>
+        </form>
+        {{end}}
     </div>
 
     <script type="text/javascript">
