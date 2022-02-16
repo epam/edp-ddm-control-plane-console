@@ -244,6 +244,9 @@ func prepareRegistryCodebase(gerritRegistryHost string, r *registry) *codebase.C
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: r.Name,
+			Labels: map[string]string{
+				"templateName": r.RegistryGitTemplate,
+			},
 		},
 		Spec: codebase.CodebaseSpec{
 			Description:      &r.Description,

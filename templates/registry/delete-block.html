@@ -21,7 +21,13 @@
 
             <div class="rc-form-group">
                 <input aria-label="registry name" type="text" id="registry-name" name="registry-name" required
-                       placeholder="Назва реєстру" autocomplete="off" />
+                        {{if eq .page "registry"}}
+                       placeholder="Назва реєстру"
+                           {{end}}
+                        {{if eq .page "group"}}
+                            placeholder="Назва групи"
+                        {{end}}
+                       autocomplete="off" />
             </div>
         </div>
         <div class="popup-footer">
