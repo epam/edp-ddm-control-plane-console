@@ -26,8 +26,9 @@ import (
 )
 
 const (
-	AdminsAnnotation = "registry-parameters/administrators"
-	GroupAnnotation  = "registry-parameters/group"
+	AdminsAnnotation       = "registry-parameters/administrators"
+	GroupAnnotation        = "registry-parameters/group"
+	TemplateNameAnnotation = "registry-parameters/template-name"
 )
 
 func (a *App) createRegistryGet(ctx *gin.Context) (response *router.Response, retErr error) {
@@ -205,7 +206,10 @@ func (a *App) createRegistry(r *registry, request *http.Request, cbService codeb
 
 	cb := prepareRegistryCodebase(a.gerritRegistryHost, r)
 
-	annotations := make(map[string]string)
+	annotations := map[string]string{
+		TemplateNameAnnotation: r.RegistryGitTemplate,
+	}
+
 	if r.Admins != "" {
 		if err := validateAdmins(r.Admins); err != nil {
 			return err
@@ -244,9 +248,6 @@ func prepareRegistryCodebase(gerritRegistryHost string, r *registry) *codebase.C
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: r.Name,
-			Labels: map[string]string{
-				"templateName": r.RegistryGitTemplate,
-			},
 		},
 		Spec: codebase.CodebaseSpec{
 			Description:      &r.Description,
