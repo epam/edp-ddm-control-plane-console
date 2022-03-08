@@ -30,19 +30,6 @@
                 <p>Допустимі символи: "0-9", "a-z", "_", "-", "@", ".", ",".</p>
             </div>
 
-            {{ if .hasUpdate }}
-            <div class="rc-form-group {{ if .errorsMap.UpdateBranch }}error{{end}}">
-                <label for="registry-update-branch">Оновити реєстр</label>
-                <select name="registry-update-branch" id="registry-update-branch">
-                    <option></option>
-                    {{range $key, $val := .updateBranches}}
-                        <option>{{$val}}</option>
-                    {{end}}
-                </select>
-                <span>{{range $key, $val := .errorsMap.UpdateBranch}}{{ $val }}{{end}}</span>
-            </div>
-            {{ end }}
-
             <div>
                 <input type="checkbox" id="edit-key">
                 <label for="edit-key">Редагувати дані про ключ</label>
@@ -55,6 +42,32 @@
                 <button type="submit" name="submit">Підтвердити</button>
             </div>
         </form>
+
+        {{if .hasUpdate}}
+        <h1>Оновлення реєстру</h1>
+        <br />
+        <form id="registry-update-form" class="registry-create-form" method="post"
+              action="/admin/registry/update/{{ .registry.Name }}">
+            <div class="rc-form-group {{ if .errorsMap.Branch }}error{{end}}">
+                <label for="branch">Оновити реєстр</label>
+                <select id="branch" name="branch" required>
+                    <option></option>
+                    {{range $key, $val := .updateBranches}}
+                        <option>{{$val}}</option>
+                    {{end}}
+                </select>
+
+                <span>
+                {{range $key, $val := .errorsMap.Branch}}
+                    {{i18n "uk" $val.Error}}
+                {{end}}
+            </span>
+            </div>
+            <div class="rc-form-group">
+                <button type="submit" name="submit">Підтвердити</button>
+            </div>
+        </form>
+        {{end}}
     </div>
     <script src="{{ .BasePath }}/static/js/mustache.js"></script>
     <script id="ini-template" type="x-tmpl-mustache">

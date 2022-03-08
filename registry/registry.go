@@ -30,7 +30,6 @@ type registry struct {
 	INIConfig           string   `form:"remote-ini-config" binding:"required_if=KeyDeviceType hardware Scenario key-required"`
 	AllowedKeysSerial   []string `form:"allowed-keys-serial[]" binding:"required_if=Scenario key-required"`
 	AllowedKeysIssuer   []string `form:"allowed-keys-issuer[]" binding:"required_if=Scenario key-required"`
-	UpdateBranch        string   `form:"registry-update-branch"`
 }
 
 func (r *registry) KeysRequired() bool {

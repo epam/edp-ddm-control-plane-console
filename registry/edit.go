@@ -8,18 +8,15 @@ import (
 	"strings"
 	"time"
 
-	"ddm-admin-console/service"
-
-	"ddm-admin-console/service/gerrit"
+	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
+	"github.com/pkg/errors"
 
 	"ddm-admin-console/router"
+	"ddm-admin-console/service"
 	"ddm-admin-console/service/codebase"
+	"ddm-admin-console/service/gerrit"
 	"ddm-admin-console/service/k8s"
-
-	"github.com/go-playground/validator/v10"
-
-	"github.com/gin-gonic/gin"
-	"github.com/pkg/errors"
 )
 
 func (a *App) editRegistryGet(ctx *gin.Context) (response *router.Response, retErr error) {
@@ -176,7 +173,7 @@ func (a *App) editRegistryPost(ctx *gin.Context) (response *router.Response, ret
 			gin.H{"page": "registry", "errorsMap": validationErrors, "registry": r, "model": r}), nil
 	}
 
-	if err := a.editRegistry(userCtx, ctx, &r, cb, cbService, k8sService); err != nil {
+	if err := a.editRegistry(ctx, &r, cb, cbService, k8sService); err != nil {
 		validationErrors, ok := err.(validator.ValidationErrors)
 		if !ok {
 			return nil, errors.Wrap(err, "unable to parse registry form")
@@ -190,7 +187,7 @@ func (a *App) editRegistryPost(ctx *gin.Context) (response *router.Response, ret
 		fmt.Sprintf("/admin/registry/view/%s", r.Name)), nil
 }
 
-func (a *App) editRegistry(ctx context.Context, ginContext *gin.Context, r *registry, cb *codebase.Codebase,
+func (a *App) editRegistry(ginContext *gin.Context, r *registry, cb *codebase.Codebase,
 	cbService codebase.ServiceInterface, k8sService k8s.ServiceInterface) error {
 	if err := a.createRegistryKeys(r, ginContext.Request, k8sService); err != nil {
 		return errors.Wrap(err, "unable to create registry keys")
@@ -209,24 +206,6 @@ func (a *App) editRegistry(ctx context.Context, ginContext *gin.Context, r *regi
 
 	if err := cbService.Update(cb); err != nil {
 		return errors.Wrap(err, "unable to update codebase")
-	}
-
-	if r.UpdateBranch != "" {
-		prj, err := a.gerritService.GetProject(ctx, r.Name)
-		if err != nil {
-			return errors.Wrap(err, "unable to get registry gerrit project")
-		}
-
-		if err := a.gerritService.CreateMergeRequest(ctx, &gerrit.MergeRequest{
-			CommitMessage: fmt.Sprintf("Update registry to %s", r.UpdateBranch),
-			SourceBranch:  r.UpdateBranch,
-			ProjectName:   prj.Spec.Name,
-			Name:          fmt.Sprintf("%s-update-%d", r.Name, time.Now().Unix()),
-			AuthorName:    ginContext.GetString(router.UserNameSessionKey),
-			AuthorEmail:   ginContext.GetString(router.UserEmailSessionKey),
-		}); err != nil {
-			return errors.Wrap(err, "unable to create update merge request")
-		}
 	}
 
 	if err := a.jenkinsService.CreateJobBuildRun(fmt.Sprintf("registry-update-%d", time.Now().Unix()),
