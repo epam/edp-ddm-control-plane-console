@@ -39,6 +39,11 @@ func (a *App) editGet(ctx *gin.Context) (*router.Response, error) {
 		return nil, errors.Wrap(err, "unable to init service for user context")
 	}
 
+	cbService, err := a.codebaseService.ServiceForContext(userCtx)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to init cb service for user")
+	}
+
 	canUpdateCluster, err := k8sService.CanI("v2.edp.epam.com", "codebases", "update", a.codebaseName)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to check access to cluster codebase")
@@ -60,7 +65,12 @@ func (a *App) editGet(ctx *gin.Context) (*router.Response, error) {
 		}
 	}
 
-	hasUpdate, branches, err := registry.HasUpdate(userCtx, a.gerritService, a.codebaseName)
+	cb, err := cbService.Get(a.codebaseName)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to get registry")
+	}
+
+	hasUpdate, branches, err := registry.HasUpdate(userCtx, a.gerritService, cb)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to check for updates")
 	}
