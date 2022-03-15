@@ -5,6 +5,8 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -47,7 +49,7 @@ func (a *App) editRegistryGet(ctx *gin.Context) (response *router.Response, retE
 		return nil, errors.Wrap(err, "unable to get ini template data")
 	}
 
-	hasUpdate, branches, err := HasUpdate(userCtx, a.gerritService, registryName)
+	hasUpdate, branches, err := HasUpdate(userCtx, a.gerritService, reg)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to check for updates")
 	}
@@ -74,8 +76,20 @@ func (a *App) checkUpdateAccess(codebaseName string, userK8sService k8s.ServiceI
 	return nil
 }
 
-func HasUpdate(ctx context.Context, gerritService gerrit.ServiceInterface, registryName string) (bool, []string, error) {
-	gerritProject, err := gerritService.GetProject(ctx, registryName)
+func branchVersion(name string) int {
+	nums := regexp.MustCompile(`\d+`)
+	matches := nums.FindAllString(name, -1)
+	num := strings.Join(matches, "")
+	version, err := strconv.ParseInt(num, 10, 32)
+	if err != nil {
+		panic(err)
+	}
+
+	return int(version)
+}
+
+func HasUpdate(ctx context.Context, gerritService gerrit.ServiceInterface, cb *codebase.Codebase) (bool, []string, error) {
+	gerritProject, err := gerritService.GetProject(ctx, cb.Name)
 	if service.IsErrNotFound(err) {
 		return false, []string{}, nil
 	}
@@ -89,6 +103,8 @@ func HasUpdate(ctx context.Context, gerritService gerrit.ServiceInterface, regis
 	if len(branches) == 0 {
 		return false, branches, nil
 	}
+
+	registryVersion := branchVersion(cb.Spec.DefaultBranch)
 
 	mrs, err := gerritService.GetMergeRequestByProject(ctx, gerritProject.Spec.Name)
 	if err != nil {
@@ -106,13 +122,20 @@ func HasUpdate(ctx context.Context, gerritService gerrit.ServiceInterface, regis
 		}
 
 		if mr.Status.Value == "MERGED" {
+			mergedBranchVersion := branchVersion(mr.Spec.SourceBranch)
+			if mergedBranchVersion > registryVersion {
+				registryVersion = mergedBranchVersion
+			}
+
 			delete(branchesDict, mr.Spec.SourceBranch)
 		}
 	}
 
 	branches = []string{}
 	for _, br := range branchesDict {
-		branches = append(branches, br)
+		if branchVersion(br) > registryVersion {
+			branches = append(branches, br)
+		}
 	}
 
 	return true, branches, nil

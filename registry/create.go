@@ -73,7 +73,7 @@ func (a *App) filterProjects(projects []gerrit.GerritProject) []gerrit.GerritPro
 		if strings.Contains(prj.Spec.Name, a.gerritRegistryPrefix) {
 			var branches []string
 			for _, br := range prj.Status.Branches {
-				if br != "master" {
+				if !strings.Contains(br, "master") {
 					branches = append(branches, br)
 				}
 			}
