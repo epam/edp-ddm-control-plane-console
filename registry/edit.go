@@ -80,6 +80,10 @@ func branchVersion(name string) int {
 	nums := regexp.MustCompile(`\d+`)
 	matches := nums.FindAllString(name, -1)
 	num := strings.Join(matches, "")
+	if num == "" {
+		return 0
+	}
+
 	version, err := strconv.ParseInt(num, 10, 32)
 	if err != nil {
 		panic(err)
