@@ -67,17 +67,30 @@ func (a *App) createRegistryGet(ctx *gin.Context) (response *router.Response, re
 	}), nil
 }
 
+func headsCount(refs []string) int {
+	cnt := 0
+	for _, ref := range refs {
+		if strings.Contains(ref, "refs/heads") {
+			cnt += 1
+		}
+	}
+
+	return cnt
+}
+
 func (a *App) filterProjects(projects []gerrit.GerritProject) []gerrit.GerritProject {
 	filteredProjects := make([]gerrit.GerritProject, 0, 4)
 	for _, prj := range projects {
 		if strings.Contains(prj.Spec.Name, a.gerritRegistryPrefix) {
-			var branches []string
-			for _, br := range prj.Status.Branches {
-				if !strings.Contains(br, "master") {
-					branches = append(branches, br)
+			if headsCount(prj.Status.Branches) > 1 {
+				var branches []string
+				for _, br := range prj.Status.Branches {
+					if !strings.Contains(br, "master") {
+						branches = append(branches, br)
+					}
 				}
+				prj.Status.Branches = branches
 			}
-			prj.Status.Branches = branches
 
 			filteredProjects = append(filteredProjects, prj)
 		}
