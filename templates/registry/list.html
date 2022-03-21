@@ -36,9 +36,13 @@
                             {{end}}
                         </td>
                         <td>
-                            <a href="{{ $.BasePath }}/admin/registry/view/{{$registry.Codebase.Name}}">
+                            {{if $registry.Codebase.ForegroundDeletion}}
                                 {{$registry.Codebase.Name}}
-                            </a>
+                            {{else}}
+                                <a href="{{ $.BasePath }}/admin/registry/view/{{$registry.Codebase.Name}}">
+                                    {{$registry.Codebase.Name}}
+                                </a>
+                            {{end}}
                         </td>
                         <td>
                             {{$registry.Codebase.Description}}
