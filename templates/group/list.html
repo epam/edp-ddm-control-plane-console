@@ -37,9 +37,13 @@
                             {{end}}
                         </td>
                         <td>
+                            {{if $group.Group.Codebase.ForegroundDeletion}}
+                                {{$group.Group.Codebase.Name}}
+                            {{else}}
                             <a href="{{ $.BasePath }}/admin/group/view/{{$group.Group.Codebase.Name}}">
                                 {{$group.Group.Codebase.Name}}
                             </a>
+                            {{end}}
                         </td>
                         <td>
                             {{ range $key, $registry := $group.Registries }}
