@@ -254,7 +254,7 @@ func prepareRegistryCodebase(gerritRegistryHost string, r *registry) *codebase.C
 	jobProvisioning := "default"
 	startVersion := "0.0.1"
 	jenkinsSlave := "gitops"
-	return &codebase.Codebase{
+	cb := codebase.Codebase{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v2.edp.epam.com/v1alpha1",
 			Kind:       "Codebase",
@@ -268,7 +268,6 @@ func prepareRegistryCodebase(gerritRegistryHost string, r *registry) *codebase.C
 			BuildTool:        "gitops",
 			Lang:             "other",
 			DefaultBranch:    r.RegistryGitBranch,
-			ReplaceMaster:    r.RegistryGitBranch != "master",
 			Strategy:         "clone",
 			DeploymentScript: "openshift-template",
 			GitServer:        "gerrit",
@@ -291,6 +290,13 @@ func prepareRegistryCodebase(gerritRegistryHost string, r *registry) *codebase.C
 			Value:           "inactive",
 		},
 	}
+
+	if cb.Spec.DefaultBranch != "master" {
+		cb.Spec.BranchToCopyInDefaultBranch = cb.Spec.DefaultBranch
+		cb.Spec.DefaultBranch = "master"
+	}
+
+	return &cb
 }
 
 func validateRegistryKeys(rq *http.Request, r *registry) (createKeys bool, key6Fl, caCertFl,
