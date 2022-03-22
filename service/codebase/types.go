@@ -71,6 +71,7 @@ type CodebaseSpec struct {
 	DefaultBranch            string      `json:"defaultBranch"`
 	JiraIssueMetadataPayload *string     `json:"jiraIssueMetadataPayload"`
 	EmptyProject             bool        `json:"emptyProject"`
+	ReplaceMaster            bool        `json:"replaceMaster"`
 }
 
 func (in *Codebase) CanBeDeleted() bool {

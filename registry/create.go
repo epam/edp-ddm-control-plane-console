@@ -268,6 +268,7 @@ func prepareRegistryCodebase(gerritRegistryHost string, r *registry) *codebase.C
 			BuildTool:        "gitops",
 			Lang:             "other",
 			DefaultBranch:    r.RegistryGitBranch,
+			ReplaceMaster:    r.RegistryGitBranch != "master",
 			Strategy:         "clone",
 			DeploymentScript: "openshift-template",
 			GitServer:        "gerrit",
