@@ -23,17 +23,6 @@ $(function (){
         return false;
     });
 
-    // $(".popup-close").click(function (){
-    //     hidePopup();
-    //
-    //     return false;
-    // });
-
-    // $("#delete-cancel").click(function () {
-    //     hidePopup();
-    //     return false;
-    // })
-
     registryInput.val('');
     registryInput.keyup(function (e) {
         popupFooter.removeClass('active');
