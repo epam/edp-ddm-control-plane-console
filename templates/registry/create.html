@@ -1,6 +1,6 @@
 {{ define "registry/create.html" }}
     {{template "header" .}}
-    <div class="registry registry-create">
+    <div class="registry registry-create" id="registry-form">
         <div class="registry-header">
             <a href="{{ .BasePath }}/admin/registry/overview" class="registry-add">
                 <img alt="add registry" src="{{ .BasePath }}/static/img/action-back.png" />
@@ -32,8 +32,16 @@
             </div>
             <div class="rc-form-group {{ if .errorsMap.Admins }}error{{end}}">
                 <label for="admins">Адміністратори</label>
-                <input type="text" id="admins" name="admins" required pattern="^[a-zA-Z0-9@._\-,]+$"
-                       value="{{.model.Admins}}" />
+                <input type="hidden" id="admins" name="admins" v-model="adminsValue" />
+                <div class="advanced-admins">
+                    <div v-cloak v-for="adm in admins" class="child-admin">
+                        [[ adm.email ]]
+                        <a @click="deleteAdmin" :email="adm.email" href="#">
+                            <img src="/static/img/action-delete.png" />
+                        </a>
+                    </div>
+                    <button type="button" @click="showAdminForm">+</button>
+                </div>
                 <span>
                     {{range $key, $val := .errorsMap.Admins}}
                         {{ i18n $val.Tag $val.Param  }}
@@ -84,7 +92,10 @@
                 <button type="submit" name="submit">Підтвердити</button>
             </div>
         </form>
+        {{template "admin-block" .}}
     </div>
+
+
     <script src="{{ .BasePath }}/static/js/mustache.js"></script>
     <script id="ini-template" type="x-tmpl-mustache">
         {{ .hwINITemplateContent }}
@@ -106,20 +117,6 @@
             ],
             {{end}}
         };
-
-        // let renderINITemplate = function (){
-        //     let iniTemplate = document.getElementById('ini-template').innerHTML;
-        //     let rendered = Mustache.render(iniTemplate, {
-        //         "CA_NAME": $("#remote-ca-name").val(),
-        //         "CA_HOST": $("#remote-ca-host").val(),
-        //         "CA_PORT": $("#remote-ca-port").val(),
-        //         "KEY_SN": $("#remote-serial-number").val(),
-        //         "KEY_HOST": $("#remote-key-host").val(),
-        //         "KEY_ADDRESS_MASK": $("#remote-key-mask").val(),
-        //     });
-        //
-        //     $("#remote-ini-config").val(rendered.trim());
-        // };
 
         $(function (){
             let registryGitTemplate = $("#registry-git-template");
@@ -146,77 +143,11 @@
                     return false;
                 }
             });
-
-            // let setValidationMessages = function(){
-            //     let input = $(this).get(0);
-            //     input.setCustomValidity('');
-            //     let inputName = $(input).attr("name");
-            //
-            //     if (inputName === "name" && $(input).val().length < 3) {
-            //         input.setAttribute("isvalid", "true")
-            //         input.setCustomValidity('Будь-ласка вкажіть назву у відповідному форматі');
-            //     }
-            //
-            //     if (!input.validity.valid) {
-            //         input.scrollIntoView();
-            //
-            //         let errorMessages = {
-            //             'name':   'Будь-ласка вкажіть назву у відповідному форматі',
-            //             'key6': 'Будь-ласка оберіть файловий ключ',
-            //             'sign-key-issuer': 'Будь-ласка вкажіть АЦСК, що видав ключ',
-            //             'sign-key-pwd': 'Будь-ласка вкажіть пароль до файлового ключа',
-            //             'ca-cert': 'Будь-ласка оберіть публічні сертифікати АЦСК',
-            //             'ca-json': 'Будь-ласка оберіть список АЦСК',
-            //             'admins': 'Будь-ласка вкажіть адміністраторів у відповідному форматі',
-            //         };
-            //         let errorMessage = errorMessages[inputName];
-            //         if (errorMessage) {
-            //             input.setCustomValidity(errorMessage);
-            //         } else {
-            //             input.setCustomValidity('Обов’язкове поле');
-            //         }
-            //     }
-            // };
-            //
-            // $("input").on('change invalid', setValidationMessages);
-
-            // let keyTypeChanged = function(e){
-            //     let typeSections = $(".key-type-section");
-            //     typeSections.find("input").prop('disabled', true);
-            //     typeSections.hide();
-            //
-            //     let val = $(e.target).val(),
-            //         visibleSection = $(`.key-type-${val}`);
-            //     visibleSection.find('input').prop('disabled', false);
-            //     visibleSection.show();
-            // };
-            // let keyDeviceType = $("#key-device-type");
-            //
-            // keyDeviceType.change(keyTypeChanged);
-            // keyDeviceType.change();
-            //
-            // $(`.key-type-hardware`).find('input').change(renderINITemplate);
-            // renderINITemplate();
-            //
-            // let removeAllowedKeysRow = function (e){
-            //     $(e.target).parent().remove();
-            //     return false;
-            // };
-
-            // $("#allowed-keys-add").click(function () {
-            //     let iniTemplate = document.getElementById('allowed-keys-template').innerHTML;
-            //     $("#allowed-keys-body").append(iniTemplate);
-            //     let allowedKeysRemoveBtn = $(".allowed-keys-remove-btn");
-            //     allowedKeysRemoveBtn.off();
-            //     allowedKeysRemoveBtn.click(removeAllowedKeysRow);
-            //
-            //     $(".allowed-keys-input").on('change invalid', setValidationMessages);
-            //
-            //     return false;
-            // });
         });
     </script>
     <script type="text/javascript" src="{{ .BasePath }}/static/js/registry-form.js"></script>
+    <script type="text/javascript" src="{{ .BasePath }}/static/js/vue.global.js"></script>
+    <script type="text/javascript" src="{{ .BasePath }}/static/js/administrators.js"></script>
     {{template "footer" .}}
 
 {{ end }}
