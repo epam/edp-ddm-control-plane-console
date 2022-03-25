@@ -11,6 +11,8 @@
         <div class="popup-body">
             <p class="popup-error" v-cloak v-if="requiredError">Всі поля обов'язкові для заповнення</p>
             <p class="popup-error" v-cloak v-if="emailFormatError">Невірний формат електронной пошти</p>
+            <p class="popup-error" v-cloak v-if="usernameFormatError">Невірний формат ім'я користувача</p>
+
             <div class="rc-form-group">
                 <input aria-label="admin username" type="text"
                         placeholder="Ім'я користувача" v-model="editAdmin.username" />

@@ -1,6 +1,6 @@
 {{ define "registry/edit.html" }}
     {{template "header" .}}
-    <div class="registry registry-create">
+    <div class="registry registry-create" id="registry-form">
         <div class="registry-header">
             <a href="{{ .BasePath }}/admin/registry/overview" class="registry-add">
                 <img alt="add registry" src="{{ .BasePath }}/static/img/action-back.png" />
@@ -20,8 +20,18 @@
             </div>
             <div class="rc-form-group {{ if .errorsMap.Admins }}error{{end}}">
                 <label for="admins">Адміністратори</label>
-                <input type="text" id="admins" name="admins" required pattern="^[a-zA-Z0-9@._\-,]+$"
-                       value="{{.registry.Admins}}" />
+                <input type="hidden" id="admins" name="admins" v-model="adminsValue"
+                       :admins="loadAdmins('{{ .model.Admins }}')" />
+
+                <div class="advanced-admins">
+                    <div v-cloak v-for="adm in admins" class="child-admin">
+                        [[ adm.email ]]
+                        <a @click="deleteAdmin" :email="adm.email" href="#">
+                            <img src="/static/img/action-delete.png" />
+                        </a>
+                    </div>
+                    <button type="button" @click="showAdminForm">+</button>
+                </div>
                 <span>
                     {{range $key, $val := .errorsMap.Admins}}
                         {{ $val.Error | i18n }}
@@ -68,6 +78,7 @@
             </div>
         </form>
         {{end}}
+        {{template "admin-block" .}}
     </div>
     <script src="{{ .BasePath }}/static/js/mustache.js"></script>
     <script id="ini-template" type="x-tmpl-mustache">
@@ -106,5 +117,7 @@
 
     </script>
     <script type="text/javascript" src="{{ .BasePath }}/static/js/registry-form.js"></script>
+    <script type="text/javascript" src="{{ .BasePath }}/static/js/vue.global.js"></script>
+    <script type="text/javascript" src="{{ .BasePath }}/static/js/administrators.js"></script>
     {{template "footer" .}}
 {{ end }}

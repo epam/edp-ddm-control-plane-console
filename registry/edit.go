@@ -2,7 +2,7 @@ package registry
 
 import (
 	"context"
-	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -44,6 +44,14 @@ func (a *App) editRegistryGet(ctx *gin.Context) (response *router.Response, retE
 		return nil, errors.Wrap(err, "unable to get registry")
 	}
 
+	admins, err := a.getAdmins(userCtx, registryName)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to get registry admins")
+	}
+	model := registry{KeyDeviceType: KeyDeviceTypeFile}
+	adminsJs, _ := json.Marshal(admins)
+	model.Admins = string(adminsJs)
+
 	hwINITemplateContent, err := a.getINITemplateContent()
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get ini template data")
@@ -56,7 +64,7 @@ func (a *App) editRegistryGet(ctx *gin.Context) (response *router.Response, retE
 
 	return router.MakeResponse(200, "registry/edit.html", gin.H{
 		"registry":             reg,
-		"model":                registry{KeyDeviceType: KeyDeviceTypeFile},
+		"model":                model,
 		"page":                 "registry",
 		"hwINITemplateContent": hwINITemplateContent,
 		"updateBranches":       branches,
@@ -109,6 +117,9 @@ func HasUpdate(ctx context.Context, gerritService gerrit.ServiceInterface, cb *c
 	}
 
 	registryVersion := branchVersion(cb.Spec.DefaultBranch)
+	if cb.Spec.BranchToCopyInDefaultBranch != "" {
+		registryVersion = branchVersion(cb.Spec.BranchToCopyInDefaultBranch)
+	}
 
 	mrs, err := gerritService.GetMergeRequestByProject(ctx, gerritProject.Spec.Name)
 	if err != nil {
@@ -200,8 +211,8 @@ func (a *App) editRegistryPost(ctx *gin.Context) (response *router.Response, ret
 			gin.H{"page": "registry", "errorsMap": validationErrors, "registry": r, "model": r}), nil
 	}
 
-	if err := a.editRegistry(ctx, &r, cb, cbService, k8sService); err != nil {
-		validationErrors, ok := err.(validator.ValidationErrors)
+	if err := a.editRegistry(userCtx, ctx, &r, cb, cbService, k8sService); err != nil {
+		validationErrors, ok := errors.Cause(err).(validator.ValidationErrors)
 		if !ok {
 			return nil, errors.Wrap(err, "unable to parse registry form")
 		}
@@ -214,7 +225,7 @@ func (a *App) editRegistryPost(ctx *gin.Context) (response *router.Response, ret
 		fmt.Sprintf("/admin/registry/view/%s", r.Name)), nil
 }
 
-func (a *App) editRegistry(ginContext *gin.Context, r *registry, cb *codebase.Codebase,
+func (a *App) editRegistry(ctx context.Context, ginContext *gin.Context, r *registry, cb *codebase.Codebase,
 	cbService codebase.ServiceInterface, k8sService k8s.ServiceInterface) error {
 	if err := a.createRegistryKeys(r, ginContext.Request, k8sService); err != nil {
 		return errors.Wrap(err, "unable to create registry keys")
@@ -225,11 +236,13 @@ func (a *App) editRegistry(ginContext *gin.Context, r *registry, cb *codebase.Co
 		cb.Annotations = make(map[string]string)
 	}
 
-	if err := validateAdmins(r.Admins); err != nil {
-		return err
+	admins, err := validateAdmins(r.Admins)
+	if err != nil {
+		return errors.Wrap(err, "unable to validate admins")
 	}
-
-	cb.Annotations[AdminsAnnotation] = base64.StdEncoding.EncodeToString([]byte(r.Admins))
+	if err := a.syncAdmins(ctx, r.Name, admins); err != nil {
+		return errors.Wrap(err, "unable to sync admins")
+	}
 
 	if err := cbService.Update(cb); err != nil {
 		return errors.Wrap(err, "unable to update codebase")
@@ -243,15 +256,20 @@ func (a *App) editRegistry(ginContext *gin.Context, r *registry, cb *codebase.Co
 	return nil
 }
 
-func validateAdmins(adminsLine string) validator.ValidationErrors {
+func validateAdmins(adminsLine string) ([]admin, error) {
+	var admins []admin
+	if err := json.Unmarshal([]byte(adminsLine), &admins); err != nil {
+		return nil, errors.Wrap(err, "unable to unmarshal admins")
+	}
+
 	validate := validator.New()
-	admins := strings.Split(adminsLine, ",")
 	for _, admin := range admins {
-		errs := validate.Var(admin, "required,email")
+		errs := validate.Var(admin.Email, "required,email")
 		if errs != nil {
-			return []validator.FieldError{router.MakeFieldError("Admins", "required")}
+			return nil,
+				validator.ValidationErrors([]validator.FieldError{router.MakeFieldError("Admins", "required")})
 		}
 	}
 
-	return nil
+	return admins, nil
 }

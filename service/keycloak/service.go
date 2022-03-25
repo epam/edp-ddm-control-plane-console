@@ -1,6 +1,8 @@
 package keycloak
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -47,4 +49,51 @@ func Make(k8sConfig *rest.Config, namespace string) (*Service, error) {
 	}, nil
 }
 
-func GetRealmUsers
+func (s *Service) GetUsers(ctx context.Context) ([]KeycloakRealmUser, error) {
+	var lst KeycloakRealmUserList
+	if err := s.k8sClient.List(ctx, &lst); err != nil {
+		return nil, errors.Wrap(err, "unable to list users")
+	}
+
+	return lst.Items, nil
+}
+
+func (s *Service) GetUsersByRealm(ctx context.Context, realmName string) ([]KeycloakRealmUser, error) {
+	usrs, err := s.GetUsers(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to get users")
+	}
+
+	var filteredUsers []KeycloakRealmUser
+	for _, u := range usrs {
+		if u.Spec.Realm == realmName {
+			filteredUsers = append(filteredUsers, u)
+		}
+	}
+
+	return filteredUsers, nil
+}
+
+func (s *Service) CreateUser(ctx context.Context, user *KeycloakRealmUser) error {
+	if err := s.k8sClient.Create(ctx, user); err != nil {
+		return errors.Wrap(err, "unable to create realm user")
+	}
+
+	return nil
+}
+
+func (s *Service) UpdateUser(ctx context.Context, user *KeycloakRealmUser) error {
+	if err := s.k8sClient.Update(ctx, user); err != nil {
+		return errors.Wrap(err, "unable to update user")
+	}
+
+	return nil
+}
+
+func (s *Service) DeleteUser(ctx context.Context, user *KeycloakRealmUser) error {
+	if err := s.k8sClient.Delete(ctx, user); err != nil {
+		return errors.Wrap(err, "unable to delete user")
+	}
+
+	return nil
+}

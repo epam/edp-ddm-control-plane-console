@@ -8,22 +8,25 @@ import (
 	"ddm-admin-console/service/gerrit"
 	"ddm-admin-console/service/jenkins"
 	"ddm-admin-console/service/k8s"
+	"ddm-admin-console/service/keycloak"
 
 	"github.com/pkg/errors"
 )
 
 type App struct {
-	router                  router.Interface
-	codebaseService         codebase.ServiceInterface
-	gerritService           gerrit.ServiceInterface
-	edpComponentService     edpComponent.ServiceInterface
-	k8sService              k8s.ServiceInterface
-	gerritCreatorSecretName string
-	gerritRegistryPrefix    string
-	gerritRegistryHost      string
-	jenkinsService          jenkins.ServiceInterface
-	timezone                string
-	hardwareINITemplatePath string
+	router                     router.Interface
+	codebaseService            codebase.ServiceInterface
+	gerritService              gerrit.ServiceInterface
+	edpComponentService        edpComponent.ServiceInterface
+	k8sService                 k8s.ServiceInterface
+	gerritCreatorSecretName    string
+	gerritRegistryPrefix       string
+	gerritRegistryHost         string
+	jenkinsService             jenkins.ServiceInterface
+	timezone                   string
+	hardwareINITemplatePath    string
+	keycloakService            keycloak.ServiceInterface
+	usersRealm, usersNamespace string
 }
 
 func Make(router router.Interface, services *config.Services, cnf *config.Settings) (*App, error) {
@@ -39,6 +42,9 @@ func Make(router router.Interface, services *config.Services, cnf *config.Settin
 		gerritRegistryPrefix:    cnf.RegistryRepoPrefix,
 		gerritRegistryHost:      cnf.RegistryRepoHost,
 		hardwareINITemplatePath: cnf.RegistryHardwareKeyINITemplatePath,
+		keycloakService:         services.Keycloak,
+		usersRealm:              cnf.UsersRealm,
+		usersNamespace:          cnf.UsersNamespace,
 	}
 
 	app.createRoutes()
