@@ -34,6 +34,7 @@ type Settings struct {
 	RootGerritName                     string `envconfig:"ROOT_GERRIT_NAME" default:"gerrit"`
 	GroupGitRepo                       string `envconfig:"GROUP_GIT_REPO"`
 	UsersNamespace                     string `envconfig:"USERS_NAMESPACE" default:"user-management"`
+	UsersRealm                         string `envconfig:"USERS_REALM" default:"openshift"`
 }
 
 type Services struct {

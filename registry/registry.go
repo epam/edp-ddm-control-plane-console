@@ -10,7 +10,7 @@ const (
 type registry struct {
 	Name                string   `form:"name" binding:"required,min=3,max=12,registry-name"`
 	Description         string   `form:"description" valid:"max=250"`
-	Admins              string   `form:"admins" binding:"registry-admins"`
+	Admins              string   `form:"admins"`
 	SignKeyIssuer       string   `form:"sign-key-issuer" binding:"required_if=KeyDeviceType file Scenario key-required"`
 	SignKeyPwd          string   `form:"sign-key-pwd" binding:"required_if=KeyDeviceType file Scenario key-required"`
 	RegistryGitTemplate string   `form:"registry-git-template" binding:"required"`

@@ -1,4 +1,7 @@
 let app = Vue.createApp({
+    mounted() {
+        // console.log(this.adminsValue);
+    },
     data() {
         return {
             adminsValue: '',
@@ -14,14 +17,22 @@ let app = Vue.createApp({
             },
             requiredError: false,
             emailFormatError: false,
+            usernameFormatError: false,
+            adminsLoaded: false,
         }
     },
     methods: {
+        loadAdmins(admins) {
+            if (!this.adminsLoaded) {
+                this.admins = JSON.parse(admins);
+                this.adminsValue = JSON.stringify(this.admins);
+                this.adminsLoaded = true;
+            }
+        },
         showAdminForm() {
             this.emailFormatError = false;
             this.requiredError = false;
             this.adminPopupShow = true;
-            console.log('show admin form');
             $("body").css("overflow", "hidden");
         },
         hideAdminForm() {
@@ -38,15 +49,14 @@ let app = Vue.createApp({
                     break;
                 }
             }
-            console.log(this.admins);
             this.adminsValue = JSON.stringify(this.admins);
         },
         createAdmin: function (e) {
             this.requiredError = false;
             this.emailFormatError = false;
+            this.usernameFormatError = false;
 
             e.preventDefault();
-            console.log(this.editAdmin);
             for (let v in this.editAdmin) {
                 if (this.editAdmin[v] === "") {
                     this.requiredError = true;
@@ -60,6 +70,11 @@ let app = Vue.createApp({
                     /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
                 )) {
                 this.emailFormatError = true;
+                return;
+            }
+
+            if (!String(this.editAdmin.username).match(/^[a-z0-9\-]{3,}$/)) {
+                this.usernameFormatError = true;
                 return;
             }
 

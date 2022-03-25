@@ -157,7 +157,7 @@ func (a *App) createRegistryPost(ctx *gin.Context) (response *router.Response, r
 		return nil, errors.Wrap(err, "unable to validate create registry git template")
 	}
 
-	if err := a.createRegistry(&r, ctx.Request, cbService, k8sService); err != nil {
+	if err := a.createRegistry(userCtx, &r, ctx.Request, cbService, k8sService); err != nil {
 		validationErrors, ok := errors.Cause(err).(validator.ValidationErrors)
 		if !ok {
 			return nil, errors.Wrap(err, "unable to parse registry form")
@@ -203,14 +203,25 @@ func (a *App) validateCreateRegistryGitTemplate(r *registry) error {
 	return errors.New("wrong registry template selected")
 }
 
-func (a *App) createRegistry(r *registry, request *http.Request, cbService codebase.ServiceInterface,
-	k8sService k8s.ServiceInterface) error {
+func (a *App) createRegistry(ctx context.Context, r *registry, request *http.Request,
+	cbService codebase.ServiceInterface, k8sService k8s.ServiceInterface) error {
 	_, err := cbService.Get(r.Name)
 	if err == nil {
 		return validator.ValidationErrors([]validator.FieldError{router.MakeFieldError("Name", "registry-exists")})
 	}
 	if !k8sErrors.IsNotFound(err) {
 		return errors.Wrap(err, "unknown error")
+	}
+
+	if r.Admins != "" {
+		admins, err := validateAdmins(r.Admins)
+		if err != nil {
+			return errors.Wrap(err, "unable to validate admins")
+		}
+
+		if err := a.syncAdmins(ctx, r.Name, admins); err != nil {
+			return errors.Wrap(err, "unable to sync admins")
+		}
 	}
 
 	if err := a.createRegistryKeys(r, request, k8sService); err != nil {
@@ -223,13 +234,6 @@ func (a *App) createRegistry(r *registry, request *http.Request, cbService codeb
 		TemplateNameAnnotation: r.RegistryGitTemplate,
 	}
 
-	if r.Admins != "" {
-		if err := validateAdmins(r.Admins); err != nil {
-			return err
-		}
-
-		annotations[AdminsAnnotation] = base64.StdEncoding.EncodeToString([]byte(r.Admins))
-	}
 	if r.RegistryGroup != "" {
 		annotations[GroupAnnotation] = base64.StdEncoding.EncodeToString([]byte(r.RegistryGroup))
 	}
@@ -247,10 +251,6 @@ func (a *App) createRegistry(r *registry, request *http.Request, cbService codeb
 		return errors.Wrap(err, "unable to create default branch")
 	}
 
-	return nil
-}
-
-func (a *App) syncAdmins() error {
 	return nil
 }
 
