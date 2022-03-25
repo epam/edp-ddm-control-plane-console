@@ -250,6 +250,10 @@ func (a *App) createRegistry(r *registry, request *http.Request, cbService codeb
 	return nil
 }
 
+func (a *App) syncAdmins() error {
+	return nil
+}
+
 func prepareRegistryCodebase(gerritRegistryHost string, r *registry) *codebase.Codebase {
 	jobProvisioning := "default"
 	startVersion := "0.0.1"

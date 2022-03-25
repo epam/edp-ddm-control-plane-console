@@ -3,6 +3,8 @@ package config
 import (
 	"go.uber.org/zap"
 
+	"ddm-admin-console/service/keycloak"
+
 	"ddm-admin-console/service/codebase"
 	edpcomponent "ddm-admin-console/service/edp_component"
 	"ddm-admin-console/service/gerrit"
@@ -31,6 +33,7 @@ type Settings struct {
 	RegistryHardwareKeyINITemplatePath string `envconfig:"REGISTRY_HW_KEY_INI_TPL_PATH" default:"osplm.ini"`
 	RootGerritName                     string `envconfig:"ROOT_GERRIT_NAME" default:"gerrit"`
 	GroupGitRepo                       string `envconfig:"GROUP_GIT_REPO"`
+	UsersNamespace                     string `envconfig:"USERS_NAMESPACE" default:"user-management"`
 }
 
 type Services struct {
@@ -40,6 +43,7 @@ type Services struct {
 	OpenShift    openshift.ServiceInterface
 	Gerrit       gerrit.ServiceInterface
 	Jenkins      jenkins.ServiceInterface
+	Keycloak     keycloak.ServiceInterface
 }
 
 type Logger interface {
