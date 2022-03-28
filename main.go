@@ -8,22 +8,6 @@ import (
 	"net/http"
 	"strings"
 
-	"ddm-admin-console/group"
-
-	"ddm-admin-console/auth"
-	oauth "ddm-admin-console/auth"
-	"ddm-admin-console/cluster"
-	"ddm-admin-console/config"
-	"ddm-admin-console/dashboard"
-	"ddm-admin-console/registry"
-	"ddm-admin-console/router"
-	"ddm-admin-console/service/codebase"
-	edpComponent "ddm-admin-console/service/edp_component"
-	"ddm-admin-console/service/gerrit"
-	"ddm-admin-console/service/jenkins"
-	"ddm-admin-console/service/k8s"
-	"ddm-admin-console/service/openshift"
-
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
@@ -36,6 +20,22 @@ import (
 	"golang.org/x/oauth2"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+
+	"ddm-admin-console/auth"
+	oauth "ddm-admin-console/auth"
+	"ddm-admin-console/cluster"
+	"ddm-admin-console/config"
+	"ddm-admin-console/dashboard"
+	"ddm-admin-console/group"
+	"ddm-admin-console/registry"
+	"ddm-admin-console/router"
+	"ddm-admin-console/service/codebase"
+	edpComponent "ddm-admin-console/service/edp_component"
+	"ddm-admin-console/service/gerrit"
+	"ddm-admin-console/service/jenkins"
+	"ddm-admin-console/service/k8s"
+	"ddm-admin-console/service/keycloak"
+	"ddm-admin-console/service/openshift"
 )
 
 func main() {
@@ -157,6 +157,11 @@ func initServices(restConf *rest.Config, appConf *config.Settings) (*config.Serv
 	serviceItems.Gerrit, err = gerrit.Make(restConf, appConf.Namespace, appConf.RootGerritName)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create gerrit service")
+	}
+
+	serviceItems.Keycloak, err = keycloak.Make(restConf, appConf.UsersNamespace)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to create keycloak service")
 	}
 
 	return &serviceItems, nil
