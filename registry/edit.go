@@ -19,7 +19,6 @@ import (
 	"ddm-admin-console/service/codebase"
 	"ddm-admin-console/service/gerrit"
 	"ddm-admin-console/service/k8s"
-	"github.com/gosimple/slug"
 )
 
 func (a *App) editRegistryGet(ctx *gin.Context) (response *router.Response, retErr error) {
@@ -270,7 +269,7 @@ func validateAdmins(adminsLine string) ([]admin, error) {
 			return nil,
 				validator.ValidationErrors([]validator.FieldError{router.MakeFieldError("Admins", "required")})
 		}
-		admins[i].Username = slug.Make(admin.Email)
+		admins[i].Username = admin.Email
 	}
 
 	return admins, nil
