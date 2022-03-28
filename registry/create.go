@@ -298,6 +298,10 @@ func prepareRegistryCodebase(gerritRegistryHost string, r *registry) *codebase.C
 	if cb.Spec.DefaultBranch != "master" {
 		cb.Spec.BranchToCopyInDefaultBranch = cb.Spec.DefaultBranch
 		cb.Spec.DefaultBranch = "master"
+
+		jobProvisioning = "default-" + strings.Replace(
+			strings.ToLower(cb.Spec.BranchToCopyInDefaultBranch), ".", "-", -1)
+		cb.Spec.JobProvisioning = &jobProvisioning
 	}
 
 	return &cb
