@@ -9,7 +9,6 @@ let app = Vue.createApp({
             adminPopupShow: false,
             admins: [],
             editAdmin: {
-                username: "",
                 firstName: "",
                 lastName: "",
                 email: "",
@@ -17,7 +16,6 @@ let app = Vue.createApp({
             },
             requiredError: false,
             emailFormatError: false,
-            usernameFormatError: false,
             adminsLoaded: false,
         }
     },
@@ -54,7 +52,6 @@ let app = Vue.createApp({
         createAdmin: function (e) {
             this.requiredError = false;
             this.emailFormatError = false;
-            this.usernameFormatError = false;
 
             e.preventDefault();
             for (let v in this.editAdmin) {
@@ -73,16 +70,10 @@ let app = Vue.createApp({
                 return;
             }
 
-            if (!String(this.editAdmin.username).match(/^[a-z0-9\-]{3,}$/)) {
-                this.usernameFormatError = true;
-                return;
-            }
-
             $("body").css("overflow", "scroll");
             this.adminPopupShow = false;
 
             this.admins.push({
-                username: this.editAdmin.username,
                 email: this.editAdmin.email,
                 firstName: this.editAdmin.firstName,
                 lastName: this.editAdmin.lastName,
@@ -90,7 +81,6 @@ let app = Vue.createApp({
             });
 
             this.editAdmin = {
-                username: "",
                 firstName: "",
                 lastName: "",
                 email: "",
