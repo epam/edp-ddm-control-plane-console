@@ -51,7 +51,10 @@ func Make(k8sConfig *rest.Config, namespace string) (*Service, error) {
 
 func (s *Service) GetUsers(ctx context.Context) ([]KeycloakRealmUser, error) {
 	var lst KeycloakRealmUserList
-	if err := s.k8sClient.List(ctx, &lst); err != nil {
+
+	if err := s.k8sClient.List(ctx, &lst, &client.ListOptions{
+		Namespace: s.namespace,
+	}); err != nil {
 		return nil, errors.Wrap(err, "unable to list users")
 	}
 
