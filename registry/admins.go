@@ -3,6 +3,7 @@ package registry
 import (
 	"context"
 	"fmt"
+	"github.com/gosimple/slug"
 
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -81,7 +82,7 @@ func (a *App) syncAdmins(ctx context.Context, registryName string, admins []admi
 func (a *App) adminCreate(ctx context.Context, registryName string, adm *admin) error {
 	if err := a.keycloakService.CreateUser(ctx, &keycloak.KeycloakRealmUser{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-%s", registryName, adm.Username),
+			Name:      fmt.Sprintf("%s-%s", registryName, slug.Make(adm.Username)),
 			Namespace: a.usersNamespace,
 		},
 		Spec: keycloak.KeycloakRealmUserSpec{
