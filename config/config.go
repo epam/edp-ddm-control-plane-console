@@ -35,6 +35,7 @@ type Settings struct {
 	GroupGitRepo                       string `envconfig:"GROUP_GIT_REPO"`
 	UsersNamespace                     string `envconfig:"USERS_NAMESPACE" default:"user-management"`
 	UsersRealm                         string `envconfig:"USERS_REALM" default:"openshift"`
+	EnableBranchProvisioners           bool   `envconfig:"ENABLE_BRANCH_PROVISIONERS"`
 }
 
 type Services struct {

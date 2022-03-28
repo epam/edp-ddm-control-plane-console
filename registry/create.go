@@ -228,7 +228,7 @@ func (a *App) createRegistry(ctx context.Context, r *registry, request *http.Req
 		return errors.Wrap(err, "unable to create registry keys")
 	}
 
-	cb := prepareRegistryCodebase(a.gerritRegistryHost, r)
+	cb := a.prepareRegistryCodebase(a.gerritRegistryHost, r)
 
 	annotations := map[string]string{
 		TemplateNameAnnotation: r.RegistryGitTemplate,
@@ -254,7 +254,7 @@ func (a *App) createRegistry(ctx context.Context, r *registry, request *http.Req
 	return nil
 }
 
-func prepareRegistryCodebase(gerritRegistryHost string, r *registry) *codebase.Codebase {
+func (a *App) prepareRegistryCodebase(gerritRegistryHost string, r *registry) *codebase.Codebase {
 	jobProvisioning := "default"
 	startVersion := "0.0.1"
 	jenkinsSlave := "gitops"
@@ -299,9 +299,11 @@ func prepareRegistryCodebase(gerritRegistryHost string, r *registry) *codebase.C
 		cb.Spec.BranchToCopyInDefaultBranch = cb.Spec.DefaultBranch
 		cb.Spec.DefaultBranch = "master"
 
-		jobProvisioning = "default-" + strings.Replace(
-			strings.ToLower(cb.Spec.BranchToCopyInDefaultBranch), ".", "-", -1)
-		cb.Spec.JobProvisioning = &jobProvisioning
+		if a.EnableBranchProvisioners {
+			jobProvisioning = "default-" + strings.Replace(
+				strings.ToLower(cb.Spec.BranchToCopyInDefaultBranch), ".", "-", -1)
+			cb.Spec.JobProvisioning = &jobProvisioning
+		}
 	}
 
 	return &cb

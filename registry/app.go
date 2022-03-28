@@ -27,24 +27,26 @@ type App struct {
 	hardwareINITemplatePath    string
 	keycloakService            keycloak.ServiceInterface
 	usersRealm, usersNamespace string
+	EnableBranchProvisioners   bool
 }
 
 func Make(router router.Interface, services *config.Services, cnf *config.Settings) (*App, error) {
 	app := &App{
-		router:                  router,
-		codebaseService:         services.Codebase,
-		edpComponentService:     services.EDPComponent,
-		k8sService:              services.K8S,
-		gerritCreatorSecretName: cnf.GerritCreatorSecretName,
-		jenkinsService:          services.Jenkins,
-		timezone:                cnf.Timezone,
-		gerritService:           services.Gerrit,
-		gerritRegistryPrefix:    cnf.RegistryRepoPrefix,
-		gerritRegistryHost:      cnf.RegistryRepoHost,
-		hardwareINITemplatePath: cnf.RegistryHardwareKeyINITemplatePath,
-		keycloakService:         services.Keycloak,
-		usersRealm:              cnf.UsersRealm,
-		usersNamespace:          cnf.UsersNamespace,
+		router:                   router,
+		codebaseService:          services.Codebase,
+		edpComponentService:      services.EDPComponent,
+		k8sService:               services.K8S,
+		gerritCreatorSecretName:  cnf.GerritCreatorSecretName,
+		jenkinsService:           services.Jenkins,
+		timezone:                 cnf.Timezone,
+		gerritService:            services.Gerrit,
+		gerritRegistryPrefix:     cnf.RegistryRepoPrefix,
+		gerritRegistryHost:       cnf.RegistryRepoHost,
+		hardwareINITemplatePath:  cnf.RegistryHardwareKeyINITemplatePath,
+		keycloakService:          services.Keycloak,
+		usersRealm:               cnf.UsersRealm,
+		usersNamespace:           cnf.UsersNamespace,
+		EnableBranchProvisioners: cnf.EnableBranchProvisioners,
 	}
 
 	app.createRoutes()
