@@ -3,6 +3,7 @@ apiVersion: authorization.openshift.io/v1
 kind: RoleBinding
 metadata:
   name: control-plane-console-keycloakrealmuser
+  namespace: user-management
 roleRef:
   name: control-plane-console-keycloakrealmuser
   namespace: user-management
