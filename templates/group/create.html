@@ -20,14 +20,14 @@
         </div>
         <div class="rc-form-group {{ if .errorsMap.Name }}error{{end}}">
             <label for="name">Назва групи</label>
-            <input type="text" id="name" name="name" maxlength="12" required
+            <input type="text" id="name" name="name" maxlength="12"
                    pattern="^[a-z0-9]([-a-z0-9]*[a-z0-9])?([a-z0-9]([-a-z0-9]*[a-z0-9])?)*$"
                    value="{{.model.Name}}" />
             <span>
                     {{range $key, $val := .errorsMap.Name}}
                         {{ i18n $val.Tag $val.Param }}
                     {{end}}
-                </span>
+            </span>
             <p>Допустимі символи: "a-z", "-". Назва не може перевищувати довжину у 12 символів.</p>
         </div>
         <div class="rc-form-group {{ if .errorsMap.Description }}error{{end}}">
