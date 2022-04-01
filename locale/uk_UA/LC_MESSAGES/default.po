@@ -31,3 +31,18 @@ msgstr "Реєстр за такою назвою вже існує"
 
 msgid "group-exists"
 msgstr "Група за такою назвою вже існує"
+
+msgid "status-active"
+msgstr "Активний"
+
+msgid "status-failed"
+msgstr "Помилка"
+
+msgid "status-failure"
+msgstr "Помилка"
+
+msgid "status-inactive"
+msgstr "В обробці"
+
+msgid "status-ok"
+msgstr "Активний"

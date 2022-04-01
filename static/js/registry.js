@@ -1,4 +1,8 @@
 $(function (){
+    $( document ).tooltip({
+        // position: { my: "top top", at: "top top" }
+    });
+
     let registryName;
     let registryInput = $("#registry-name");
     let popupFooter = $(".popup-footer");

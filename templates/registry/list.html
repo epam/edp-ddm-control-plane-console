@@ -1,7 +1,8 @@
 {{ define "registry/list.html" }}
     {{template "header" .}}
     <link rel="stylesheet" type="text/css" href="{{.BasePath}}/static/css/datatables.custom.css" />
-    <div class="registry">
+
+    <div class="registry" id="tooltip">
         <div class="registry-header">
             <h1>Реєстри</h1>
             {{if .allowedToCreate}}
@@ -29,11 +30,12 @@
                     <tr {{if $registry.Codebase.ForegroundDeletion}}class="disabled"{{end}}>
                         <td>
                             {{if $registry.Codebase.ForegroundDeletion}}
-                                <img src="{{ $.BasePath }}/static/img/action-delete.png" alt="delete registry" />
+                                <img title="{{ i18n $registry.Codebase.LocaleStatus }}" src="{{ $.BasePath }}/static/img/action-delete.png" alt="delete registry" />
                             {{else}}
-                                <img src="{{ $.BasePath }}/static/img/status-{{$registry.Codebase.StrStatus}}.png"
-                                     alt="status {{$registry.Codebase.StrStatus}}" />
+                                <img title="{{ i18n $registry.Codebase.LocaleStatus }}" src="{{ $.BasePath }}/static/img/status-{{$registry.Codebase.StrStatus}}.png"
+                                     alt="{{ i18n $registry.Codebase.LocaleStatus}}" />
                             {{end}}
+
                         </td>
                         <td>
                             {{if $registry.Codebase.ForegroundDeletion}}
@@ -82,6 +84,7 @@
 
     <script type="text/javascript" src="{{.BasePath}}/static/js/datatables.min.js"></script>
     <script type="text/javascript" src="{{.BasePath}}/static/js/registry.js"></script>
+    <script type="text/javascript" src="{{ .BasePath }}/static/js/jquery-ui.min.js"></script>
     {{template "footer" .}}
         
 {{ end }}

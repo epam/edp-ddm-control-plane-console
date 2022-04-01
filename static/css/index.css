@@ -11919,3 +11919,10 @@ div#kubernetes-component {
 .popup-error {
     color: #ff2c2c;
 }
+
+.ui-tooltip {
+    padding: 16px;
+    background: #FFFFFF;
+    border: 2px solid #000000!important;
+    box-shadow: none;
+}
