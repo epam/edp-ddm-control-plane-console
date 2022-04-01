@@ -29,3 +29,5 @@ keycloakIntegration:
     name: admin-console-client
     public: false
     secretName: admin-console-client
+
+enable_branch_provisioners: 1

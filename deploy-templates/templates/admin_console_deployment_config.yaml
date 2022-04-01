@@ -82,6 +82,8 @@ spec:
               value: "{{.Values.projectUrlMask}}"
             - name: IMAGE_STREAM_MASK_URL
               value: "{{ .Values.imageStreamUrlMask }}"
+            - name: ENABLE_BRANCH_PROVISIONERS
+              value: "{{ .Values.enable_branch_provisioners }}"
           image: "{{ .Values.image.name }}:{{ .Values.image.version }}"
           imagePullPolicy: IfNotPresent
           livenessProbe:
