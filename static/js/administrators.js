@@ -17,9 +17,21 @@ let app = Vue.createApp({
             requiredError: false,
             emailFormatError: false,
             adminsLoaded: false,
+            adminsError: false,
         }
     },
     methods: {
+        registryFormSubmit(e) {
+            if (this.admins.length === 0) {
+                this.adminsError = true;
+                e.preventDefault();
+
+                let element = this.$refs['admins'];
+                let top = element.offsetTop;
+
+                window.scrollTo(0, top);
+            }
+        },
         loadAdmins(admins) {
             if (!this.adminsLoaded) {
                 this.admins = JSON.parse(admins);

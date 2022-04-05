@@ -75,6 +75,10 @@ func (a *App) editGet(ctx *gin.Context) (*router.Response, error) {
 		return nil, errors.Wrap(err, "unable to check for updates")
 	}
 
+	if len(branches) > 1 {
+		branches = []string{branches[0]}
+	}
+
 	return router.MakeResponse(200, "cluster/edit.html", gin.H{
 		"backupConf":     backupConfig,
 		"page":           "cluster",

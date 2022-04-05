@@ -11926,3 +11926,7 @@ div#kubernetes-component {
     border: 2px solid #000000!important;
     box-shadow: none;
 }
+
+.error > .advanced-admins {
+    border: 1px solid #D35D47;
+}
