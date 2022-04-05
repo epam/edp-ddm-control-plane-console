@@ -5,9 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"regexp"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -15,9 +12,7 @@ import (
 	"github.com/pkg/errors"
 
 	"ddm-admin-console/router"
-	"ddm-admin-console/service"
 	"ddm-admin-console/service/codebase"
-	"ddm-admin-console/service/gerrit"
 	"ddm-admin-console/service/k8s"
 )
 
@@ -62,6 +57,17 @@ func (a *App) editRegistryGet(ctx *gin.Context) (response *router.Response, retE
 		return nil, errors.Wrap(err, "unable to check for updates")
 	}
 
+	if hasUpdate && len(branches) > 0 {
+		filteredBranches, err := a.filterUpdateBranchesByCluster(userCtx, branches)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to filter update branches by cluster")
+		}
+		if len(filteredBranches) > 1 {
+			filteredBranches = []string{filteredBranches[0]}
+		}
+		branches = filteredBranches
+	}
+
 	return router.MakeResponse(200, "registry/edit.html", gin.H{
 		"registry":             reg,
 		"model":                model,
@@ -82,89 +88,6 @@ func (a *App) checkUpdateAccess(codebaseName string, userK8sService k8s.ServiceI
 	}
 
 	return nil
-}
-
-func branchVersion(name string) int {
-	nums := regexp.MustCompile(`\d+`)
-	matches := nums.FindAllString(name, -1)
-	num := strings.Join(matches, "")
-	if num == "" {
-		return 0
-	}
-
-	version, err := strconv.ParseInt(num, 10, 32)
-	if err != nil {
-		panic(err)
-	}
-
-	return int(version)
-}
-
-func HasUpdate(ctx context.Context, gerritService gerrit.ServiceInterface, cb *codebase.Codebase) (bool, []string, error) {
-	gerritProject, err := gerritService.GetProject(ctx, cb.Name)
-	if service.IsErrNotFound(err) {
-		return false, []string{}, nil
-	}
-
-	if err != nil {
-		return false, nil, errors.Wrap(err, "unable to get gerrit project")
-	}
-
-	branches := updateBranches(gerritProject.Status.Branches)
-
-	if len(branches) == 0 {
-		return false, branches, nil
-	}
-
-	registryVersion := branchVersion(cb.Spec.DefaultBranch)
-	if cb.Spec.BranchToCopyInDefaultBranch != "" {
-		registryVersion = branchVersion(cb.Spec.BranchToCopyInDefaultBranch)
-	}
-
-	mrs, err := gerritService.GetMergeRequestByProject(ctx, gerritProject.Spec.Name)
-	if err != nil {
-		return false, branches, errors.Wrap(err, "unable to get merge requests")
-	}
-
-	branchesDict := make(map[string]string)
-	for _, br := range branches {
-		branchesDict[br] = br
-	}
-
-	for _, mr := range mrs {
-		if mr.Status.Value == "NEW" {
-			return false, branches, nil
-		}
-
-		if mr.Status.Value == "MERGED" {
-			mergedBranchVersion := branchVersion(mr.Spec.SourceBranch)
-			if mergedBranchVersion > registryVersion {
-				registryVersion = mergedBranchVersion
-			}
-
-			delete(branchesDict, mr.Spec.SourceBranch)
-		}
-	}
-
-	branches = []string{}
-	for _, br := range branchesDict {
-		if branchVersion(br) > registryVersion {
-			branches = append(branches, br)
-		}
-	}
-
-	return true, branches, nil
-}
-
-func updateBranches(projectBranches []string) []string {
-	var updateBranches []string
-	for _, br := range projectBranches {
-		if strings.Contains(br, "refs/heads") && !strings.Contains(br, "master") {
-			updateBranches = append(updateBranches, strings.Replace(br, "refs/heads/", "", 1))
-		}
-	}
-
-	return updateBranches
 }
 
 func (a *App) editRegistryPost(ctx *gin.Context) (response *router.Response, retErr error) {
