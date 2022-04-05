@@ -28,6 +28,7 @@ type App struct {
 	keycloakService            keycloak.ServiceInterface
 	usersRealm, usersNamespace string
 	EnableBranchProvisioners   bool
+	clusterCodebaseName        string
 }
 
 func Make(router router.Interface, services *config.Services, cnf *config.Settings) (*App, error) {
@@ -47,6 +48,7 @@ func Make(router router.Interface, services *config.Services, cnf *config.Settin
 		usersRealm:               cnf.UsersRealm,
 		usersNamespace:           cnf.UsersNamespace,
 		EnableBranchProvisioners: cnf.EnableBranchProvisioners,
+		clusterCodebaseName:      cnf.ClusterCodebaseName,
 	}
 
 	app.createRoutes()
