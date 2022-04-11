@@ -300,13 +300,17 @@ func (a *App) prepareRegistryCodebase(gerritRegistryHost string, r *registry) *c
 		cb.Spec.DefaultBranch = "master"
 
 		if a.EnableBranchProvisioners {
-			jobProvisioning = "default-" + strings.Replace(
-				strings.ToLower(cb.Spec.BranchToCopyInDefaultBranch), ".", "-", -1)
+			jobProvisioning = branchProvisioner(cb.Spec.BranchToCopyInDefaultBranch)
 			cb.Spec.JobProvisioning = &jobProvisioning
 		}
 	}
 
 	return &cb
+}
+
+func branchProvisioner(branch string) string {
+	return "default-" + strings.Replace(
+		strings.ToLower(branch), ".", "-", -1)
 }
 
 func validateRegistryKeys(rq *http.Request, r *registry) (createKeys bool, key6Fl, caCertFl,
