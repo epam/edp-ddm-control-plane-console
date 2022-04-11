@@ -57,16 +57,16 @@ func (a *App) editRegistryGet(ctx *gin.Context) (response *router.Response, retE
 		return nil, errors.Wrap(err, "unable to check for updates")
 	}
 
-	if hasUpdate && len(branches) > 0 {
-		filteredBranches, err := a.filterUpdateBranchesByCluster(userCtx, branches)
-		if err != nil {
-			return nil, errors.Wrap(err, "unable to filter update branches by cluster")
-		}
-		if len(filteredBranches) > 1 {
-			filteredBranches = []string{filteredBranches[0]}
-		}
-		branches = filteredBranches
-	}
+	//if hasUpdate && len(branches) > 0 {
+	//	filteredBranches, err := a.filterUpdateBranchesByCluster(userCtx, branches)
+	//	if err != nil {
+	//		return nil, errors.Wrap(err, "unable to filter update branches by cluster")
+	//	}
+	//	if len(filteredBranches) > 1 {
+	//		filteredBranches = []string{filteredBranches[0]}
+	//	}
+	//	branches = filteredBranches
+	//}
 
 	return router.MakeResponse(200, "registry/edit.html", gin.H{
 		"registry":             reg,
