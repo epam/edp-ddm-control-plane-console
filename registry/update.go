@@ -54,6 +54,14 @@ func (a *App) registryUpdate(ctx *gin.Context) (*router.Response, error) {
 		return nil, errors.Wrap(err, "unable to create merge request")
 	}
 
+	if a.EnableBranchProvisioners {
+		prov := branchProvisioner(ur.Branch)
+		cb.Spec.JobProvisioning = &prov
+		if err := a.codebaseService.Update(cb); err != nil {
+			return nil, errors.Wrap(err, "unable to update codebase provisioner")
+		}
+	}
+
 	return router.MakeRedirectResponse(http.StatusFound,
 		fmt.Sprintf("/admin/registry/view/%s", r.Name)), nil
 }

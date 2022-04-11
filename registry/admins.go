@@ -3,8 +3,9 @@ package registry
 import (
 	"context"
 	"fmt"
-	"github.com/gosimple/slug"
 	"strings"
+
+	"github.com/gosimple/slug"
 
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,7 +20,6 @@ type admin struct {
 	LastName    string `json:"lastName"`
 	TmpPassword string `json:"tmpPassword"`
 }
-
 
 func (a *App) getAdmins(ctx context.Context, registryName string) ([]admin, error) {
 	usrs, err := a.keycloakService.GetUsersByRealm(ctx, a.usersRealm)
@@ -84,8 +84,8 @@ func (a *App) syncAdmins(ctx context.Context, registryName string, admins []admi
 func (a *App) adminCreate(ctx context.Context, registryName string, adm *admin) error {
 	if err := a.keycloakService.CreateUser(ctx, &keycloak.KeycloakRealmUser{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-%s", registryName,
-				strings.Replace(slug.Make(adm.Username), "_", "-", -1)),
+			Name: fmt.Sprintf("%s-%s", registryName,
+				strings.Replace(slug.Make(adm.Username), "_", "-", -1)), //TODO: remove registry name from name
 			Namespace: a.usersNamespace,
 		},
 		Spec: keycloak.KeycloakRealmUserSpec{
