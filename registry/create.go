@@ -26,7 +26,6 @@ import (
 )
 
 const (
-	AdminsAnnotation       = "registry-parameters/administrators"
 	GroupAnnotation        = "registry-parameters/group"
 	TemplateNameAnnotation = "registry-parameters/template-name"
 )
@@ -303,6 +302,10 @@ func (a *App) prepareRegistryCodebase(gerritRegistryHost string, r *registry) *c
 			jobProvisioning = branchProvisioner(cb.Spec.BranchToCopyInDefaultBranch)
 			cb.Spec.JobProvisioning = &jobProvisioning
 		}
+	}
+
+	if a.codebaseLabels != nil && len(a.codebaseLabels) > 0 {
+		cb.SetLabels(a.codebaseLabels)
 	}
 
 	return &cb

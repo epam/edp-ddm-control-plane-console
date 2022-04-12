@@ -36,6 +36,7 @@ type Settings struct {
 	UsersNamespace                     string `envconfig:"USERS_NAMESPACE" default:"user-management"`
 	UsersRealm                         string `envconfig:"USERS_REALM" default:"openshift"`
 	EnableBranchProvisioners           bool   `envconfig:"ENABLE_BRANCH_PROVISIONERS"`
+	RegistryCodebaseLabels             string `envconfig:"REGISTRY_CODEBASE_LABELS"`
 }
 
 type Services struct {

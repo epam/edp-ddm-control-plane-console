@@ -60,6 +60,13 @@ func (a *App) registryUpdate(ctx *gin.Context) (*router.Response, error) {
 		if err := a.codebaseService.Update(cb); err != nil {
 			return nil, errors.Wrap(err, "unable to update codebase provisioner")
 		}
+
+		if err := a.jenkinsService.CreateJobBuildRun(fmt.Sprintf("ru-create-release-%d", time.Now().Unix()),
+			fmt.Sprintf("%s/job/Create-release-%s/", r.Name, r.Name), map[string]string{
+				"RELEASE_NAME": cb.Spec.DefaultBranch,
+			}); err != nil {
+			return nil, errors.Wrap(err, "unable to trigger jenkins job build run")
+		}
 	}
 
 	return router.MakeRedirectResponse(http.StatusFound,
