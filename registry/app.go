@@ -1,6 +1,8 @@
 package registry
 
 import (
+	"strings"
+
 	"ddm-admin-console/config"
 	"ddm-admin-console/router"
 	"ddm-admin-console/service/codebase"
@@ -29,6 +31,7 @@ type App struct {
 	usersRealm, usersNamespace string
 	EnableBranchProvisioners   bool
 	clusterCodebaseName        string
+	codebaseLabels             map[string]string
 }
 
 func Make(router router.Interface, services *config.Services, cnf *config.Settings) (*App, error) {
@@ -49,6 +52,19 @@ func Make(router router.Interface, services *config.Services, cnf *config.Settin
 		usersNamespace:           cnf.UsersNamespace,
 		EnableBranchProvisioners: cnf.EnableBranchProvisioners,
 		clusterCodebaseName:      cnf.ClusterCodebaseName,
+	}
+
+	if cnf.RegistryCodebaseLabels != "" {
+		labels := strings.Split(cnf.RegistryCodebaseLabels, ",")
+		if len(labels) > 0 {
+			app.codebaseLabels = make(map[string]string)
+			for _, l := range labels {
+				labelParts := strings.Split(l, "=")
+				if len(labelParts) == 2 {
+					app.codebaseLabels[labelParts[0]] = labelParts[1]
+				}
+			}
+		}
 	}
 
 	app.createRoutes()
