@@ -2,6 +2,7 @@ package jenkins
 
 import (
 	"context"
+
 	"ddm-admin-console/service"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,9 +22,7 @@ type Service struct {
 	service.UserConfig
 }
 
-func Make(k8sConfig *rest.Config, namespace string) (*Service, error) {
-	s := runtime.NewScheme()
-
+func Make(s *runtime.Scheme, k8sConfig *rest.Config, namespace string) (*Service, error) {
 	builder := pkgScheme.Builder{GroupVersion: schema.GroupVersion{Group: "v2.edp.epam.com", Version: "v1alpha1"}}
 	builder.Register(&JenkinsJobBuildRun{}, &JenkinsJobBuildRunList{})
 
@@ -88,7 +87,7 @@ func (s *Service) ServiceForContext(ctx context.Context) (ServiceInterface, erro
 		return s, nil
 	}
 
-	svc, err := Make(userConfig, s.namespace)
+	svc, err := Make(s.scheme, userConfig, s.namespace)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create service for context")
 	}
