@@ -218,7 +218,7 @@ func (a *App) createRegistry(ctx context.Context, r *registry, request *http.Req
 			return errors.Wrap(err, "unable to validate admins")
 		}
 
-		if err := a.syncAdmins(ctx, r.Name, admins); err != nil {
+		if err := a.admins.SyncAdmins(ctx, r.Name, admins); err != nil {
 			return errors.Wrap(err, "unable to sync admins")
 		}
 	}

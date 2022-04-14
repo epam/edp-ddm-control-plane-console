@@ -38,8 +38,7 @@ type MergeRequest struct {
 	AuthorEmail   string
 }
 
-func Make(k8sConfig *rest.Config, namespace, rootGerritName string) (*Service, error) {
-	s := runtime.NewScheme()
+func Make(s *runtime.Scheme, k8sConfig *rest.Config, namespace, rootGerritName string) (*Service, error) {
 	builder := pkgScheme.Builder{GroupVersion: schema.GroupVersion{Group: "v2.edp.epam.com", Version: "v1alpha1"}}
 	builder.Register(&GerritProject{}, &GerritProjectList{}, &GerritMergeRequest{}, &GerritMergeRequestList{})
 
