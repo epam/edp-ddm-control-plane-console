@@ -21,8 +21,7 @@ type Service struct {
 	restConfig *rest.Config
 }
 
-func Make(k8sConfig *rest.Config, namespace string) (*Service, error) {
-	s := runtime.NewScheme()
+func Make(s *runtime.Scheme, k8sConfig *rest.Config, namespace string) (*Service, error) {
 	builder := pkgScheme.Builder{GroupVersion: schema.GroupVersion{Group: "v1.edp.epam.com", Version: "v1alpha1"}}
 	builder.Register(&KeycloakRealmUser{}, &KeycloakRealmUserList{})
 

@@ -18,15 +18,17 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"golang.org/x/oauth2"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	ctrl "sigs.k8s.io/controller-runtime"
 
 	"ddm-admin-console/auth"
 	oauth "ddm-admin-console/auth"
 	"ddm-admin-console/cluster"
 	"ddm-admin-console/config"
+	codebaseController "ddm-admin-console/controller/codebase"
 	"ddm-admin-console/dashboard"
-	"ddm-admin-console/group"
 	"ddm-admin-console/registry"
 	"ddm-admin-console/router"
 	"ddm-admin-console/service/codebase"
@@ -125,16 +127,16 @@ func getLogger(level, encoding string) (*zap.Logger, error) {
 	return logger, nil
 }
 
-func initServices(restConf *rest.Config, appConf *config.Settings) (*config.Services, error) {
+func initServices(sch *runtime.Scheme, restConf *rest.Config, appConf *config.Settings) (*config.Services, error) {
 	var err error
 	serviceItems := config.Services{}
 
-	serviceItems.EDPComponent, err = edpComponent.Make(restConf, appConf.Namespace)
+	serviceItems.EDPComponent, err = edpComponent.Make(sch, restConf, appConf.Namespace)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to init edp component service")
 	}
 
-	serviceItems.Codebase, err = codebase.Make(restConf, appConf.Namespace)
+	serviceItems.Codebase, err = codebase.Make(sch, restConf, appConf.Namespace)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to init codebase service")
 	}
@@ -144,7 +146,7 @@ func initServices(restConf *rest.Config, appConf *config.Settings) (*config.Serv
 		return nil, errors.Wrap(err, "unable to init k8s service")
 	}
 
-	serviceItems.Jenkins, err = jenkins.Make(restConf, appConf.Namespace)
+	serviceItems.Jenkins, err = jenkins.Make(sch, restConf, appConf.Namespace)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to init jenkins service")
 	}
@@ -154,17 +156,45 @@ func initServices(restConf *rest.Config, appConf *config.Settings) (*config.Serv
 		return nil, errors.Wrap(err, "unable to init open shift service")
 	}
 
-	serviceItems.Gerrit, err = gerrit.Make(restConf, appConf.Namespace, appConf.RootGerritName)
+	serviceItems.Gerrit, err = gerrit.Make(sch, restConf, appConf.Namespace, appConf.RootGerritName)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create gerrit service")
 	}
 
-	serviceItems.Keycloak, err = keycloak.Make(restConf, appConf.UsersNamespace)
+	serviceItems.Keycloak, err = keycloak.Make(sch, restConf, appConf.UsersNamespace)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create keycloak service")
 	}
 
 	return &serviceItems, nil
+}
+
+func initControllers(sch *runtime.Scheme, namespace string, logger *zap.Logger, cnf *config.Settings,
+	services *config.Services) error {
+	cfg := ctrl.GetConfigOrDie()
+
+	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
+		Scheme:             sch,
+		Namespace:          namespace,
+		MetricsBindAddress: "0",
+	})
+
+	if err != nil {
+		return errors.Wrap(err, "unable to ini manager")
+	}
+
+	if err := codebaseController.Make(mgr, logger.Sugar(),
+		registry.MakeAdmins(services.Keycloak, cnf.UsersRealm, cnf.UsersNamespace)); err != nil {
+		return errors.Wrap(err, "unable to init codebase controller")
+	}
+
+	go func() {
+		if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+			logger.Sugar().Error(err.Error(), "unable to start manager")
+		}
+	}()
+
+	return nil
 }
 
 func initApps(logger *zap.Logger, cnf *config.Settings, r *gin.Engine) error {
@@ -179,9 +209,15 @@ func initApps(logger *zap.Logger, cnf *config.Settings, r *gin.Engine) error {
 	}
 
 	appRouter := router.Make(r, logger)
-	serviceItems, err := initServices(restConf, cnf)
+
+	sch := runtime.NewScheme()
+	serviceItems, err := initServices(sch, restConf, cnf)
 	if err != nil {
 		return errors.Wrap(err, "unable to init services")
+	}
+
+	if err := initControllers(sch, cnf.Namespace, logger, cnf, serviceItems); err != nil {
+		return errors.Wrap(err, "unable to init controllers")
 	}
 
 	_, err = dashboard.Make(appRouter, oa, serviceItems, cnf.ClusterCodebaseName)
@@ -199,7 +235,7 @@ func initApps(logger *zap.Logger, cnf *config.Settings, r *gin.Engine) error {
 		return errors.Wrap(err, "unable to init cluster app")
 	}
 
-	_ = group.Make(appRouter, serviceItems, cnf)
+	//_ = group.Make(appRouter, serviceItems, cnf)
 
 	return nil
 }

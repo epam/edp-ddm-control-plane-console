@@ -39,7 +39,7 @@ func (a *App) editRegistryGet(ctx *gin.Context) (response *router.Response, retE
 		return nil, errors.Wrap(err, "unable to get registry")
 	}
 
-	admins, err := a.getAdmins(userCtx, registryName)
+	admins, err := a.admins.GetAdmins(userCtx, registryName)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get registry admins")
 	}
@@ -163,7 +163,7 @@ func (a *App) editRegistry(ctx context.Context, ginContext *gin.Context, r *regi
 	if err != nil {
 		return errors.Wrap(err, "unable to validate admins")
 	}
-	if err := a.syncAdmins(ctx, r.Name, admins); err != nil {
+	if err := a.admins.SyncAdmins(ctx, r.Name, admins); err != nil {
 		return errors.Wrap(err, "unable to sync admins")
 	}
 
@@ -179,8 +179,8 @@ func (a *App) editRegistry(ctx context.Context, ginContext *gin.Context, r *regi
 	return nil
 }
 
-func validateAdmins(adminsLine string) ([]admin, error) {
-	var admins []admin
+func validateAdmins(adminsLine string) ([]Admin, error) {
+	var admins []Admin
 	if err := json.Unmarshal([]byte(adminsLine), &admins); err != nil {
 		return nil, errors.Wrap(err, "unable to unmarshal admins")
 	}

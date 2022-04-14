@@ -1,9 +1,6 @@
 package registry
 
 import (
-	"context"
-	"strings"
-
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 
@@ -59,7 +56,7 @@ func (a *App) viewRegistry(ctx *gin.Context) (*router.Response, error) {
 		return nil, errors.Wrap(err, "unable to check codebase creation access")
 	}
 
-	admins, err := a.formatViewAdmins(userCtx, registry.Name)
+	admins, err := a.admins.formatViewAdmins(userCtx, registry.Name)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to load admins for codebase")
 	}
@@ -76,24 +73,4 @@ func (a *App) viewRegistry(ctx *gin.Context) (*router.Response, error) {
 		"timezone":      a.timezone,
 		"admins":        admins,
 	}), nil
-}
-
-func (a *App) formatViewAdmins(ctx context.Context, registryName string) (string, error) {
-	usrs, err := a.keycloakService.GetUsersByRealm(ctx, a.usersRealm)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to load admins")
-	}
-
-	var registryAdmins []string
-
-	for _, u := range usrs {
-		for _, role := range u.Spec.Roles {
-			if role == groupRoleName(registryName) {
-				registryAdmins = append(registryAdmins, u.Spec.Email)
-				break
-			}
-		}
-	}
-
-	return strings.Join(registryAdmins, ", "), nil
 }

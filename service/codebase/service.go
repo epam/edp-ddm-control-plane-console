@@ -49,17 +49,16 @@ func IsErrAlreadyExists(err error) bool {
 	return false
 }
 
-func Make(k8sConfig *rest.Config, namespace string) (*Service, error) {
-	s := runtime.NewScheme()
+func Make(sch *runtime.Scheme, k8sConfig *rest.Config, namespace string) (*Service, error) {
 	builder := pkgScheme.Builder{GroupVersion: schema.GroupVersion{Group: "v2.edp.epam.com", Version: "v1alpha1"}}
 	builder.Register(&Codebase{}, &CodebaseBranch{}, &CodebaseBranchList{}, &CodebaseList{})
 
-	if err := builder.AddToScheme(s); err != nil {
+	if err := builder.AddToScheme(sch); err != nil {
 		return nil, errors.Wrap(err, "error during builder add to scheme")
 	}
 
 	cl, err := client.New(k8sConfig, client.Options{
-		Scheme: s,
+		Scheme: sch,
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to init k8s jenkins client")
@@ -67,7 +66,7 @@ func Make(k8sConfig *rest.Config, namespace string) (*Service, error) {
 
 	return &Service{
 		k8sClient: cl,
-		scheme:    s,
+		scheme:    sch,
 		namespace: namespace,
 		UserConfig: service.UserConfig{
 			RestConfig: k8sConfig,
@@ -232,7 +231,7 @@ func (s *Service) ServiceForContext(ctx context.Context) (ServiceInterface, erro
 		return s, nil
 	}
 
-	svc, err := Make(userConfig, s.namespace)
+	svc, err := Make(s.scheme, userConfig, s.namespace)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create service for context")
 	}

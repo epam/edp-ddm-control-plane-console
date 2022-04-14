@@ -1,15 +1,12 @@
 package config
 
 import (
-	"go.uber.org/zap"
-
-	"ddm-admin-console/service/keycloak"
-
 	"ddm-admin-console/service/codebase"
 	edpcomponent "ddm-admin-console/service/edp_component"
 	"ddm-admin-console/service/gerrit"
 	"ddm-admin-console/service/jenkins"
 	"ddm-admin-console/service/k8s"
+	"ddm-admin-console/service/keycloak"
 	"ddm-admin-console/service/openshift"
 )
 
@@ -47,9 +44,4 @@ type Services struct {
 	Gerrit       gerrit.ServiceInterface
 	Jenkins      jenkins.ServiceInterface
 	Keycloak     keycloak.ServiceInterface
-}
-
-type Logger interface {
-	Error(msg string, fields ...zap.Field)
-	Info(msg string, fields ...zap.Field)
 }
