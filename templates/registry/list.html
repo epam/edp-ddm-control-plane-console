@@ -27,12 +27,14 @@
                 </thead>
                 <tbody>
                     {{range $key, $registry := .registries}}
-                    <tr {{if $registry.Codebase.ForegroundDeletion}}class="disabled"{{end}}>
+                    <tr>
                         <td>
                             {{if $registry.Codebase.ForegroundDeletion}}
-                                <img title="{{ i18n $registry.Codebase.LocaleStatus }}" src="{{ $.BasePath }}/static/img/action-delete.png" alt="delete registry" />
+                                <img title="Видалення"
+                                     src="{{ $.BasePath }}/static/img/action-delete.png" alt="delete registry" />
                             {{else}}
-                                <img title="{{ i18n $registry.Codebase.LocaleStatus }}" src="{{ $.BasePath }}/static/img/status-{{$registry.Codebase.StrStatus}}.png"
+                                <img title="{{ i18n $registry.Codebase.LocaleStatus }}"
+                                     src="{{ $.BasePath }}/static/img/status-{{$registry.Codebase.StrStatus}}.png"
                                      alt="{{ i18n $registry.Codebase.LocaleStatus}}" />
                             {{end}}
 
@@ -56,7 +58,7 @@
                             {{if $registry.CanUpdate}}
                             {{if not $registry.Codebase.ForegroundDeletion}}
                             <a href="{{ $.BasePath }}/admin/registry/edit/{{$registry.Codebase.Name}}">
-                                <img src="{{ $.BasePath }}/static/img/action-edit.png" alt="edit registry" />
+                                <img title="Редагувати" src="{{ $.BasePath }}/static/img/action-edit.png" alt="edit registry" />
                             </a>
                             {{end}}
                             {{end}}
@@ -67,7 +69,7 @@
                             {{if not $registry.Codebase.ForegroundDeletion}}
                             <a href="#" class="delete-registry"
                                data-name="{{$registry.Codebase.Name}}">
-                                <img src="{{ $.BasePath }}/static/img/action-delete.png" alt="delete registry" />
+                                <img title="Видалити" src="{{ $.BasePath }}/static/img/action-delete.png" alt="delete registry" />
                             </a>
                             {{end}}
                             {{end}}
