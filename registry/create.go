@@ -212,6 +212,10 @@ func (a *App) createRegistry(ctx context.Context, r *registry, request *http.Req
 		return errors.Wrap(err, "unknown error")
 	}
 
+	if err := a.gerritService.CreateProject(ctx, r.Name); err != nil {
+		return errors.Wrap(err, "unable to create gerrit project")
+	}
+
 	if r.Admins != "" {
 		admins, err := validateAdmins(r.Admins)
 		if err != nil {
@@ -227,7 +231,7 @@ func (a *App) createRegistry(ctx context.Context, r *registry, request *http.Req
 		return errors.Wrap(err, "unable to create registry keys")
 	}
 
-	cb := a.prepareRegistryCodebase(a.gerritRegistryHost, r)
+	cb := a.prepareRegistryCodebase(r)
 
 	annotations := map[string]string{
 		TemplateNameAnnotation: r.RegistryGitTemplate,
@@ -242,9 +246,9 @@ func (a *App) createRegistry(ctx context.Context, r *registry, request *http.Req
 		return errors.Wrap(err, "unable to create codebase")
 	}
 
-	if err := cbService.CreateTempSecrets(cb, k8sService, a.gerritCreatorSecretName); err != nil {
-		return errors.Wrap(err, "unable to create temp secrets")
-	}
+	//if err := cbService.CreateTempSecrets(cb, k8sService, a.gerritCreatorSecretName); err != nil {
+	//	return errors.Wrap(err, "unable to create temp secrets")
+	//}
 
 	if err := cbService.CreateDefaultBranch(cb); err != nil {
 		return errors.Wrap(err, "unable to create default branch")
@@ -253,10 +257,11 @@ func (a *App) createRegistry(ctx context.Context, r *registry, request *http.Req
 	return nil
 }
 
-func (a *App) prepareRegistryCodebase(gerritRegistryHost string, r *registry) *codebase.Codebase {
+func (a *App) prepareRegistryCodebase(r *registry) *codebase.Codebase {
 	jobProvisioning := "default"
 	startVersion := "0.0.1"
 	jenkinsSlave := "gitops"
+	gitURL := codebase.RepoNotReady
 	cb := codebase.Codebase{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v2.edp.epam.com/v1alpha1",
@@ -271,9 +276,10 @@ func (a *App) prepareRegistryCodebase(gerritRegistryHost string, r *registry) *c
 			BuildTool:        "gitops",
 			Lang:             "other",
 			DefaultBranch:    r.RegistryGitBranch,
-			Strategy:         "clone",
+			Strategy:         "import",
 			DeploymentScript: "openshift-template",
 			GitServer:        "gerrit",
+			GitUrlPath:       &gitURL,
 			CiTool:           "Jenkins",
 			JobProvisioning:  &jobProvisioning,
 			Versioning: codebase.Versioning{
@@ -281,7 +287,8 @@ func (a *App) prepareRegistryCodebase(gerritRegistryHost string, r *registry) *c
 				Type:      "edp",
 			},
 			Repository: &codebase.Repository{
-				Url: fmt.Sprintf("%s/%s", gerritRegistryHost, r.RegistryGitTemplate),
+				//Url: fmt.Sprintf("%s/%s", gerritRegistryHost, r.RegistryGitTemplate),
+				Url: gitURL,
 			},
 			JenkinsSlave: &jenkinsSlave,
 		},
