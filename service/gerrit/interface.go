@@ -8,4 +8,5 @@ type ServiceInterface interface {
 	GetMergeRequest(ctx context.Context, name string) (*GerritMergeRequest, error)
 	CreateMergeRequest(ctx context.Context, mr *MergeRequest) error
 	GetMergeRequestByProject(ctx context.Context, projectName string) ([]GerritMergeRequest, error)
+	CreateProject(ctx context.Context, name string) error
 }
