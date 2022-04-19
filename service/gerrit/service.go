@@ -2,6 +2,7 @@ package gerrit
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,7 +41,8 @@ type MergeRequest struct {
 
 func Make(s *runtime.Scheme, k8sConfig *rest.Config, namespace, rootGerritName string) (*Service, error) {
 	builder := pkgScheme.Builder{GroupVersion: schema.GroupVersion{Group: "v2.edp.epam.com", Version: "v1alpha1"}}
-	builder.Register(&GerritProject{}, &GerritProjectList{}, &GerritMergeRequest{}, &GerritMergeRequestList{})
+	builder.Register(&Gerrit{}, &GerritList{}, &GerritProject{}, &GerritProjectList{}, &GerritMergeRequest{},
+		&GerritMergeRequestList{})
 
 	if err := builder.AddToScheme(s); err != nil {
 		return nil, errors.Wrap(err, "error during builder add to scheme")
@@ -87,6 +89,24 @@ func (s *Service) GetProject(ctx context.Context, name string) (*GerritProject, 
 	}
 
 	return nil, service.ErrNotFound("unable to find gerrit project")
+}
+
+func (s *Service) CreateProject(ctx context.Context, name string) error {
+	if err := s.k8sClient.Create(ctx, &GerritProject{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: s.namespace,
+			Name:      fmt.Sprintf("default-%s", name),
+		},
+		Spec: GerritProjectSpec{
+			Name:              name,
+			CreateEmptyCommit: false,
+			Parent:            "All-Projects",
+		},
+	}); err != nil {
+		return errors.Wrap(err, "unable to create gerrit project")
+	}
+
+	return nil
 }
 
 func (s *Service) GetMergeRequest(ctx context.Context, name string) (*GerritMergeRequest, error) {

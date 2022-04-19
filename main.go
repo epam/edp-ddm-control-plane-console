@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"strings"
 
+	v1 "k8s.io/api/core/v1"
+
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
@@ -184,7 +186,7 @@ func initControllers(sch *runtime.Scheme, namespace string, logger *zap.Logger, 
 	}
 
 	if err := codebaseController.Make(mgr, logger.Sugar(),
-		registry.MakeAdmins(services.Keycloak, cnf.UsersRealm, cnf.UsersNamespace)); err != nil {
+		registry.MakeAdmins(services.Keycloak, cnf.UsersRealm, cnf.UsersNamespace), cnf); err != nil {
 		return errors.Wrap(err, "unable to init codebase controller")
 	}
 
@@ -211,6 +213,10 @@ func initApps(logger *zap.Logger, cnf *config.Settings, r *gin.Engine) error {
 	appRouter := router.Make(r, logger)
 
 	sch := runtime.NewScheme()
+	if err := v1.AddToScheme(sch); err != nil {
+		return errors.Wrap(err, "unable to add core api to scheme")
+	}
+
 	serviceItems, err := initServices(sch, restConf, cnf)
 	if err != nil {
 		return errors.Wrap(err, "unable to init services")

@@ -19,6 +19,7 @@ const (
 	ViewTimeFormat                  = "02.01.2006 15:04"
 	statusActive                    = "active"
 	AdminsAnnotation                = "registry-parameters/administrators"
+	RepoNotReady                    = "NOT_READY"
 )
 
 type VersioningType string
