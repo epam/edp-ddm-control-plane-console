@@ -15,8 +15,8 @@ RUN addgroup --gid ${USER_UID} ${USER_NAME} \
 #COPY --from=0 /usr/lib/go/lib/time/zoneinfo.zip /usr/lib/go/lib/time/
 
 WORKDIR /go/bin
-ENV PWD=/go/bin
-ENV PATH=/go/bin
+#ENV PWD=/go/bin
+#ENV PATH=/go/bin
 ENV ZONEINFO=/usr/lib/go/lib/time/zoneinfo.zip
 
 COPY control-plane-console .
@@ -28,4 +28,4 @@ COPY osplm.ini .
 
 USER ${USER_UID}
 
-ENTRYPOINT ["control-plane-console"]
+CMD ["control-plane-console"]
