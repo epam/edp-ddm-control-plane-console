@@ -28,4 +28,4 @@ COPY osplm.ini .
 
 USER ${USER_UID}
 
-CMD ["control-plane-console"]
+ENTRYPOINT ["control-plane-console"]
