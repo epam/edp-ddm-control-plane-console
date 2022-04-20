@@ -1,6 +1,6 @@
 FROM alpine:3.14.1
 
-RUN apk update && apk add ca-certificates go
+RUN apk update && apk add ca-certificates go git
 
 ENV USER_UID=1001 \
     USER_NAME=admin-console \
@@ -9,10 +9,10 @@ ENV USER_UID=1001 \
 RUN addgroup --gid ${USER_UID} ${USER_NAME} \
     && adduser --disabled-password --uid ${USER_UID} --ingroup ${USER_NAME} --home ${HOME} ${USER_NAME}
 
-FROM scratch
-COPY --from=0 /etc/passwd /etc/passwd
-COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=0 /usr/lib/go/lib/time/zoneinfo.zip /usr/lib/go/lib/time/
+#FROM scratch
+#COPY --from=0 /etc/passwd /etc/passwd
+#COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+#COPY --from=0 /usr/lib/go/lib/time/zoneinfo.zip /usr/lib/go/lib/time/
 
 WORKDIR /go/bin
 ENV PWD=/go/bin
