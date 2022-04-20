@@ -1,6 +1,6 @@
 FROM alpine:3.14.1
 
-RUN apk update && apk add ca-certificates go git
+RUN apk update && apk add ca-certificates go git openssh-client
 
 ENV USER_UID=1001 \
     USER_NAME=admin-console \
@@ -28,4 +28,4 @@ COPY osplm.ini .
 
 USER ${USER_UID}
 
-ENTRYPOINT ["control-plane-console"]
+CMD ["/go/bin/control-plane-console"]

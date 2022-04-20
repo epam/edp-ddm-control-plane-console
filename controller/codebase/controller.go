@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"net/url"
 	"os"
 	"path"
 	"reflect"
@@ -32,25 +31,24 @@ import (
 )
 
 const (
-	adminsAnnotation  = "registry-parameters/administrators"
-	defaultTempDir    = "/tmp"
-	gitUserSecretName = "gerrit-project-creator"
-	gitUsername       = "project-creator"
-	rootGerritCRName  = "gerrit"
+	adminsAnnotation    = "registry-parameters/administrators"
+	defaultTempDir      = "/tmp"
+	gitUserSecretName   = "gerrit-project-creator"
+	gitUsername         = "project-creator"
+	rootGitServerCRName = "gerrit"
 )
 
 type Controller struct {
-	logger            controller.Logger
-	mgr               ctrl.Manager
-	k8sClient         client.Client
-	adminSyncer       AdminSyncer
-	TempDir           string
-	GitUserSecretName string
-	GitUsername       string
-	GerritHostname    string
-	_gerritSSHURL     string
-	RootGerritCRName  string
-	namespace         string
+	logger              controller.Logger
+	mgr                 ctrl.Manager
+	k8sClient           client.Client
+	adminSyncer         AdminSyncer
+	TempDir             string
+	GitUserSecretName   string
+	GitUsername         string
+	_gerritSSHURL       string
+	RootGitServerCRName string
+	namespace           string
 }
 
 type AdminSyncer interface {
@@ -59,17 +57,16 @@ type AdminSyncer interface {
 
 func Make(mgr ctrl.Manager, logger controller.Logger, adminSyncer AdminSyncer, cnf *config.Settings) error {
 	c := Controller{
-		mgr:               mgr,
-		logger:            logger,
-		k8sClient:         mgr.GetClient(),
-		adminSyncer:       adminSyncer,
-		TempDir:           defaultTempDir,
-		GitUserSecretName: gitUserSecretName,
-		GitUsername:       gitUsername,
-		GerritHostname:    cnf.RegistryRepoHost,
-		RootGerritCRName:  rootGerritCRName,
-		namespace:         cnf.Namespace,
-		_gerritSSHURL:     "ssh://localhost:37861", //for local development
+		mgr:                 mgr,
+		logger:              logger,
+		k8sClient:           mgr.GetClient(),
+		adminSyncer:         adminSyncer,
+		TempDir:             defaultTempDir,
+		GitUserSecretName:   gitUserSecretName,
+		GitUsername:         gitUsername,
+		RootGitServerCRName: rootGitServerCRName,
+		namespace:           cnf.Namespace,
+		//_gerritSSHURL:     "ssh://localhost:37861", //for local development
 	}
 
 	if err := ctrl.NewControllerManagedBy(mgr).
@@ -87,18 +84,14 @@ func (c *Controller) gerritSSHURL() (string, error) {
 		return c._gerritSSHURL, nil
 	}
 
-	gerritURL, err := url.Parse(c.GerritHostname)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to parse gerrit url")
-	}
-
-	var rootGerrit gerritService.Gerrit
+	var rootGerrit codebaseService.GitServer
 	if err := c.k8sClient.Get(context.Background(), types.NamespacedName{Namespace: c.namespace,
-		Name: c.RootGerritCRName}, &rootGerrit); err != nil {
+		Name: c.RootGitServerCRName}, &rootGerrit); err != nil {
 		return "", errors.Wrap(err, "unable to get root gerrit")
 	}
 
-	c._gerritSSHURL = fmt.Sprintf("ssh://%s@%s:%d", c.GitUsername, gerritURL.Host, rootGerrit.Spec.SshPort)
+	c._gerritSSHURL = fmt.Sprintf("ssh://%s@%s:%d", c.GitUsername, rootGerrit.Spec.GitHost,
+		rootGerrit.Spec.SshPort)
 	return c._gerritSSHURL, nil
 }
 

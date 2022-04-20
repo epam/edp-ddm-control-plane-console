@@ -11,6 +11,8 @@ rules:
   - '*'
   attributeRestrictions: null
   resources:
+  - gerrits
+  - gitservers
   - codebases
   - codebasebranches
   - cdpipelines
