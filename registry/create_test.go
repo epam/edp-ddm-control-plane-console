@@ -4,7 +4,7 @@ import "testing"
 
 func TestPrepareRegistryCodebase(t *testing.T) {
 	app := App{EnableBranchProvisioners: true}
-	cb := app.prepareRegistryCodebase("host", &registry{
+	cb := app.prepareRegistryCodebase(&registry{
 		RegistryGitBranch: "1.2.4-snap.130",
 	})
 
