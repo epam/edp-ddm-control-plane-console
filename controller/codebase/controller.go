@@ -197,11 +197,23 @@ func (c *Controller) pushRegistryTemplate(ctx context.Context, instance *codebas
 	}
 
 	reposPath := path.Join(c.TempDir, "repos")
+	if _, err := os.Stat(reposPath); err == nil {
+		if err := os.RemoveAll(reposPath); err != nil {
+			return errors.Wrap(err, "unable to clear repos folder")
+		}
+	}
+
 	if err := os.MkdirAll(reposPath, 0777); err != nil {
 		return errors.Wrap(err, "unable to create repo folder")
 	}
 
 	gitService := git.Make(path.Join(reposPath, instance.Name), c.GitUsername, string(key))
+	defer func() {
+		if err := gitService.Clean(); err != nil {
+			c.logger.Error(err)
+		}
+	}()
+
 	gerritSSHURL, err := c.gerritSSHURL()
 	if err != nil {
 		return errors.Wrap(err, "unable to get gerrit ssh url")
