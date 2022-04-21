@@ -33,6 +33,20 @@ func Make(path, user, key string) *Service {
 	}
 }
 
+func (s *Service) Clean() error {
+	if s._keyFilePath != "" {
+		if err := os.RemoveAll(s._keyFilePath); err != nil {
+			return errors.Wrap(err, "unable to clear key file")
+		}
+	}
+
+	if err := os.RemoveAll(s.path); err != nil {
+		return errors.Wrap(err, "unable to clear repo path")
+	}
+
+	return nil
+}
+
 func (s *Service) Clone(url string) error {
 	//cmd := s.commandCreate("git", "clone", url, s.path)
 	//bts, err := cmd.CombinedOutput()
