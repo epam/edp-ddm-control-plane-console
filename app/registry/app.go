@@ -20,7 +20,6 @@ type App struct {
 	gerritService            gerrit.ServiceInterface
 	edpComponentService      edpComponent.ServiceInterface
 	k8sService               k8s.ServiceInterface
-	gerritCreatorSecretName  string
 	gerritRegistryPrefix     string
 	gerritRegistryHost       string
 	jenkinsService           jenkins.ServiceInterface
@@ -38,7 +37,6 @@ func Make(router router.Interface, services *config.Services, cnf *config.Settin
 		codebaseService:          services.Codebase,
 		edpComponentService:      services.EDPComponent,
 		k8sService:               services.K8S,
-		gerritCreatorSecretName:  cnf.GerritCreatorSecretName,
 		jenkinsService:           services.Jenkins,
 		timezone:                 cnf.Timezone,
 		gerritService:            services.Gerrit,

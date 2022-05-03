@@ -40,18 +40,18 @@ func Make(s *runtime.Scheme, k8sConfig *rest.Config, namespace string) (*Service
 	}, nil
 }
 
-func (s *Service) GetAll() ([]EDPComponent, error) {
+func (s *Service) GetAll(ctx context.Context) ([]EDPComponent, error) {
 	var lst EDPComponentList
-	if err := s.k8sClient.List(context.Background(), &lst, &client.ListOptions{Namespace: s.namespace}); err != nil {
+	if err := s.k8sClient.List(ctx, &lst, &client.ListOptions{Namespace: s.namespace}); err != nil {
 		return nil, errors.Wrap(err, "unable to list edp component")
 	}
 
 	return lst.Items, nil
 }
 
-func (s *Service) GetAllNamespace(ns string, onlyVisible bool) ([]EDPComponent, error) {
+func (s *Service) GetAllNamespace(ctx context.Context, ns string, onlyVisible bool) ([]EDPComponent, error) {
 	var lst EDPComponentList
-	if err := s.k8sClient.List(context.Background(), &lst, &client.ListOptions{Namespace: ns}); err != nil {
+	if err := s.k8sClient.List(ctx, &lst, &client.ListOptions{Namespace: ns}); err != nil {
 		return nil, errors.Wrap(err, "unable to list edp component")
 	}
 
@@ -69,9 +69,9 @@ func (s *Service) GetAllNamespace(ns string, onlyVisible bool) ([]EDPComponent, 
 	return items, nil
 }
 
-func (s *Service) Get(name string) (*EDPComponent, error) {
+func (s *Service) Get(ctx context.Context, name string) (*EDPComponent, error) {
 	var comp EDPComponent
-	if err := s.k8sClient.Get(context.Background(), types.NamespacedName{
+	if err := s.k8sClient.Get(ctx, types.NamespacedName{
 		Name: name, Namespace: s.namespace}, &comp); err != nil {
 		return nil, errors.Wrapf(err, "unable to get edp component by name: %s", name)
 	}

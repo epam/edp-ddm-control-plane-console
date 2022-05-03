@@ -21,9 +21,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	"ddm-admin-console/app/registry"
 	"ddm-admin-console/config"
 	"ddm-admin-console/controller"
-	"ddm-admin-console/registry"
 	"ddm-admin-console/service"
 	codebaseService "ddm-admin-console/service/codebase"
 	gerritService "ddm-admin-console/service/gerrit"

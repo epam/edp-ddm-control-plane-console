@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"strings"
 
-	v1 "k8s.io/api/core/v1"
-
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
@@ -20,18 +18,19 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"golang.org/x/oauth2"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	ctrl "sigs.k8s.io/controller-runtime"
 
+	"ddm-admin-console/app/cluster"
+	"ddm-admin-console/app/dashboard"
+	"ddm-admin-console/app/registry"
 	"ddm-admin-console/auth"
 	oauth "ddm-admin-console/auth"
-	"ddm-admin-console/cluster"
 	"ddm-admin-console/config"
 	codebaseController "ddm-admin-console/controller/codebase"
-	"ddm-admin-console/dashboard"
-	"ddm-admin-console/registry"
 	"ddm-admin-console/router"
 	"ddm-admin-console/service/codebase"
 	edpComponent "ddm-admin-console/service/edp_component"
@@ -158,7 +157,9 @@ func initServices(sch *runtime.Scheme, restConf *rest.Config, appConf *config.Se
 		return nil, errors.Wrap(err, "unable to init open shift service")
 	}
 
-	serviceItems.Gerrit, err = gerrit.Make(sch, restConf, appConf.Namespace, appConf.RootGerritName)
+	serviceItems.Gerrit, err = gerrit.Make(sch, restConf,
+		gerrit.Config{Namespace: appConf.Namespace, GerritAPIUrlTemplate: appConf.GerritAPIUrlTemplate,
+			RootGerritName: appConf.RootGerritName})
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create gerrit service")
 	}
