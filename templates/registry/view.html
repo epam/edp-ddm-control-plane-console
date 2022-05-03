@@ -1,6 +1,6 @@
 {{ define "registry/view.html" }}
     {{template "header" .}}
-<div class="registry">
+<div class="registry" id="registry-view">
     <div class="registry-header">
         <a href="{{ .BasePath }}/admin/registry/overview" class="registry-add">
             <img alt="add registry" src="{{ .BasePath }}/static/img/action-back.png" />
@@ -43,6 +43,61 @@
             <div class="rg-info-line-horizontal">
                 <span>Час створення</span>
                 <span>{{ .registry.FormattedCreatedAtTimezone $.timezone }}</span>
+            </div>
+        </div>
+    </div>
+    <div class="rg-info-block">
+        <div class="rg-info-block-header">
+            <span>Доступ для реєстрів платформи та зовнішніх систем</span>
+            <img src="{{ .BasePath }}/static/img/action-toggle.png" alt="toggle block" />
+        </div>
+        <div class="rg-info-block-body">
+            <table class="rg-info-table rg-info-table-config">
+                <thead>
+                <tr>
+                    <th>Статус</th>
+                    <th>Назва</th>
+                    <th>Тип системи</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <img alt="status" src="{{ $.BasePath }}/static/img/status-inactive.png" />
+                        </td>
+                        <td>
+                            Reg-name-2
+                        </td>
+                        <td>
+                            Зовнішня система
+                        </td>
+                        <td>
+                            <div class="rg-external-system-actions">
+                                <a href="#">
+                                    <img alt="key" src="{{ $.BasePath }}/static/img/key.png" />
+                                </a>
+                                <a href="#">
+                                    <img alt="key" src="{{ $.BasePath }}/static/img/lock.png" />
+                                </a>
+                                <a href="#">
+                                    <img alt="key" src="{{ $.BasePath }}/static/img/disable.png" />
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- <div class="rg-info-block-no-content">
+                Немає реєстрів або систем, що мають доступ до цього реєстра.
+            </div> -->
+
+            <div class="link-grant-access">
+                <a class="" href="#">
+                    <img alt="Надати доступ" src="{{ .BasePath }}/static/img/plus.png" />
+                    <span>Надати доступ</span>
+                </a>
             </div>
         </div>
     </div>
@@ -178,6 +233,31 @@
     </div>
     {{end}}
 
+
+    <div class="popup-backdrop visible" v-cloak v-if="accessGrantPopupShow"></div>
+    <div id="admin-popup admin-window" class="popup-window admin-window visible" v-cloak v-if="accessGrantPopupShow">
+        <div class="popup-header">
+            <p>Надати доступ</p>
+            <a href="#" @click="hideAccessGrantForm" class="popup-close hide-popup">
+                <img alt="close popup window" src="{{.BasePath}}/static/img/close.png" />
+            </a>
+        </div>
+        <form @submit="createAccessGrant" id="admin-form" method="post" action="">
+            <div class="popup-body">
+                <p class="popup-error" v-cloak v-if="accessGrantError">Всі поля обов'язкові для заповнення</p>
+
+                <p>
+                    Ви можете надати доступ до даних цього реєстру (master) іншим реєстрам на цій платформі або
+                    зовнішнім системам (clients). Для цього в мастер-реєстрі буде створено окремого користувача
+                    реєстра-клієнта, від імені якого здійснюватеметься доступ до мастер-реєстру.
+                </p>
+            </div>
+            <div class="popup-footer active">
+                <a href="#" id="admin-cancel" class="hide-popup" @click="hideGrantAccessForm">відмінити</a>
+                <button value="submit" name="admin-apply" @click="createGrantAccess" type="submit">Надати</button>
+            </div>
+        </form>
+    </div>
 </div>
 
     {{template "footer" .}}

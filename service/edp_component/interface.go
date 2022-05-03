@@ -1,7 +1,9 @@
 package edpcomponent
 
+import "context"
+
 type ServiceInterface interface {
-	GetAll() ([]EDPComponent, error)
-	GetAllNamespace(ns string, onlyVisible bool) ([]EDPComponent, error)
-	Get(name string) (*EDPComponent, error)
+	GetAll(ctx context.Context) ([]EDPComponent, error)
+	GetAllNamespace(ctx context.Context, ns string, onlyVisible bool) ([]EDPComponent, error)
+	Get(ctx context.Context, name string) (*EDPComponent, error)
 }

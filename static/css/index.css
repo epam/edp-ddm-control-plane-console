@@ -11930,3 +11930,40 @@ div#kubernetes-component {
 .error > .advanced-admins {
     border: 1px solid #D35D47;
 }
+
+.rg-info-block-no-content {
+    text-align: center;
+    padding: 16px 0 16px 0;
+    border-bottom: 1px solid #E1E3EB;
+}
+
+.link-grant-access {
+    padding: 21px 0 21px 21px;
+}
+
+.link-grant-access img {
+    margin: -5px 13px 0 0;
+    width: 14px;
+    height: 14px;
+
+}
+
+.link-grant-access span {
+    font-size: 18px;
+    font-family: 'Oswald', sans-serif;
+    color: rgba(0, 0, 0, 0.5);
+    text-transform: uppercase;
+}
+
+.rg-external-system-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.rg-external-system-actions a {
+    margin-right: 36px;
+}
+
+.rg-external-system-actions a:last-of-type {
+    margin: 0;
+}
