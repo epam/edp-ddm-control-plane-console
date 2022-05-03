@@ -19,7 +19,6 @@ type Settings struct {
 	OCClientID                         string `envconfig:"OC_CLIENT_ID"`
 	OCClientSecret                     string `envconfig:"OC_CLIENT_SECRET"`
 	Host                               string `envconfig:"HOST"`
-	GerritCreatorSecretName            string `envconfig:"GERRIT_CREATOR_SECRET_NAME"`
 	ClusterCodebaseName                string `envconfig:"CLUSTER_CODEBASE_NAME"`
 	ClusterRepo                        string `envconfig:"CLUSTER_REPO"`
 	BackupSecretName                   string `envconfig:"BACKUP_SECRET_NAME" default:"backup-credential"`
@@ -34,6 +33,7 @@ type Settings struct {
 	UsersRealm                         string `envconfig:"USERS_REALM" default:"openshift"`
 	EnableBranchProvisioners           bool   `envconfig:"ENABLE_BRANCH_PROVISIONERS"`
 	RegistryCodebaseLabels             string `envconfig:"REGISTRY_CODEBASE_LABELS"`
+	GerritAPIUrlTemplate               string `envconfig:"GERRIT_API_URL_TPL" default:"http://{HOST}:8080/a/"`
 }
 
 type Services struct {

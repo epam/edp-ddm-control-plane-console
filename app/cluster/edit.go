@@ -5,16 +5,13 @@ import (
 	"net/http"
 	"time"
 
-	"ddm-admin-console/registry"
-
-	"ddm-admin-console/router"
-
+	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-
 	"github.com/pkg/errors"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 
-	"github.com/gin-gonic/gin"
+	"ddm-admin-console/app/registry"
+	"ddm-admin-console/router"
 )
 
 const (

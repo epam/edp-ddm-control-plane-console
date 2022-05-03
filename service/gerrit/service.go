@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"gopkg.in/resty.v1"
+
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -21,12 +23,12 @@ const (
 )
 
 type Service struct {
+	Config
 	service.UserConfig
-	k8sClient      client.Client
-	scheme         *runtime.Scheme
-	namespace      string
-	restConfig     *rest.Config
-	rootGerritName string
+	k8sClient  client.Client
+	scheme     *runtime.Scheme
+	restConfig *rest.Config
+	apiClient  *resty.Client
 }
 
 type MergeRequest struct {
@@ -39,7 +41,13 @@ type MergeRequest struct {
 	AuthorEmail   string
 }
 
-func Make(s *runtime.Scheme, k8sConfig *rest.Config, namespace, rootGerritName string) (*Service, error) {
+type Config struct {
+	Namespace            string
+	RootGerritName       string
+	GerritAPIUrlTemplate string
+}
+
+func Make(s *runtime.Scheme, k8sConfig *rest.Config, config Config) (*Service, error) {
 	builder := pkgScheme.Builder{GroupVersion: schema.GroupVersion{Group: "v2.edp.epam.com", Version: "v1alpha1"}}
 	builder.Register(&Gerrit{}, &GerritList{}, &GerritProject{}, &GerritProjectList{}, &GerritMergeRequest{},
 		&GerritMergeRequestList{})
@@ -55,16 +63,21 @@ func Make(s *runtime.Scheme, k8sConfig *rest.Config, namespace, rootGerritName s
 		return nil, errors.Wrap(err, "unable to init k8s jenkins client")
 	}
 
-	return &Service{
+	svc := Service{
 		k8sClient: cl,
 		scheme:    s,
-		namespace: namespace,
 		UserConfig: service.UserConfig{
 			RestConfig: k8sConfig,
 		},
-		restConfig:     k8sConfig,
-		rootGerritName: rootGerritName,
-	}, nil
+		restConfig: k8sConfig,
+		Config:     config,
+	}
+
+	if err := svc.initRestyClient(); err != nil {
+		return nil, errors.Wrap(err, "unable to init resty client")
+	}
+
+	return &svc, nil
 }
 
 func (s *Service) GetProjects(ctx context.Context) ([]GerritProject, error) {
@@ -94,7 +107,7 @@ func (s *Service) GetProject(ctx context.Context, name string) (*GerritProject, 
 func (s *Service) CreateProject(ctx context.Context, name string) error {
 	if err := s.k8sClient.Create(ctx, &GerritProject{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: s.namespace,
+			Namespace: s.Namespace,
 			Name:      fmt.Sprintf("default-%s", name),
 		},
 		Spec: GerritProjectSpec{
@@ -111,7 +124,7 @@ func (s *Service) CreateProject(ctx context.Context, name string) error {
 
 func (s *Service) GetMergeRequest(ctx context.Context, name string) (*GerritMergeRequest, error) {
 	var mr GerritMergeRequest
-	if err := s.k8sClient.Get(ctx, types.NamespacedName{Name: name, Namespace: s.namespace}, &mr); err != nil {
+	if err := s.k8sClient.Get(ctx, types.NamespacedName{Name: name, Namespace: s.Namespace}, &mr); err != nil {
 		return nil, errors.Wrap(err, "unable to get gerrit merge request")
 	}
 
@@ -136,9 +149,9 @@ func (s *Service) GetMergeRequestByProject(ctx context.Context, projectName stri
 
 func (s *Service) CreateMergeRequest(ctx context.Context, mr *MergeRequest) error {
 	if err := s.k8sClient.Create(ctx, &GerritMergeRequest{
-		ObjectMeta: metav1.ObjectMeta{Namespace: s.namespace, Name: mr.Name},
+		ObjectMeta: metav1.ObjectMeta{Namespace: s.Namespace, Name: mr.Name},
 		Spec: GerritMergeRequestSpec{
-			OwnerName:     s.rootGerritName,
+			OwnerName:     s.RootGerritName,
 			ProjectName:   mr.ProjectName,
 			TargetBranch:  mr.TargetBranch,
 			SourceBranch:  mr.SourceBranch,
