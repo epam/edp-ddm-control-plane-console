@@ -2,6 +2,7 @@ package k8s
 
 import (
 	"context"
+
 	"ddm-admin-console/service"
 
 	"github.com/pkg/errors"
@@ -85,6 +86,7 @@ func (s *Service) GetSecret(name string) (*v1.Secret, error) {
 
 func (s *Service) CanI(group, resource, verb, name string) (bool, error) {
 	review := authorizationv1.SelfSubjectAccessReview{
+		//ObjectMeta: metav1.ObjectMeta{Namespace: s.namespace},
 		Spec: authorizationv1.SelfSubjectAccessReviewSpec{
 			ResourceAttributes: &authorizationv1.ResourceAttributes{
 				Namespace: s.namespace,

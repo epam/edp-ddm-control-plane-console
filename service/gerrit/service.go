@@ -2,7 +2,12 @@ package gerrit
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"path/filepath"
+	"time"
+
+	coreV1Api "k8s.io/api/core/v1"
 
 	"gopkg.in/resty.v1"
 
@@ -39,6 +44,13 @@ type MergeRequest struct {
 	CommitMessage string
 	AuthorName    string
 	AuthorEmail   string
+	Labels        map[string]string
+	Annotations   map[string]string
+}
+
+type MRConfigMapFile struct {
+	Path     string `json:"path"`
+	Contents string `json:"contents"`
 }
 
 type Config struct {
@@ -149,7 +161,8 @@ func (s *Service) GetMergeRequestByProject(ctx context.Context, projectName stri
 
 func (s *Service) CreateMergeRequest(ctx context.Context, mr *MergeRequest) error {
 	if err := s.k8sClient.Create(ctx, &GerritMergeRequest{
-		ObjectMeta: metav1.ObjectMeta{Namespace: s.Namespace, Name: mr.Name},
+		ObjectMeta: metav1.ObjectMeta{Namespace: s.Namespace, Name: mr.Name, Labels: mr.Labels,
+			Annotations: mr.Annotations},
 		Spec: GerritMergeRequestSpec{
 			OwnerName:     s.RootGerritName,
 			ProjectName:   mr.ProjectName,
@@ -158,6 +171,48 @@ func (s *Service) CreateMergeRequest(ctx context.Context, mr *MergeRequest) erro
 			CommitMessage: mr.CommitMessage,
 			AuthorEmail:   mr.AuthorEmail,
 			AuthorName:    mr.AuthorName,
+		},
+	}); err != nil {
+		return errors.Wrap(err, "unable to create merge request")
+	}
+
+	return nil
+}
+
+func (s *Service) CreateMergeRequestWithContents(ctx context.Context, mr *MergeRequest, contents map[string]string) error {
+	changesCMName := fmt.Sprintf("mr-%s-values-%d", mr.ProjectName, time.Now().Unix())
+
+	cmData := make(map[string]string)
+	for filePath, content := range contents {
+		bts, err := json.Marshal(MRConfigMapFile{Path: filePath, Contents: content})
+		if err != nil {
+			return errors.Wrap(err, "unable to encode file")
+		}
+
+		cmData[filepath.Base(filePath)] = string(bts)
+	}
+
+	mergeRequestConfigMap := coreV1Api.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{Name: changesCMName, Namespace: s.Namespace},
+		Data:       cmData,
+	}
+
+	if err := s.k8sClient.Create(ctx, &mergeRequestConfigMap); err != nil {
+		return errors.Wrap(err, "unable to create changes config map")
+	}
+
+	if err := s.k8sClient.Create(ctx, &GerritMergeRequest{
+		ObjectMeta: metav1.ObjectMeta{Namespace: s.Namespace, Name: mr.Name, Labels: mr.Labels,
+			Annotations: mr.Annotations},
+		Spec: GerritMergeRequestSpec{
+			OwnerName:        s.RootGerritName,
+			ProjectName:      mr.ProjectName,
+			TargetBranch:     mr.TargetBranch,
+			CommitMessage:    mr.CommitMessage,
+			AuthorEmail:      mr.AuthorEmail,
+			AuthorName:       mr.AuthorName,
+			ChangesConfigMap: changesCMName,
+			SourceBranch:     "",
 		},
 	}); err != nil {
 		return errors.Wrap(err, "unable to create merge request")
