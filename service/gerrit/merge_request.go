@@ -17,13 +17,15 @@ type GerritMergeRequest struct {
 }
 
 type GerritMergeRequestSpec struct {
-	OwnerName     string `json:"ownerName"`
-	ProjectName   string `json:"projectName"`
-	TargetBranch  string `json:"targetBranch"`
-	SourceBranch  string `json:"sourceBranch"`
-	CommitMessage string `json:"commitMessage"`
-	AuthorName    string `json:"authorName"`
-	AuthorEmail   string `json:"authorEmail"`
+	OwnerName           string   `json:"ownerName"`
+	ProjectName         string   `json:"projectName"`
+	TargetBranch        string   `json:"targetBranch"`
+	SourceBranch        string   `json:"sourceBranch"`
+	CommitMessage       string   `json:"commitMessage"`
+	AuthorName          string   `json:"authorName"`
+	AuthorEmail         string   `json:"authorEmail"`
+	ChangesConfigMap    string   `json:"changesConfigMap"`
+	AdditionalArguments []string `json:"additionalArguments"`
 }
 
 type GerritMergeRequestStatus struct {
@@ -56,8 +58,10 @@ func (in GerritMergeRequest) TargetBranch() string {
 }
 
 func (in GerritMergeRequest) CommitMessage() string {
-	if in.Spec.CommitMessage == "" {
+	if in.Spec.CommitMessage == "" && in.Spec.SourceBranch != "" {
 		return fmt.Sprintf("merge %s to %s", in.Spec.SourceBranch, in.TargetBranch())
+	} else if in.Spec.CommitMessage == "" && in.Spec.ChangesConfigMap != "" {
+		return fmt.Sprintf("merge files contents from config map: %s", in.Spec.ChangesConfigMap)
 	}
 
 	return in.Spec.CommitMessage

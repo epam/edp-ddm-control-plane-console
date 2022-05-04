@@ -10,4 +10,5 @@ type ServiceInterface interface {
 	GetMergeRequestByProject(ctx context.Context, projectName string) ([]GerritMergeRequest, error)
 	CreateProject(ctx context.Context, name string) error
 	GetFileContents(ctx context.Context, projectName, branch, filePath string) (string, error)
+	CreateMergeRequestWithContents(ctx context.Context, mr *MergeRequest, contents map[string]string) error
 }

@@ -59,10 +59,21 @@ func (a *App) viewRegistryExternalRegistration(userCtx context.Context, registry
 	}
 
 	eRegs := make([]ExternalRegistration, 0)
+	mrs, err := a.gerritService.GetMergeRequestByProject(userCtx, registryName)
+	if err != nil {
+		return errors.Wrap(err, "unable to get gerrit merge requests")
+	}
+	for _, mr := range mrs {
+		if mr.Labels[mrLabelTarget] == "external-reg" {
+			//TODO: append to eRegs
+		}
+	}
+
 	externalReg, ok := valuesDict["nontrembita-external-registration"]
 	if !ok {
 		viewParams["externalRegs"] = eRegs
 	} else {
+		//TODO: not replace but append
 		eRegs, ok = externalReg.([]ExternalRegistration)
 		if !ok {
 			return errors.New("wrong format of nontrembita-external-registration")
@@ -90,6 +101,7 @@ func (a *App) viewRegistryExternalRegistration(userCtx context.Context, registry
 			availableRegs = append(availableRegs, cb)
 		}
 	}
+
 	viewParams["externalRegAvailableRegistries"] = availableRegs
 
 	return nil
