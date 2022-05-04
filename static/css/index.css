@@ -11676,6 +11676,87 @@ div#kubernetes-component {
     position: fixed;
 }
 
+.external-reg-window {
+    font-family: 'Source Sans Pro', sans-serif;
+    top: 10px;
+}
+
+.external-reg-window p {
+    font-weight: 300;
+    font-size: 16px;
+    line-height: 24px;
+}
+
+.er-radio {
+    margin-top: 24px;
+}
+
+.er-radio-button {
+    display: block;
+    width: 24px;
+    height: 24px;
+    border: 2px solid #CED0DB;
+    border-radius: 15px;
+    margin-right: 8px;
+    cursor: pointer;
+}
+
+.er-radio-text {
+    cursor: pointer;
+}
+
+.er-radio-button.selected {
+    border: 2px solid #008ACE;
+}
+
+.er-radio-button.selected::after {
+    display: block;
+}
+
+.er-radio-button::after {
+    display: none;
+    background: #008ACE;
+    width: 14px;
+    height: 14px;
+    position: absolute;
+    content: "";
+    border-radius: 7px;
+    margin: 3px 0 0 3px;
+}
+
+.er-radio div {
+    display: flex;
+    margin-top: 16px;
+}
+
+.er-system-opts {
+    display: flex;
+    flex-direction: column;
+}
+
+.er-system-opts input {
+    background: #FFFFFF;
+    border: 1px solid #CED0DB;
+    border-radius: 1px;
+    height: 40px;
+    padding-left: 8px;
+}
+
+.er-system-opts select {
+    background: #FFFFFF;
+    border: 1px solid #CED0DB;
+    border-radius: 1px;
+    height: 40px;
+}
+
+.er-system-opts span {
+    font-size: 12px;
+}
+
+.er-system-opts label {
+    font-weight: bold;
+    margin-top: 24px;
+}
 
 .visible {
     display: block;

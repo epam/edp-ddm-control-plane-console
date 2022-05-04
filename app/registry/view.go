@@ -8,11 +8,13 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"ddm-admin-console/router"
+	"ddm-admin-console/service/codebase"
 )
 
 type ExternalRegistration struct {
-	Name    string
-	Enabled bool
+	Name     string `yaml:"name"`
+	Enabled  bool   `yaml:"enabled"`
+	External bool   `yaml:"external"`
 }
 
 func (a *App) viewRegistry(ctx *gin.Context) (*router.Response, error) {
@@ -56,18 +58,40 @@ func (a *App) viewRegistryExternalRegistration(userCtx context.Context, registry
 		return errors.Wrap(err, "unable to decode values yaml")
 	}
 
+	eRegs := make([]ExternalRegistration, 0)
 	externalReg, ok := valuesDict["nontrembita-external-registration"]
 	if !ok {
-		viewParams["external-regs"] = []ExternalRegistration{}
-		return nil
+		viewParams["externalRegs"] = eRegs
+	} else {
+		eRegs, ok = externalReg.([]ExternalRegistration)
+		if !ok {
+			return errors.New("wrong format of nontrembita-external-registration")
+		}
+
+		viewParams["externalRegs"] = eRegs
 	}
 
-	regs, ok := externalReg.([]ExternalRegistration)
-	if !ok {
-		return errors.New("wrong format of nontrembita-external-registration")
+	cbs, err := a.codebaseService.GetAllByType("registry")
+	if err != nil {
+		return errors.Wrap(err, "unable to get all registries")
 	}
 
-	viewParams["external-regs"] = regs
+	var availableRegs []codebase.Codebase
+	for _, cb := range cbs {
+		skip := false
+		for _, er := range eRegs {
+			if er.Name == cb.Name {
+				skip = true
+				break
+			}
+		}
+
+		if !skip && cb.Name != registryName {
+			availableRegs = append(availableRegs, cb)
+		}
+	}
+	viewParams["externalRegAvailableRegistries"] = availableRegs
+
 	return nil
 }
 
