@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -30,14 +31,16 @@ func (s *Service) initRestyClient() error {
 }
 
 func (s *Service) GetFileContents(ctx context.Context, projectName, branch, filePath string) (string, error) {
+	filePath = url.PathEscape(filePath)
+	path := fmt.Sprintf("projects/%s/branches/%s/files/%s/content", projectName, branch, filePath)
 	rsp, err := s.apiClient.NewRequest().SetContext(ctx).
-		Get(fmt.Sprintf("projects/%s/branches/%s/files/%s/content", projectName, branch, filePath))
+		Get(path)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to get file content")
 	}
 
 	if rsp.StatusCode() >= 300 {
-		return "", errors.Wrapf(err, "wrong response code: %d, content: %s", rsp.StatusCode(), rsp.String())
+		return "", errors.Errorf("wrong response code: %d, content: %s", rsp.StatusCode(), rsp.String())
 	}
 
 	bts, err := base64.StdEncoding.DecodeString(rsp.String())

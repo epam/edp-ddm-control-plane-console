@@ -2,20 +2,17 @@ package registry
 
 import (
 	"context"
+	"encoding/json"
+	"sort"
+
+	"ddm-admin-console/service/gerrit"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v3"
 
 	"ddm-admin-console/router"
 	"ddm-admin-console/service/codebase"
 )
-
-type ExternalRegistration struct {
-	Name     string `yaml:"name"`
-	Enabled  bool   `yaml:"enabled"`
-	External bool   `yaml:"external"`
-}
 
 func (a *App) viewRegistry(ctx *gin.Context) (*router.Response, error) {
 	userCtx := a.router.ContextWithUserAccessToken(ctx)
@@ -48,39 +45,29 @@ func (a *App) viewRegistryProcessFunctions() []func(ctx context.Context, registr
 }
 
 func (a *App) viewRegistryExternalRegistration(userCtx context.Context, registryName string, viewParams gin.H) error {
-	values, err := a.gerritService.GetFileContents(userCtx, registryName, "master", "deploy-templates/values.yaml")
-	if err != nil {
-		return errors.Wrap(err, "unable to get values yaml")
-	}
-
-	var valuesDict map[string]interface{}
-	if err := yaml.Unmarshal([]byte(values), &valuesDict); err != nil {
-		return errors.Wrap(err, "unable to decode values yaml")
-	}
-
-	eRegs := make([]ExternalRegistration, 0)
+	eRegs, mergeRequestsForER := make([]ExternalRegistration, 0), make(map[string]struct{})
 	mrs, err := a.gerritService.GetMergeRequestByProject(userCtx, registryName)
 	if err != nil {
 		return errors.Wrap(err, "unable to get gerrit merge requests")
 	}
 	for _, mr := range mrs {
-		if mr.Labels[mrLabelTarget] == "external-reg" {
-			//TODO: append to eRegs
+		if mr.Labels[mrLabelTarget] == "external-reg" && mr.Status.Value == "NEW" {
+			eRegs = append(eRegs, ExternalRegistration{Name: mr.Annotations[mrAnnotationRegName], Enabled: true,
+				External: mr.Annotations[mrAnnotationRegType] == externalSystemTypeExternal, status: "inactive"})
+			mergeRequestsForER[mr.Annotations[mrAnnotationRegName]] = struct{}{}
 		}
 	}
 
-	externalReg, ok := valuesDict["nontrembita-external-registration"]
-	if !ok {
-		viewParams["externalRegs"] = eRegs
-	} else {
-		//TODO: not replace but append
-		eRegs, ok = externalReg.([]ExternalRegistration)
-		if !ok {
-			return errors.New("wrong format of nontrembita-external-registration")
-		}
-
-		viewParams["externalRegs"] = eRegs
+	_, _eRegs, err := a.getValuesFromGit(userCtx, registryName)
+	if err != nil {
+		return errors.Wrap(err, "unable to get values from git")
 	}
+	for _, _er := range _eRegs {
+		if _, ok := mergeRequestsForER[_er.Name]; !ok {
+			eRegs = append(eRegs, _er)
+		}
+	}
+	viewParams["externalRegs"] = eRegs
 
 	cbs, err := a.codebaseService.GetAllByType("registry")
 	if err != nil {
@@ -101,10 +88,23 @@ func (a *App) viewRegistryExternalRegistration(userCtx context.Context, registry
 			availableRegs = append(availableRegs, cb)
 		}
 	}
-
 	viewParams["externalRegAvailableRegistries"] = availableRegs
 
 	return nil
+}
+
+func convertExternalRegFromInterface(in interface{}) ([]ExternalRegistration, error) {
+	js, err := json.Marshal(in)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to encode interface to json")
+	}
+
+	var res []ExternalRegistration
+	if err := json.Unmarshal(js, &res); err != nil {
+		return nil, errors.Wrap(err, "unable to decode json")
+	}
+
+	return res, nil
 }
 
 func (a *App) viewRegistryGetAdmins(userCtx context.Context, registryName string, viewParams gin.H) error {
@@ -122,6 +122,8 @@ func (a *App) viewRegistryGetMergeRequests(userCtx context.Context, registryName
 	if err != nil {
 		return errors.Wrap(err, "unable to list gerrit merge requests")
 	}
+
+	sort.Sort(gerrit.SortByCreationDesc(mrs))
 
 	viewParams["mergeRequests"] = mrs
 	return nil
