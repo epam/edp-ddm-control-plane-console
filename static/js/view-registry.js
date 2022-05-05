@@ -23,6 +23,8 @@ let app = Vue.createApp({
             systemToDelete: '',
             systemToDisable: '',
             mrError: false,
+            externalKey: false,
+            systemToShowKey: ''
         }
     },
     methods: {
@@ -108,6 +110,18 @@ let app = Vue.createApp({
             this.removeExternalRegPopupShow = false;
             $("body").css("overflow", "scroll");
 
+        },
+        showExternalKey(name, e) {
+            console.log(name);
+            e.preventDefault();
+            this.backdropShow = true;
+            this.externalKey = true;
+            this.systemToShowKey = name;
+        },
+        hideExternalKey(e) {
+            e.preventDefault();
+            this.backdropShow = false;
+            this.externalKey = false;
         },
         addExternalReg() {
 

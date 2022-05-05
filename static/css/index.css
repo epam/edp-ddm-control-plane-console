@@ -12052,3 +12052,10 @@ div#kubernetes-component {
 .rg-external-system-actions.inactive a {
     cursor: not-allowed;
 }
+
+.er-ex-key {
+    border: 1px solid #CED0DB;
+    height: 40px;
+    margin-top: 16px;
+    padding: 8px;
+}

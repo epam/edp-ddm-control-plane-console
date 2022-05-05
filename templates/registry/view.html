@@ -81,9 +81,12 @@
                         </td>
                         <td>
                             <div class="rg-external-system-actions {{if eq "status-inactive" $er.Status}}inactive{{end}}" >
-                                <!--<a href="#">
-                                    <img alt="key" src="{{ $.BasePath }}/static/img/key.png" />
-                                </a>-->
+                                {{if $er.External}}
+                                    <a @click="{{if eq "status-inactive" $er.Status}}disabledLink{{else}}showExternalKey('{{$er.Name}}', $event){{end}}" href="#">
+                                        <img alt="key" src="{{ $.BasePath }}/static/img/key-{{$er.Status}}.png" />
+                                    </a>
+                                {{end}}
+
                                 <a @click="{{if eq "status-inactive" $er.Status}}disabledLink{{else}}disableExternalReg('{{$er.Name}}', $event){{end}}" href="#">
                                     <img alt="key" src="{{ $.BasePath }}/static/img/lock-{{$er.Status}}.png" />
                                 </a>
@@ -250,6 +253,26 @@
 
 
     <div class="popup-backdrop visible" v-cloak v-if="backdropShow"></div>
+
+    <div class="popup-window admin-window visible" v-cloak v-if="externalKey">
+        <div class="popup-header">
+            <p>Перевірити пароль для "[[ systemToShowKey ]]"</p>
+            <a href="#" @click="hideExternalKey" class="popup-close hide-popup">
+                <img alt="close popup window" src="{{.BasePath}}/static/img/close.png" />
+            </a>
+        </div>
+        <form method="POST" action="{{ .BasePath }}/admin/registry/external-reg-remove/{{.registry.Name}}">
+            <div class="popup-body">
+                Не передавайте пароль стороннім особам.
+                <div class="er-ex-key">
+                    ********
+                </div>
+            </div>
+            <div class="popup-footer active">
+                <a href="#" class="hide-popup" @click="hideExternalKey">закрити</a>
+            </div>
+        </form>
+    </div>
 
     <div class="popup-window admin-window visible" v-cloak v-if="mrError">
         <div class="popup-header">
