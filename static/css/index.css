@@ -12048,3 +12048,7 @@ div#kubernetes-component {
 .rg-external-system-actions a:last-of-type {
     margin: 0;
 }
+
+.rg-external-system-actions.inactive a {
+    cursor: not-allowed;
+}

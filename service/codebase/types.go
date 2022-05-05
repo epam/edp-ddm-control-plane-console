@@ -162,6 +162,19 @@ func (in *Codebase) LocaleStatus() string {
 	return fmt.Sprintf("status-%s", in.StrStatus())
 }
 
+func (in *CodebaseBranch) LocaleStatus() string {
+	return fmt.Sprintf("status-%s", in.StrStatus())
+}
+
+func (in *CodebaseBranch) StrStatus() string {
+	status := in.Status.Value
+	if status == "" {
+		status = "active"
+	}
+
+	return status
+}
+
 func (in *CodebaseBranch) CreateGerritLink(baseURL string) string {
 	return fmt.Sprintf("%v/gitweb?p=%s.git;a=shortlog;h=refs/heads/%s", baseURL, in.Spec.CodebaseName,
 		in.Spec.BranchName)

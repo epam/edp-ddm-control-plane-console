@@ -14,4 +14,6 @@ func (a *App) createRoutes() {
 	a.router.POST("/admin/registry/update/:name", a.registryUpdate)
 
 	a.router.POST("/admin/registry/external-reg-add/:name", a.addExternalReg)
+	a.router.POST("/admin/registry/external-reg-remove/:name", a.removeExternalReg)
+	a.router.POST("/admin/registry/external-reg-disable/:name", a.disableExternalReg)
 }
