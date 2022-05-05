@@ -15,11 +15,33 @@ import (
 )
 
 const (
-	valuesLocation      = "deploy-templates/values.yaml"
-	mrLabelTarget       = "console/target"
-	mrAnnotationRegName = "ext-reg/name"
-	mrAnnotationRegType = "ext-reg/type"
+	valuesLocation             = "deploy-templates/values.yaml"
+	mrLabelTarget              = "console/target"
+	mrAnnotationRegName        = "ext-reg/name"
+	mrAnnotationRegType        = "ext-reg/type"
+	externalSystemTypeExternal = "external-system"
+	erValuesIndex              = "nontrembita-external-registration"
 )
+
+type ExternalRegistration struct {
+	Name     string `yaml:"name"`
+	Enabled  bool   `yaml:"enabled"`
+	External bool   `yaml:"external"`
+	status   string
+}
+
+func (e ExternalRegistration) Status() string {
+	s := e.status
+	if s == "" {
+		s = "active"
+	}
+
+	if !e.Enabled {
+		s = "disabled"
+	}
+
+	return fmt.Sprintf("status-%s", s)
+}
 
 func (a *App) addExternalReg(ctx *gin.Context) (*router.Response, error) {
 	userCtx := a.router.ContextWithUserAccessToken(ctx)
@@ -27,59 +49,57 @@ func (a *App) addExternalReg(ctx *gin.Context) (*router.Response, error) {
 	registryName := ctx.Param("name")
 	er := ExternalRegistration{
 		Name:     ctx.PostForm("reg-name"),
-		External: ctx.PostForm("external-system-type") == "external-system",
+		External: ctx.PostForm("external-system-type") == externalSystemTypeExternal,
 		Enabled:  true,
 	}
 	values, err := a.prepareRegistryValues(userCtx, registryName, &er)
-
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to prepare registry values")
 	}
 
-	if err := a.gerritService.CreateMergeRequestWithContents(userCtx, &gerrit.MergeRequest{
-		ProjectName:   registryName,
-		Name:          fmt.Sprintf("external-reg-system-mr-%s-%d", registryName, time.Now().Unix()),
-		AuthorEmail:   ctx.GetString(router.UserEmailSessionKey),
-		AuthorName:    ctx.GetString(router.UserNameSessionKey),
-		CommitMessage: fmt.Sprintf("add new external reg system to registry %s", registryName),
-		TargetBranch:  "master",
-		Labels: map[string]string{
-			mrLabelTarget: "external-reg",
-		},
-		Annotations: map[string]string{
-			mrAnnotationRegName: er.Name,
-			mrAnnotationRegType: ctx.PostForm("external-system-type"),
-		},
-	}, map[string]string{
-		valuesLocation: values,
-	}); err != nil {
-		return nil, errors.Wrap(err, "unable to create MR with new values")
+	if err := a.createErMergeRequest(userCtx, ctx, registryName, er.Name, values); err != nil {
+		return nil, errors.Wrap(err, "unable to create MR")
 	}
 
 	return router.MakeRedirectResponse(http.StatusFound,
 		fmt.Sprintf("/admin/registry/view/%s", registryName)), nil
 }
 
-func (a *App) prepareRegistryValues(ctx context.Context, registryName string, er *ExternalRegistration) (string, error) {
+func (a *App) getValuesFromGit(ctx context.Context, registryName string) (map[string]interface{}, []ExternalRegistration, error) {
 	values, err := a.gerritService.GetFileContents(ctx, registryName, "master", valuesLocation)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to get values yaml")
+		return nil, nil, errors.Wrap(err, "unable to get values yaml")
 	}
 
 	var valuesDict map[string]interface{}
 	if err := yaml.Unmarshal([]byte(values), &valuesDict); err != nil {
-		return "", errors.Wrap(err, "unable to decode values yaml")
+		return nil, nil, errors.Wrap(err, "unable to decode values yaml")
 	}
 	if valuesDict == nil {
 		valuesDict = make(map[string]interface{})
 	}
 
 	eRegs := make([]ExternalRegistration, 0)
-	externalReg, ok := valuesDict["nontrembita-external-registration"]
+	externalReg, ok := valuesDict[erValuesIndex]
 	if ok {
-		eRegs, ok = externalReg.([]ExternalRegistration)
-		if !ok {
-			return "", errors.New("wrong nontrembita-external-registration structure")
+		eRegs, err = convertExternalRegFromInterface(externalReg)
+		if err != nil {
+			return nil, nil, errors.Wrap(err, "unable to convert external regs")
+		}
+	}
+
+	return valuesDict, eRegs, nil
+}
+
+func (a *App) prepareRegistryValues(ctx context.Context, registryName string, er *ExternalRegistration) (string, error) {
+	valuesDict, eRegs, err := a.getValuesFromGit(ctx, registryName)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to get values from git")
+	}
+
+	for _, _er := range eRegs {
+		if er.Name == _er.Name {
+			return "", errors.New("external reg system already exists")
 		}
 	}
 
@@ -88,7 +108,7 @@ func (a *App) prepareRegistryValues(ctx context.Context, registryName string, er
 		Enabled:  er.Enabled,
 		External: er.External,
 	})
-	valuesDict["nontrembita-external-registration"] = eRegs
+	valuesDict[erValuesIndex] = eRegs
 
 	newValues, err := yaml.Marshal(valuesDict)
 	if err != nil {
@@ -96,4 +116,106 @@ func (a *App) prepareRegistryValues(ctx context.Context, registryName string, er
 	}
 
 	return string(newValues), nil
+}
+
+func (a *App) createErMergeRequest(userCtx context.Context, ctx *gin.Context, registryName, erName, values string) error {
+	if err := a.gerritService.CreateMergeRequestWithContents(userCtx, &gerrit.MergeRequest{
+		ProjectName:   registryName,
+		Name:          fmt.Sprintf("ers-mr-%s-%s-%d", registryName, erName, time.Now().Unix()),
+		AuthorEmail:   ctx.GetString(router.UserEmailSessionKey),
+		AuthorName:    ctx.GetString(router.UserNameSessionKey),
+		CommitMessage: fmt.Sprintf("update registry external reg systems"),
+		TargetBranch:  "master",
+		Labels: map[string]string{
+			mrLabelTarget: "external-reg",
+		},
+		Annotations: map[string]string{
+			mrAnnotationRegName: erName,
+			mrAnnotationRegType: ctx.PostForm("external-system-type"),
+		},
+	}, map[string]string{
+		valuesLocation: values,
+	}); err != nil {
+		return errors.Wrap(err, "unable to create MR with new values")
+	}
+
+	return nil
+}
+
+func (a *App) disableExternalReg(ctx *gin.Context) (*router.Response, error) {
+	userCtx := a.router.ContextWithUserAccessToken(ctx)
+
+	registryName := ctx.Param("name")
+	systemName := ctx.PostForm("reg-name")
+	if systemName == "" {
+		return nil, errors.New("reg-name is required")
+	}
+
+	values, eRegs, err := a.getValuesFromGit(ctx, registryName)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to get values from git")
+	}
+
+	found := false
+	for i, v := range eRegs {
+		if v.Name == systemName {
+			eRegs[i].Enabled = !eRegs[i].Enabled
+			found = true
+		}
+	}
+	if !found {
+		return nil, errors.New("reg-name not found")
+	}
+
+	values[erValuesIndex] = eRegs
+	newValues, err := yaml.Marshal(values)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to encode new values yaml")
+	}
+
+	if err := a.createErMergeRequest(userCtx, ctx, registryName, systemName, string(newValues)); err != nil {
+		return nil, errors.Wrap(err, "unable to crete MR")
+	}
+
+	return router.MakeRedirectResponse(http.StatusFound,
+		fmt.Sprintf("/admin/registry/view/%s", registryName)), nil
+}
+
+func (a *App) removeExternalReg(ctx *gin.Context) (*router.Response, error) {
+	userCtx := a.router.ContextWithUserAccessToken(ctx)
+
+	registryName := ctx.Param("name")
+	systemName := ctx.PostForm("reg-name")
+	if systemName == "" {
+		return nil, errors.New("reg-name is required")
+	}
+
+	values, eRegs, err := a.getValuesFromGit(ctx, registryName)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to get values from git")
+	}
+
+	found := false
+	for i, v := range eRegs {
+		if v.Name == systemName {
+			eRegs = append(eRegs[:i], eRegs[i+1:]...)
+			found = true
+		}
+	}
+	if !found {
+		return nil, errors.New("reg-name not found")
+	}
+
+	values[erValuesIndex] = eRegs
+	newValues, err := yaml.Marshal(values)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to encode new values yaml")
+	}
+
+	if err := a.createErMergeRequest(userCtx, ctx, registryName, systemName, string(newValues)); err != nil {
+		return nil, errors.Wrap(err, "unable to crete MR")
+	}
+
+	return router.MakeRedirectResponse(http.StatusFound,
+		fmt.Sprintf("/admin/registry/view/%s", registryName)), nil
 }
