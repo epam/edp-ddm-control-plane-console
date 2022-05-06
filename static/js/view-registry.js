@@ -24,7 +24,8 @@ let app = Vue.createApp({
             systemToDisable: '',
             mrError: false,
             externalKey: false,
-            systemToShowKey: ''
+            systemToShowKey: '',
+            keyValue: '******',
         }
     },
     methods: {
@@ -110,6 +111,10 @@ let app = Vue.createApp({
             this.removeExternalRegPopupShow = false;
             $("body").css("overflow", "scroll");
 
+        },
+        showExternalKeyValue(e) {
+            console.log(e);
+            e.preventDefault();
         },
         showExternalKey(name, e) {
             console.log(name);

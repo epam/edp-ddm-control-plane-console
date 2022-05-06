@@ -21,6 +21,9 @@ const (
 	mrAnnotationRegType        = "ext-reg/type"
 	externalSystemTypeExternal = "external-system"
 	erValuesIndex              = "nontrembita-external-registration"
+	erStatusInactive           = "inactive"
+	erStatusActive             = "active"
+	erStatusDisabled           = "disabled"
 )
 
 type ExternalRegistration struct {
@@ -28,16 +31,17 @@ type ExternalRegistration struct {
 	Enabled  bool   `yaml:"enabled"`
 	External bool   `yaml:"external"`
 	status   string
+	KeyValue string
 }
 
 func (e ExternalRegistration) Status() string {
 	s := e.status
 	if s == "" {
-		s = "active"
+		s = erStatusActive
 	}
 
 	if !e.Enabled {
-		s = "disabled"
+		s = erStatusDisabled
 	}
 
 	return fmt.Sprintf("status-%s", s)

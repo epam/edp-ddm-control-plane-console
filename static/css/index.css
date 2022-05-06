@@ -12058,4 +12058,11 @@ div#kubernetes-component {
     height: 40px;
     margin-top: 16px;
     padding: 8px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.er-ex-key img {
+    width: 22px;
+    margin: 4px 5px 0 0;
 }

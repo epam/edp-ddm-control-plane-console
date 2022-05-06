@@ -265,7 +265,10 @@
             <div class="popup-body">
                 Не передавайте пароль стороннім особам.
                 <div class="er-ex-key">
-                    ********
+                    <span id="key-value">[[ keyValue ]]</span>
+                    <a @click="showExternalKeyValue" href="#">
+                        <img alt="display password" src="/static/img/eye.png" />
+                    </a>
                 </div>
             </div>
             <div class="popup-footer active">

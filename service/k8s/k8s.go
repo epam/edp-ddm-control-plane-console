@@ -75,6 +75,15 @@ func (s *Service) ServiceForContext(ctx context.Context) (ServiceInterface, erro
 	return svc, nil
 }
 
+func (s *Service) GetSecretFromNamespace(ctx context.Context, name, namespace string) (*v1.Secret, error) {
+	secret, err := s.clientSet.CoreV1().Secrets(namespace).Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to get secret: %s, ns: %s", name, namespace)
+	}
+
+	return secret, nil
+}
+
 func (s *Service) GetSecret(name string) (*v1.Secret, error) {
 	secret, err := s.clientSet.CoreV1().Secrets(s.namespace).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
