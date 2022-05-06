@@ -3,15 +3,17 @@ package registry
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"sort"
 
-	"ddm-admin-console/service/gerrit"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 
 	"ddm-admin-console/router"
 	"ddm-admin-console/service/codebase"
+	"ddm-admin-console/service/gerrit"
 )
 
 func (a *App) viewRegistry(ctx *gin.Context) (*router.Response, error) {
@@ -53,7 +55,7 @@ func (a *App) viewRegistryExternalRegistration(userCtx context.Context, registry
 	for _, mr := range mrs {
 		if mr.Labels[mrLabelTarget] == "external-reg" && mr.Status.Value == "NEW" {
 			eRegs = append(eRegs, ExternalRegistration{Name: mr.Annotations[mrAnnotationRegName], Enabled: true,
-				External: mr.Annotations[mrAnnotationRegType] == externalSystemTypeExternal, status: "inactive"})
+				External: mr.Annotations[mrAnnotationRegType] == externalSystemTypeExternal, status: erStatusInactive})
 			mergeRequestsForER[mr.Annotations[mrAnnotationRegName]] = struct{}{}
 		}
 	}
@@ -67,8 +69,40 @@ func (a *App) viewRegistryExternalRegistration(userCtx context.Context, registry
 			eRegs = append(eRegs, _er)
 		}
 	}
+
+	if err := a.loadKeysForExternalRegs(userCtx, registryName, eRegs); err != nil {
+		return errors.Wrap(err, "unable load keys for ext regs")
+	}
+
 	viewParams["externalRegs"] = eRegs
 
+	if err := a.loadCodebasesForExternalRegistrations(registryName, eRegs, viewParams); err != nil {
+		return errors.Wrap(err, "unable to load codebases for external reg")
+	}
+
+	return nil
+}
+
+func (a *App) loadKeysForExternalRegs(ctx context.Context, registryName string, eRegs []ExternalRegistration) error {
+	for i, er := range eRegs {
+		if er.External && er.Enabled {
+			s, err := a.k8sService.GetSecretFromNamespace(ctx, fmt.Sprintf("keycloak-client-%s-secret", er.Name),
+				registryName)
+			if k8sErrors.IsNotFound(err) {
+				eRegs[i].status = erStatusInactive
+				continue
+			} else if err != nil {
+				return errors.Wrap(err, "unable to get er system key")
+			}
+
+			eRegs[i].KeyValue = string(s.Data["clientSecret"])
+		}
+	}
+
+	return nil
+}
+
+func (a *App) loadCodebasesForExternalRegistrations(registryName string, eRegs []ExternalRegistration, viewParams gin.H) error {
 	cbs, err := a.codebaseService.GetAllByType("registry")
 	if err != nil {
 		return errors.Wrap(err, "unable to get all registries")
