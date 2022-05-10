@@ -53,7 +53,7 @@
                         {{range $index, $br := .branches}}
                             <tr>
                                 <td>
-                                    <img alt="status" src="{{ $.BasePath }}/static/img/status-{{$br.Status.Value}}.png" />
+                                    <img title="{{ i18n $br.LocaleStatus }}" alt="{{ i18n $br.LocaleStatus }}" src="{{ $.BasePath }}/static/img/status-{{$br.Status.Value}}.png" />
                                 </td>
                                 <td>
                                     {{$br.Name}}
@@ -160,5 +160,6 @@
             </div>
         {{end}}
     </div>
+    {{template "scripts" .}}
     {{template "footer" .}}
 {{ end }}

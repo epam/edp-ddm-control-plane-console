@@ -46,3 +46,6 @@ msgstr "В обробці"
 
 msgid "status-ok"
 msgstr "Активний"
+
+msgid "status-disabled"
+msgstr "Активний"
