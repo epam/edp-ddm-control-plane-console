@@ -1,7 +1,5 @@
 $(function (){
-    $( document ).tooltip({
-        // position: { my: "top top", at: "top top" }
-    });
+    $( document ).tooltip();
 
     let registryName;
     let registryInput = $("#registry-name");
