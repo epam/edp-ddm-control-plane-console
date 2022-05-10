@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/pkg/errors"
 )
 
@@ -22,6 +24,11 @@ type Service struct {
 	user           string
 	commandCreator func(name string, arg ...string) Command
 	TempDir        string
+}
+
+type User struct {
+	Name  string
+	Email string
 }
 
 func Make(path, user, key string) *Service {
@@ -48,12 +55,6 @@ func (s *Service) Clean() error {
 }
 
 func (s *Service) Clone(url string) error {
-	//cmd := s.commandCreate("git", "clone", url, s.path)
-	//bts, err := cmd.CombinedOutput()
-	//if err != nil {
-	//	return errors.Wrapf(err, "clone execute error: %s", string(bts))
-	//}
-
 	keyPath, err := s.keyFilePath()
 	if err != nil {
 		return errors.Wrap(err, "unable to create key file")
@@ -76,6 +77,32 @@ func (s *Service) Clone(url string) error {
 	bts, err := fetchCMD.CombinedOutput()
 	if err != nil && !strings.Contains(string(bts), "does not make sense") {
 		return errors.Wrapf(err, "unable to pull unshallow repo: %s", string(bts))
+	}
+
+	return nil
+}
+
+func (s *Service) Commit(message string, files []string, user *User) error {
+	r, err := git.PlainOpen(s.path)
+	if err != nil {
+		return errors.Wrap(err, "unable to open repository")
+	}
+
+	w, err := r.Worktree()
+	if err != nil {
+		return errors.Wrap(err, "unable to get repo worktree")
+	}
+
+	for _, f := range files {
+		if _, err := w.Add(f); err != nil {
+			return errors.Wrapf(err, "unable to add file: %s", f)
+		}
+	}
+
+	if _, err := w.Commit(message, &git.CommitOptions{
+		Author: &object.Signature{Name: user.Name, Email: user.Email, When: time.Now()},
+	}); err != nil {
+		return errors.Wrap(err, "unable to perform git commit")
 	}
 
 	return nil
@@ -177,6 +204,40 @@ func (s *Service) Push(remoteName string, pushParams ...string) error {
 	}
 
 	return nil
+}
+
+func (s *Service) SetFileContents(filePath, contents string) error {
+	filePath = path.Join(s.path, filePath)
+
+	fp, err := os.Create(filePath)
+	if err != nil {
+		return errors.Wrapf(err, "unable to create file: %s", filePath)
+	}
+
+	if _, err := fp.WriteString(contents); err != nil {
+		return errors.Wrapf(err, "unable to put file contents, file: %s", filePath)
+	}
+
+	if err := fp.Close(); err != nil {
+		return errors.Wrapf(err, "unable to close file: %s", filePath)
+	}
+
+	return nil
+}
+
+func (s *Service) GetFileContents(filePath string) (string, error) {
+	filePath = path.Join(s.path, filePath)
+	fp, err := os.Open(filePath)
+	if err != nil {
+		return "", errors.Wrapf(err, "unable to open file: %s", filePath)
+	}
+
+	bts, err := ioutil.ReadAll(fp)
+	if err != nil {
+		return "", errors.Wrapf(err, "unable to read file: %s", filePath)
+	}
+
+	return string(bts), nil
 }
 
 func (s *Service) AddRemote(remoteName, url string) error {

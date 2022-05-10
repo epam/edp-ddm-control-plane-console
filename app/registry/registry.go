@@ -5,6 +5,8 @@ const (
 	ScenarioKeyNotRequired = "key-not-required"
 	KeyDeviceTypeFile      = "file"
 	KeyDeviceTypeHardware  = "hardware"
+	SMTPTypePlatform       = "platform-mail-server"
+	SMTPTypeExternal       = "external-mail-server"
 )
 
 type registry struct {
@@ -15,7 +17,6 @@ type registry struct {
 	SignKeyPwd          string   `form:"sign-key-pwd" binding:"required_if=KeyDeviceType file Scenario key-required"`
 	RegistryGitTemplate string   `form:"registry-git-template" binding:"required"`
 	RegistryGitBranch   string   `form:"registry-git-branch" binding:"required"`
-	RegistryGroup       string   `form:"registry-group"`
 	KeyDeviceType       string   `form:"key-device-type" binding:"oneof=file hardware"`
 	RemoteType          string   `form:"remote-type" binding:"required_if=KeyDeviceType hardware Scenario key-required"`
 	RemoteKeyPassword   string   `form:"remote-key-pwd" binding:"required_if=KeyDeviceType hardware Scenario key-required"`
@@ -30,6 +31,8 @@ type registry struct {
 	INIConfig           string   `form:"remote-ini-config" binding:"required_if=KeyDeviceType hardware Scenario key-required"`
 	AllowedKeysSerial   []string `form:"allowed-keys-serial[]" binding:"required_if=Scenario key-required"`
 	AllowedKeysIssuer   []string `form:"allowed-keys-issuer[]" binding:"required_if=Scenario key-required"`
+	MailServerType      string   `form:"smtp-server-type"`
+	MailServerOpts      string   `form:"mail-server-opts"`
 }
 
 func (r *registry) KeysRequired() bool {
