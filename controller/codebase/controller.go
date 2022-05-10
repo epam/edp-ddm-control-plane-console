@@ -3,12 +3,16 @@ package codebase
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
+
+	"gopkg.in/yaml.v3"
 
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
@@ -123,7 +127,6 @@ func (c *Controller) Reconcile(ctx context.Context, request reconcile.Request) (
 		if err := c.reconcile(ctx, &instance); err != nil {
 			c.logger.Error(err)
 			result = reconcile.Result{RequeueAfter: time.Second * 10}
-			//resultErr = errors.Wrap(err, "unable to reconcile codebase")
 			return
 		}
 	}
@@ -191,7 +194,7 @@ func (c *Controller) pushRegistryTemplate(ctx context.Context, instance *codebas
 		return errors.New("no data by key id_rsa in gerrit secret")
 	}
 
-	tpl, ok := instance.Annotations[registry.TemplateNameAnnotation]
+	tpl, ok := instance.Annotations[registry.AnnotationTemplateName]
 	if !ok {
 		return errors.New("template annotation not found")
 	}
@@ -223,6 +226,10 @@ func (c *Controller) pushRegistryTemplate(ctx context.Context, instance *codebas
 		return errors.Wrap(err, "unable to clone repo")
 	}
 
+	if err := updateRegistryValues(instance, gitService); err != nil {
+		return errors.Wrap(err, "unable to update registry values")
+	}
+
 	if err := gitService.AddRemote("registry", fmt.Sprintf("%s/%s", gerritSSHURL, instance.Name)); err != nil {
 		return errors.Wrap(err, "unable to add registry remote")
 	}
@@ -233,6 +240,89 @@ func (c *Controller) pushRegistryTemplate(ctx context.Context, instance *codebas
 
 	if err := gitService.Push("registry", "--tags"); err != nil {
 		return errors.Wrap(err, "unable to push tags to repo registry")
+	}
+
+	return nil
+}
+
+func updateRegistryValues(instance *codebaseService.Codebase, gitService *git.Service) error {
+	valuesStr, err := gitService.GetFileContents(registry.ValuesLocation)
+	if err != nil {
+		return errors.Wrap(err, "unable to get values from repo")
+	}
+
+	var raw map[string]interface{}
+	if err := yaml.Unmarshal([]byte(valuesStr), &raw); err != nil {
+		return errors.Wrap(err, "unable to decode values")
+	}
+
+	global, ok := raw["global"]
+	if !ok {
+		global = map[string]interface{}{}
+	}
+	globalDict, ok := global.(map[string]interface{})
+	if !ok {
+		return errors.New("wrong yaml structure, global is not an object")
+	}
+
+	notifications, ok := globalDict["notifications"]
+	if !ok {
+		notifications = map[string]interface{}{}
+	}
+	notificationsDict, ok := notifications.(map[string]interface{})
+	if !ok {
+		return errors.New("wrong yaml structure, notifications is not an object")
+	}
+
+	smtpType, ok := instance.Annotations[registry.AnnotationSMPTType]
+	if !ok {
+		return nil
+	}
+
+	if smtpType == registry.SMTPTypeExternal {
+		smtpOpts, ok := instance.Annotations[registry.AnnotationSMPTOpts]
+		if !ok {
+			return errors.New("smtp opts not found in annotation")
+		}
+
+		var smptOptsDict map[string]string
+		if err := json.Unmarshal([]byte(smtpOpts), &smtpOpts); err != nil {
+			return errors.Wrap(err, "unable to decode smtp opts json")
+		}
+
+		port, err := strconv.ParseInt(smptOptsDict["port"], 10, 32)
+		if err != nil {
+			return errors.Wrapf(err, "wrong smtp port value: %s", smptOptsDict["port"])
+		}
+
+		notificationsDict["email"] = map[string]interface{}{
+			"type":     "external",
+			"host":     smptOptsDict["host"],
+			"port":     port,
+			"address":  smptOptsDict["address"],
+			"password": smptOptsDict["password"],
+		}
+	} else {
+		notificationsDict["email"] = map[string]interface{}{
+			"type": "internal",
+		}
+	}
+
+	bts, err := yaml.Marshal(raw)
+	if err != nil {
+		return errors.Wrap(err, "unable to encode values yaml")
+	}
+
+	if err := gitService.SetFileContents(registry.ValuesLocation, string(bts)); err != nil {
+		return errors.Wrap(err, "unable to set values yaml file contents")
+	}
+
+	if err := gitService.Commit("set initial values.yaml from admin controle",
+		[]string{registry.ValuesLocation}, &git.User{
+			Name:  instance.Annotations[registry.AnnotationCreatorUsername],
+			Email: instance.Annotations[registry.AnnotationCreatorEmail],
+		}); err != nil {
+		return errors.Wrap(err, "unable to commit values yaml")
 	}
 
 	return nil

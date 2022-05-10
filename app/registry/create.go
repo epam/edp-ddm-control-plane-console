@@ -2,7 +2,6 @@ package registry
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"mime/multipart"
@@ -26,8 +25,11 @@ import (
 )
 
 const (
-	GroupAnnotation        = "registry-parameters/group"
-	TemplateNameAnnotation = "registry-parameters/template-name"
+	AnnotationSMPTType        = "registry-parameters/smtp-type"
+	AnnotationSMPTOpts        = "registry-parameters/smtp-opts"
+	AnnotationTemplateName    = "registry-parameters/template-name"
+	AnnotationCreatorUsername = "registry-parameters/creator-username"
+	AnnotationCreatorEmail    = "registry-parameters/creator-email"
 )
 
 func (a *App) createRegistryGet(ctx *gin.Context) (response *router.Response, retErr error) {
@@ -47,11 +49,6 @@ func (a *App) createRegistryGet(ctx *gin.Context) (response *router.Response, re
 		return nil, errors.Wrap(err, "error during create access check")
 	}
 
-	groups, err := a.codebaseService.GetAllByType(codebase.GroupCodebaseType)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to get groups")
-	}
-
 	hwINITemplateContent, err := a.getINITemplateContent()
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get ini template data")
@@ -62,7 +59,6 @@ func (a *App) createRegistryGet(ctx *gin.Context) (response *router.Response, re
 		"gerritProjects":       prjs,
 		"model":                registry{KeyDeviceType: KeyDeviceTypeFile},
 		"hwINITemplateContent": hwINITemplateContent,
-		"groups":               groups,
 	}), nil
 }
 
@@ -156,7 +152,7 @@ func (a *App) createRegistryPost(ctx *gin.Context) (response *router.Response, r
 		return nil, errors.Wrap(err, "unable to validate create registry git template")
 	}
 
-	if err := a.createRegistry(userCtx, &r, ctx.Request, cbService, k8sService); err != nil {
+	if err := a.createRegistry(userCtx, ctx, &r, cbService, k8sService); err != nil {
 		validationErrors, ok := errors.Cause(err).(validator.ValidationErrors)
 		if !ok {
 			return nil, errors.Wrap(err, "unable to parse registry form")
@@ -202,7 +198,7 @@ func (a *App) validateCreateRegistryGitTemplate(r *registry) error {
 	return errors.New("wrong registry template selected")
 }
 
-func (a *App) createRegistry(ctx context.Context, r *registry, request *http.Request,
+func (a *App) createRegistry(ctx context.Context, ginContext *gin.Context, r *registry,
 	cbService codebase.ServiceInterface, k8sService k8s.ServiceInterface) error {
 	_, err := cbService.Get(r.Name)
 	if err == nil {
@@ -227,28 +223,25 @@ func (a *App) createRegistry(ctx context.Context, r *registry, request *http.Req
 		}
 	}
 
-	if err := a.createRegistryKeys(r, request, k8sService); err != nil {
+	if err := a.createRegistryKeys(r, ginContext.Request, k8sService); err != nil {
 		return errors.Wrap(err, "unable to create registry keys")
 	}
 
 	cb := a.prepareRegistryCodebase(r)
 
 	annotations := map[string]string{
-		TemplateNameAnnotation: r.RegistryGitTemplate,
+		AnnotationTemplateName:    r.RegistryGitTemplate,
+		AnnotationSMPTType:        r.MailServerType,
+		AnnotationSMPTOpts:        r.MailServerOpts,
+		AnnotationCreatorUsername: ginContext.GetString(router.UserNameSessionKey),
+		AnnotationCreatorEmail:    ginContext.GetString(router.UserEmailSessionKey),
 	}
 
-	if r.RegistryGroup != "" {
-		annotations[GroupAnnotation] = base64.StdEncoding.EncodeToString([]byte(r.RegistryGroup))
-	}
 	cb.Annotations = annotations
 
 	if err := cbService.Create(cb); err != nil {
 		return errors.Wrap(err, "unable to create codebase")
 	}
-
-	//if err := cbService.CreateTempSecrets(cb, k8sService, a.gerritCreatorSecretName); err != nil {
-	//	return errors.Wrap(err, "unable to create temp secrets")
-	//}
 
 	if err := cbService.CreateDefaultBranch(cb); err != nil {
 		return errors.Wrap(err, "unable to create default branch")
