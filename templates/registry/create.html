@@ -74,20 +74,7 @@
                 </select>
                 <span>{{range $key, $val := .errorsMap.RegistryGitTemplate}}{{ $val }}{{end}}</span>
             </div>
-
-{{/*            <div class="rc-form-group {{ if .errorsMap.RegistryGroup }}error{{end}}">*/}}
-{{/*                <label for="registry-group">Група реєстрів</label>*/}}
-{{/*                <select name="registry-group" id="registry-group">*/}}
-{{/*                    <option value="">Не додавати в групу</option>*/}}
-{{/*                    {{range $key, $group := .groups}}*/}}
-{{/*                        <option>{{ $group.Name }}</option>*/}}
-{{/*                    {{end}}*/}}
-{{/*                </select>*/}}
-{{/*                <p>Створити нову групу можна у розділі "<a href="/admin/group/create">Групи реєстрів</a>".</p>*/}}
-{{/*                <span>{{range $key, $val := .errorsMap.RegistryGroup}}{{ $val }}{{end}}</span>*/}}
-{{/*            </div>*/}}
-
-
+            {{template "reg-smtp" .}}
             {{template "key-form" .}}
 
             <div class="rc-form-group">

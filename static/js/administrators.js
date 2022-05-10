@@ -1,6 +1,11 @@
 let app = Vue.createApp({
     mounted() {
         // console.log(this.adminsValue);
+        let selectedSMTP = this.$refs.smtpServerTypeSelected.value
+        if (selectedSMTP === "") {
+            selectedSMTP = "platform-mail-server"
+        }
+        this.smtpServerType = selectedSMTP;
     },
     data() {
         return {
@@ -18,6 +23,14 @@ let app = Vue.createApp({
             emailFormatError: false,
             adminsLoaded: false,
             adminsError: false,
+            smtpServerType: null,
+            mailServerOpts: '',
+            externalSMTPOpts: {
+                host: '',
+                port: '587',
+                address: '',
+                password: ''
+            }
         }
     },
     methods: {
@@ -31,6 +44,8 @@ let app = Vue.createApp({
 
                 window.scrollTo(0, top);
             }
+
+            this.mailServerOpts = JSON.stringify(this.externalSMTPOpts);
         },
         loadAdmins(admins) {
             if (!this.adminsLoaded) {
@@ -100,7 +115,6 @@ let app = Vue.createApp({
             };
 
             this.adminsValue = JSON.stringify(this.admins);
-
         }
     }
 })

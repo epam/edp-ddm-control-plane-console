@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	valuesLocation             = "deploy-templates/values.yaml"
+	ValuesLocation             = "deploy-templates/values.yaml"
 	mrLabelTarget              = "console/target"
 	mrAnnotationRegName        = "ext-reg/name"
 	mrAnnotationRegType        = "ext-reg/type"
@@ -70,7 +70,7 @@ func (a *App) addExternalReg(ctx *gin.Context) (*router.Response, error) {
 }
 
 func (a *App) getValuesFromGit(ctx context.Context, registryName string) (map[string]interface{}, []ExternalRegistration, error) {
-	values, err := a.gerritService.GetFileContents(ctx, registryName, "master", valuesLocation)
+	values, err := a.gerritService.GetFileContents(ctx, registryName, "master", ValuesLocation)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "unable to get values yaml")
 	}
@@ -138,7 +138,7 @@ func (a *App) createErMergeRequest(userCtx context.Context, ctx *gin.Context, re
 			mrAnnotationRegType: ctx.PostForm("external-system-type"),
 		},
 	}, map[string]string{
-		valuesLocation: values,
+		ValuesLocation: values,
 	}); err != nil {
 		return errors.Wrap(err, "unable to create MR with new values")
 	}

@@ -22,7 +22,6 @@ const (
 	defaultBranch         = "master"
 	gerritCreatorUsername = "user"
 	gerritCreatorPassword = "password"
-	GroupCodebaseType     = "registry-group"
 	RegistryCodebaseType  = "registry"
 )
 
