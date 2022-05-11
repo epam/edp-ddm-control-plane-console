@@ -120,7 +120,7 @@ func (s *Service) CreateProject(ctx context.Context, name string) error {
 	if err := s.k8sClient.Create(ctx, &GerritProject{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: s.Namespace,
-			Name:      fmt.Sprintf("default-%s", name),
+			Name:      fmt.Sprintf("gerrit-%s", name),
 		},
 		Spec: GerritProjectSpec{
 			Name:              name,

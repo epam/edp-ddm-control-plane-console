@@ -31,7 +31,7 @@ type ExternalRegistration struct {
 	Enabled  bool   `yaml:"enabled"`
 	External bool   `yaml:"external"`
 	status   string
-	KeyValue string
+	KeyValue string `yaml:"-"`
 }
 
 func (e ExternalRegistration) Status() string {
