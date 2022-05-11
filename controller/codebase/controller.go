@@ -12,9 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"gopkg.in/yaml.v3"
-
 	"github.com/pkg/errors"
+	"gopkg.in/yaml.v3"
 	v1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -40,6 +39,7 @@ const (
 	gitUserSecretName   = "gerrit-project-creator"
 	gitUsername         = "project-creator"
 	rootGitServerCRName = "gerrit"
+	registryRemoteName  = "registry"
 )
 
 type Controller struct {
@@ -70,7 +70,7 @@ func Make(mgr ctrl.Manager, logger controller.Logger, adminSyncer AdminSyncer, c
 		GitUsername:         gitUsername,
 		RootGitServerCRName: rootGitServerCRName,
 		namespace:           cnf.Namespace,
-		//_gerritSSHURL:     "ssh://localhost:37861", //for local development
+		//_gerritSSHURL:       "ssh://project-creator@localhost:31000", //for local development
 	}
 
 	if err := ctrl.NewControllerManagedBy(mgr).
@@ -183,66 +183,120 @@ func (c *Controller) updateImportRepo(ctx context.Context, instance *codebaseSer
 }
 
 func (c *Controller) pushRegistryTemplate(ctx context.Context, instance *codebaseService.Codebase) error {
-	var gerritSecret v1.Secret
-	if err := c.k8sClient.Get(ctx, types.NamespacedName{Namespace: instance.Namespace, Name: c.GitUserSecretName},
-		&gerritSecret); err != nil {
-		return errors.Wrap(err, "unable to get gerrit project creator secret")
+	reposPath, err := prepareReposPath(c.TempDir)
+	if err != nil {
+		return errors.Wrap(err, "unable to create repos folder")
 	}
 
-	key, ok := gerritSecret.Data["id_rsa"]
-	if !ok {
-		return errors.New("no data by key id_rsa in gerrit secret")
+	privateKey, err := c.getGerritPrivateKey(ctx)
+	if err != nil {
+		return errors.Wrap(err, "unable to get gerrit private key")
 	}
 
-	tpl, ok := instance.Annotations[registry.AnnotationTemplateName]
-	if !ok {
-		return errors.New("template annotation not found")
-	}
-
-	reposPath := path.Join(c.TempDir, "repos")
-	if _, err := os.Stat(reposPath); err == nil {
-		if err := os.RemoveAll(reposPath); err != nil {
-			return errors.Wrap(err, "unable to clear repos folder")
-		}
-	}
-
-	if err := os.MkdirAll(reposPath, 0777); err != nil {
-		return errors.Wrap(err, "unable to create repo folder")
-	}
-
-	gitService := git.Make(path.Join(reposPath, instance.Name), c.GitUsername, string(key))
+	gitService := git.Make(path.Join(reposPath, instance.Name), c.GitUsername, privateKey)
 	defer func() {
 		if err := gitService.Clean(); err != nil {
 			c.logger.Error(err)
 		}
 	}()
 
-	gerritSSHURL, err := c.gerritSSHURL()
-	if err != nil {
-		return errors.Wrap(err, "unable to get gerrit ssh url")
+	if err := c.initCodebaseRepo(instance, gitService); err != nil {
+		return errors.Wrap(err, "unable to init codebase repo")
 	}
 
-	if err := gitService.Clone(fmt.Sprintf("%s/%s", gerritSSHURL, tpl)); err != nil {
-		return errors.Wrap(err, "unable to clone repo")
+	_, err = gitService.Pull(registryRemoteName)
+	if git.IsErrReferenceNotFound(err) {
+		if err := c.replaceDefaultBranch(instance, gitService); err != nil {
+			return errors.Wrap(err, "unable to replace default branch")
+		}
+	} else if err != nil {
+		return errors.Wrap(err, "unable to pull")
 	}
 
 	if err := updateRegistryValues(instance, gitService); err != nil {
 		return errors.Wrap(err, "unable to update registry values")
 	}
 
-	if err := gitService.AddRemote("registry", fmt.Sprintf("%s/%s", gerritSSHURL, instance.Name)); err != nil {
-		return errors.Wrap(err, "unable to add registry remote")
-	}
-
-	if err := gitService.Push("registry", "--all"); err != nil {
+	if err := gitService.Push(registryRemoteName, "--all"); err != nil {
 		return errors.Wrap(err, "unable to push [all] changes to repo registry")
 	}
 
-	if err := gitService.Push("registry", "--tags"); err != nil {
+	if err := gitService.Push(registryRemoteName, "--tags"); err != nil {
 		return errors.Wrap(err, "unable to push tags to repo registry")
 	}
 
 	return nil
+}
+
+func (c *Controller) replaceDefaultBranch(instance *codebaseService.Codebase, gitService *git.Service) error {
+	if instance.Spec.BranchToCopyInDefaultBranch == "" {
+		return gitService.Checkout(instance.Spec.DefaultBranch, false)
+	}
+
+	if err := gitService.Checkout(instance.Spec.BranchToCopyInDefaultBranch, false); err != nil {
+		return errors.Wrap(err, "unable to checkout")
+	}
+
+	if err := gitService.RemoveBranch(instance.Spec.DefaultBranch); err != nil {
+		return errors.Wrap(err, "unable to remove default branch")
+	}
+
+	if err := gitService.Checkout(instance.Spec.DefaultBranch, true); err != nil {
+		return errors.Wrap(err, "unable to copy to default branch")
+	}
+
+	return nil
+}
+
+func (c *Controller) initCodebaseRepo(instance *codebaseService.Codebase, gitService *git.Service) error {
+	gerritSSHURL, err := c.gerritSSHURL()
+	if err != nil {
+		return errors.Wrap(err, "unable to get gerrit ssh url")
+	}
+
+	tpl, ok := instance.Annotations[registry.AnnotationTemplateName]
+	if !ok {
+		return errors.New("template annotation not found")
+	}
+	if err := gitService.Clone(fmt.Sprintf("%s/%s", gerritSSHURL, tpl)); err != nil {
+		return errors.Wrap(err, "unable to clone repo")
+	}
+
+	if err := gitService.AddRemote(registryRemoteName, fmt.Sprintf("%s/%s", gerritSSHURL, instance.Name)); err != nil {
+		return errors.Wrap(err, "unable to add registry remote")
+	}
+
+	return nil
+}
+
+func prepareReposPath(tempDir string) (string, error) {
+	reposPath := path.Join(tempDir, "repos")
+	if _, err := os.Stat(reposPath); err == nil {
+		if err := os.RemoveAll(reposPath); err != nil {
+			return "", errors.Wrap(err, "unable to clear repos folder")
+		}
+	}
+
+	if err := os.MkdirAll(reposPath, 0777); err != nil {
+		return "", errors.Wrap(err, "unable to create repo folder")
+	}
+
+	return reposPath, nil
+}
+
+func (c *Controller) getGerritPrivateKey(ctx context.Context) (string, error) {
+	var gerritSecret v1.Secret
+	if err := c.k8sClient.Get(ctx, types.NamespacedName{Namespace: c.namespace, Name: c.GitUserSecretName},
+		&gerritSecret); err != nil {
+		return "", errors.Wrap(err, "unable to get gerrit project creator secret")
+	}
+
+	key, ok := gerritSecret.Data["id_rsa"]
+	if !ok {
+		return "", errors.New("no data by key id_rsa in gerrit secret")
+	}
+
+	return string(key), nil
 }
 
 func updateRegistryValues(instance *codebaseService.Codebase, gitService *git.Service) error {
@@ -254,6 +308,9 @@ func updateRegistryValues(instance *codebaseService.Codebase, gitService *git.Se
 	var raw map[string]interface{}
 	if err := yaml.Unmarshal([]byte(valuesStr), &raw); err != nil {
 		return errors.Wrap(err, "unable to decode values")
+	}
+	if raw == nil {
+		raw = make(map[string]interface{})
 	}
 
 	global, ok := raw["global"]
@@ -274,6 +331,34 @@ func updateRegistryValues(instance *codebaseService.Codebase, gitService *git.Se
 		return errors.New("wrong yaml structure, notifications is not an object")
 	}
 
+	if err := setNotificationsEmail(notificationsDict, instance); err != nil {
+		return errors.Wrap(err, "unable to set notifications email config")
+	}
+
+	globalDict["notifications"] = notificationsDict
+	raw["global"] = globalDict
+
+	bts, err := yaml.Marshal(raw)
+	if err != nil {
+		return errors.Wrap(err, "unable to encode values yaml")
+	}
+
+	if err := gitService.SetFileContents(registry.ValuesLocation, string(bts)); err != nil {
+		return errors.Wrap(err, "unable to set values yaml file contents")
+	}
+
+	if err := gitService.Commit("set initial values.yaml from admin console",
+		[]string{registry.ValuesLocation}, &git.User{
+			Name:  instance.Annotations[registry.AnnotationCreatorUsername],
+			Email: instance.Annotations[registry.AnnotationCreatorEmail],
+		}); err != nil {
+		return errors.Wrap(err, "unable to commit values yaml")
+	}
+
+	return nil
+}
+
+func setNotificationsEmail(notificationsDict map[string]interface{}, instance *codebaseService.Codebase) error {
 	smtpType, ok := instance.Annotations[registry.AnnotationSMPTType]
 	if !ok {
 		return nil
@@ -306,23 +391,6 @@ func updateRegistryValues(instance *codebaseService.Codebase, gitService *git.Se
 		notificationsDict["email"] = map[string]interface{}{
 			"type": "internal",
 		}
-	}
-
-	bts, err := yaml.Marshal(raw)
-	if err != nil {
-		return errors.Wrap(err, "unable to encode values yaml")
-	}
-
-	if err := gitService.SetFileContents(registry.ValuesLocation, string(bts)); err != nil {
-		return errors.Wrap(err, "unable to set values yaml file contents")
-	}
-
-	if err := gitService.Commit("set initial values.yaml from admin controle",
-		[]string{registry.ValuesLocation}, &git.User{
-			Name:  instance.Annotations[registry.AnnotationCreatorUsername],
-			Email: instance.Annotations[registry.AnnotationCreatorEmail],
-		}); err != nil {
-		return errors.Wrap(err, "unable to commit values yaml")
 	}
 
 	return nil

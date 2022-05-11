@@ -9,7 +9,9 @@ import (
 	"time"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 	"github.com/pkg/errors"
 )
 
@@ -83,14 +85,9 @@ func (s *Service) Clone(url string) error {
 }
 
 func (s *Service) Commit(message string, files []string, user *User) error {
-	r, err := git.PlainOpen(s.path)
+	_, w, err := s.worktree()
 	if err != nil {
-		return errors.Wrap(err, "unable to open repository")
-	}
-
-	w, err := r.Worktree()
-	if err != nil {
-		return errors.Wrap(err, "unable to get repo worktree")
+		return errors.Wrap(err, "unable to get worktree")
 	}
 
 	for _, f := range files {
@@ -185,6 +182,47 @@ func (s *Service) keyFilePath() (string, error) {
 	return keyFilePath, nil
 }
 
+func IsErrReferenceNotFound(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	return errors.Cause(err).Error() == "reference not found"
+}
+
+func (s *Service) Pull(remoteName string) (*object.Commit, error) {
+	r, w, err := s.worktree()
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to get worktree")
+	}
+
+	keyPath, err := s.keyFilePath()
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to create key file")
+	}
+
+	publicKeys, err := ssh.NewPublicKeysFromFile(s.user, keyPath, "")
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to create public keys")
+	}
+
+	if err := w.Pull(&git.PullOptions{RemoteName: remoteName, Auth: publicKeys}); err != nil {
+		return nil, errors.Wrap(err, "unable to pull")
+	}
+
+	ref, err := r.Head()
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to get ref")
+	}
+
+	commit, err := r.CommitObject(ref.Hash())
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to get last commit")
+	}
+
+	return commit, nil
+}
+
 func (s *Service) Push(remoteName string, pushParams ...string) error {
 	keyPath, err := s.keyFilePath()
 	if err != nil {
@@ -246,6 +284,55 @@ func (s *Service) AddRemote(remoteName, url string) error {
 
 	if bts, err := cmd.CombinedOutput(); err != nil {
 		return errors.Wrapf(err, "unable to add remote, err: %s", string(bts))
+	}
+
+	return nil
+}
+
+func (s *Service) Checkout(branch string, create bool) error {
+	_, w, err := s.worktree()
+	if err != nil {
+		return errors.Wrap(err, "unable to get worktree")
+	}
+
+	if err := w.Checkout(&git.CheckoutOptions{
+		Branch: plumbing.NewBranchReferenceName(branch), Create: create}); err != nil {
+		return errors.Wrap(err, "unable to checkout branch")
+	}
+
+	return nil
+}
+
+func (s *Service) worktree() (*git.Repository, *git.Worktree, error) {
+	r, err := git.PlainOpen(s.path)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "unable to open repo")
+	}
+
+	w, err := r.Worktree()
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "unable to get worktree")
+	}
+
+	return r, w, nil
+}
+
+func (s *Service) RemoveBranch(name string) error {
+	r, err := git.PlainOpen(s.path)
+	if err != nil {
+		return errors.Wrap(err, "unable to open repo")
+	}
+
+	headRef, err := r.Head()
+	if err != nil {
+		return errors.Wrap(err, "unable to get head ref")
+	}
+
+	err = r.Storer.RemoveReference(
+		plumbing.NewHashReference(plumbing.NewBranchReferenceName(name), headRef.Hash()).Name())
+
+	if err != nil {
+		return errors.Wrap(err, "unable to remove branch")
 	}
 
 	return nil
