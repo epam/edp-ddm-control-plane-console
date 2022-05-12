@@ -2,11 +2,10 @@ package registry
 
 import (
 	"context"
-	"regexp"
 	"sort"
-	"strconv"
 	"strings"
 
+	"github.com/hashicorp/go-version"
 	"github.com/pkg/errors"
 
 	"ddm-admin-console/service"
@@ -17,23 +16,15 @@ import (
 type SortByVersion []string
 
 func (a SortByVersion) Len() int           { return len(a) }
-func (a SortByVersion) Less(i, j int) bool { return branchVersion(a[i]) < branchVersion(a[j]) }
+func (a SortByVersion) Less(i, j int) bool { return branchVersion(a[i]).LessThan(branchVersion(a[j])) }
 func (a SortByVersion) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 
-func branchVersion(name string) int {
-	nums := regexp.MustCompile(`\d+`)
-	matches := nums.FindAllString(name, -1)
-	num := strings.Join(matches, "")
-	if num == "" {
-		return 0
-	}
-
-	version, err := strconv.ParseInt(num, 10, 32)
+func branchVersion(name string) *version.Version {
+	v, err := version.NewVersion(name)
 	if err != nil {
 		panic(err)
 	}
-
-	return int(version)
+	return v
 }
 
 func HasUpdate(ctx context.Context, gerritService gerrit.ServiceInterface, cb *codebase.Codebase) (bool, []string, error) {
@@ -74,7 +65,7 @@ func HasUpdate(ctx context.Context, gerritService gerrit.ServiceInterface, cb *c
 
 		if mr.Status.Value == "MERGED" {
 			mergedBranchVersion := branchVersion(mr.Spec.SourceBranch)
-			if mergedBranchVersion > registryVersion {
+			if registryVersion.LessThan(mergedBranchVersion) {
 				registryVersion = mergedBranchVersion
 			}
 
@@ -84,7 +75,7 @@ func HasUpdate(ctx context.Context, gerritService gerrit.ServiceInterface, cb *c
 
 	branches = []string{}
 	for _, br := range branchesDict {
-		if branchVersion(br) > registryVersion {
+		if registryVersion.LessThan(branchVersion(br)) {
 			branches = append(branches, br)
 		}
 	}
@@ -127,7 +118,7 @@ func (a *App) filterUpdateBranchesByCluster(ctx context.Context, registryBranche
 
 	var filteredBranches []string
 	for _, rb := range registryBranches {
-		if branchVersion(rb) <= branchVersion(clusterBranch) {
+		if branchVersion(rb).LessThanOrEqual(branchVersion(clusterBranch)) {
 			filteredBranches = append(filteredBranches, rb)
 		}
 	}
