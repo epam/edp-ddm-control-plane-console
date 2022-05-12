@@ -371,7 +371,7 @@ func setNotificationsEmail(notificationsDict map[string]interface{}, instance *c
 		}
 
 		var smptOptsDict map[string]string
-		if err := json.Unmarshal([]byte(smtpOpts), &smtpOpts); err != nil {
+		if err := json.Unmarshal([]byte(smtpOpts), &smptOptsDict); err != nil {
 			return errors.Wrap(err, "unable to decode smtp opts json")
 		}
 
