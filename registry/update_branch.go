@@ -22,7 +22,8 @@ func (a SortByVersion) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func branchVersion(name string) *version.Version {
 	v, err := version.NewVersion(name)
 	if err != nil {
-		panic(err)
+		v, _ := version.NewVersion("0")
+		return v
 	}
 	return v
 }
