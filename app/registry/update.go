@@ -20,7 +20,7 @@ type updateRequest struct {
 
 func (a *App) registryUpdate(ctx *gin.Context) (*router.Response, error) {
 	userCtx := a.router.ContextWithUserAccessToken(ctx)
-	cbService, err := a.codebaseService.ServiceForContext(userCtx)
+	cbService, err := a.Services.Codebase.ServiceForContext(userCtx)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to init service for user context")
 	}
@@ -57,11 +57,11 @@ func (a *App) registryUpdate(ctx *gin.Context) (*router.Response, error) {
 	if a.EnableBranchProvisioners {
 		prov := branchProvisioner(ur.Branch)
 		cb.Spec.JobProvisioning = &prov
-		if err := a.codebaseService.Update(cb); err != nil {
+		if err := a.Services.Codebase.Update(cb); err != nil {
 			return nil, errors.Wrap(err, "unable to update codebase provisioner")
 		}
 
-		if err := a.jenkinsService.CreateJobBuildRun(fmt.Sprintf("ru-create-release-%d", time.Now().Unix()),
+		if err := a.Services.Jenkins.CreateJobBuildRun(fmt.Sprintf("ru-create-release-%d", time.Now().Unix()),
 			fmt.Sprintf("%s/job/Create-release-%s/", r.Name, r.Name), map[string]string{
 				"RELEASE_NAME": cb.Spec.DefaultBranch,
 			}); err != nil {
@@ -74,12 +74,12 @@ func (a *App) registryUpdate(ctx *gin.Context) (*router.Response, error) {
 }
 
 func (a *App) createMergeRequest(registryName, updateBranch string, userContext context.Context, ginContext *gin.Context) error {
-	prj, err := a.gerritService.GetProject(userContext, registryName)
+	prj, err := a.Services.Gerrit.GetProject(userContext, registryName)
 	if err != nil {
 		return errors.Wrap(err, "unable to get registry gerrit project")
 	}
 
-	if err := a.gerritService.CreateMergeRequest(userContext, &gerrit.MergeRequest{
+	if err := a.Services.Gerrit.CreateMergeRequest(userContext, &gerrit.MergeRequest{
 		CommitMessage: fmt.Sprintf("Update registry to %s", updateBranch),
 		SourceBranch:  updateBranch,
 		ProjectName:   prj.Spec.Name,

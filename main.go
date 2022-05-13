@@ -1,6 +1,7 @@
 package main
 
 import (
+	"ddm-admin-console/service/vault"
 	"encoding/gob"
 	"flag"
 	"fmt"
@@ -169,6 +170,11 @@ func initServices(sch *runtime.Scheme, restConf *rest.Config, appConf *config.Se
 		return nil, errors.Wrap(err, "unable to create keycloak service")
 	}
 
+	serviceItems.Vault, err = vault.Make(appConf.VaultConfig(), serviceItems.K8S)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to init vault service")
+	}
+
 	return &serviceItems, nil
 }
 
@@ -232,7 +238,7 @@ func initApps(logger *zap.Logger, cnf *config.Settings, r *gin.Engine) error {
 		return errors.Wrap(err, "unable to make dashboard app")
 	}
 
-	_, err = registry.Make(appRouter, serviceItems, cnf)
+	_, err = registry.Make(appRouter, serviceItems.RegistryServices(), cnf.RegistryConfig())
 	if err != nil {
 		return errors.Wrap(err, "unable to make registry app")
 	}
@@ -241,8 +247,6 @@ func initApps(logger *zap.Logger, cnf *config.Settings, r *gin.Engine) error {
 	if err != nil {
 		return errors.Wrap(err, "unable to init cluster app")
 	}
-
-	//_ = group.Make(appRouter, serviceItems, cnf)
 
 	return nil
 }

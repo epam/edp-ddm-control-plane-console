@@ -105,12 +105,12 @@ func updateBranches(projectBranches []string) []string {
 }
 
 func (a *App) filterUpdateBranchesByCluster(ctx context.Context, registryBranches []string) ([]string, error) {
-	clusterCodebase, err := a.codebaseService.Get(a.clusterCodebaseName)
+	clusterCodebase, err := a.Services.Codebase.Get(a.Config.ClusterCodebaseName)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get cluster codebase")
 	}
 
-	hasUpdate, clusterBranches, err := HasUpdate(ctx, a.gerritService, clusterCodebase)
+	hasUpdate, clusterBranches, err := HasUpdate(ctx, a.Services.Gerrit, clusterCodebase)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get cluster update branches")
 	}

@@ -23,7 +23,7 @@ func (a *App) viewRegistry(ctx *gin.Context) (*router.Response, error) {
 
 	viewParams := gin.H{
 		"page":     "registry",
-		"timezone": a.timezone,
+		"timezone": a.Config.Timezone,
 	}
 
 	for _, f := range a.viewRegistryProcessFunctions() {
@@ -48,7 +48,7 @@ func (a *App) viewRegistryProcessFunctions() []func(ctx context.Context, registr
 
 func (a *App) viewRegistryExternalRegistration(userCtx context.Context, registryName string, viewParams gin.H) error {
 	eRegs, mergeRequestsForER := make([]ExternalRegistration, 0), make(map[string]struct{})
-	mrs, err := a.gerritService.GetMergeRequestByProject(userCtx, registryName)
+	mrs, err := a.Services.Gerrit.GetMergeRequestByProject(userCtx, registryName)
 	if err != nil {
 		return errors.Wrap(err, "unable to get gerrit merge requests")
 	}
@@ -86,7 +86,7 @@ func (a *App) viewRegistryExternalRegistration(userCtx context.Context, registry
 func (a *App) loadKeysForExternalRegs(ctx context.Context, registryName string, eRegs []ExternalRegistration) error {
 	for i, er := range eRegs {
 		if er.External && er.Enabled {
-			s, err := a.k8sService.GetSecretFromNamespace(ctx, fmt.Sprintf("keycloak-client-%s-secret", er.Name),
+			s, err := a.Services.K8S.GetSecretFromNamespace(ctx, fmt.Sprintf("keycloak-client-%s-secret", er.Name),
 				registryName)
 			if k8sErrors.IsNotFound(err) {
 				eRegs[i].status = erStatusInactive
@@ -103,7 +103,7 @@ func (a *App) loadKeysForExternalRegs(ctx context.Context, registryName string, 
 }
 
 func (a *App) loadCodebasesForExternalRegistrations(registryName string, eRegs []ExternalRegistration, viewParams gin.H) error {
-	cbs, err := a.codebaseService.GetAllByType("registry")
+	cbs, err := a.Services.Codebase.GetAllByType("registry")
 	if err != nil {
 		return errors.Wrap(err, "unable to get all registries")
 	}
@@ -152,7 +152,7 @@ func (a *App) viewRegistryGetAdmins(userCtx context.Context, registryName string
 }
 
 func (a *App) viewRegistryGetMergeRequests(userCtx context.Context, registryName string, viewParams gin.H) error {
-	mrs, err := a.gerritService.GetMergeRequestByProject(userCtx, registryName)
+	mrs, err := a.Services.Gerrit.GetMergeRequestByProject(userCtx, registryName)
 	if err != nil {
 		return errors.Wrap(err, "unable to list gerrit merge requests")
 	}
@@ -164,12 +164,12 @@ func (a *App) viewRegistryGetMergeRequests(userCtx context.Context, registryName
 }
 
 func (a *App) viewRegistryAllowedToEdit(userCtx context.Context, registryName string, viewParams gin.H) error {
-	k8sService, err := a.k8sService.ServiceForContext(userCtx)
+	k8sService, err := a.Services.K8S.ServiceForContext(userCtx)
 	if err != nil {
 		return errors.Wrap(err, "unable to init service for user context")
 	}
 
-	allowed, err := a.codebaseService.CheckIsAllowedToUpdate(registryName, k8sService)
+	allowed, err := a.Services.Codebase.CheckIsAllowedToUpdate(registryName, k8sService)
 	if err != nil {
 		return errors.Wrap(err, "unable to check codebase creation access")
 	}
@@ -179,7 +179,7 @@ func (a *App) viewRegistryAllowedToEdit(userCtx context.Context, registryName st
 }
 
 func (a *App) viewRegistryGetRegistryAndBranches(userCtx context.Context, registryName string, viewParams gin.H) error {
-	cbService, err := a.codebaseService.ServiceForContext(userCtx)
+	cbService, err := a.Services.Codebase.ServiceForContext(userCtx)
 	if err != nil {
 		return errors.Wrap(err, "unable to init service for user context")
 	}
@@ -202,17 +202,17 @@ func (a *App) viewRegistryGetRegistryAndBranches(userCtx context.Context, regist
 }
 
 func (a *App) viewRegistryGetEDPComponents(userCtx context.Context, registryName string, viewParams gin.H) error {
-	jenkinsComponent, err := a.edpComponentService.Get(userCtx, "jenkins")
+	jenkinsComponent, err := a.Services.EDPComponent.Get(userCtx, "jenkins")
 	if err != nil {
 		return errors.Wrap(err, "unable to get jenkins edp component")
 	}
 
-	gerritComponent, err := a.edpComponentService.Get(userCtx, "gerrit")
+	gerritComponent, err := a.Services.EDPComponent.Get(userCtx, "gerrit")
 	if err != nil {
 		return errors.Wrap(err, "unable to get gerrit edp component")
 	}
 
-	namespacedEDPComponents, err := a.edpComponentService.GetAllNamespace(userCtx, registryName, true)
+	namespacedEDPComponents, err := a.Services.EDPComponent.GetAllNamespace(userCtx, registryName, true)
 	if err != nil {
 		return errors.Wrap(err, "unable to list namespaced edp components")
 	}

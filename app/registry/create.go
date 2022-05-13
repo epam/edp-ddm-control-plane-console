@@ -2,6 +2,7 @@ package registry
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"mime/multipart"
@@ -33,14 +34,14 @@ const (
 )
 
 func (a *App) createRegistryGet(ctx *gin.Context) (response *router.Response, retErr error) {
-	prjs, err := a.gerritService.GetProjects(context.Background())
+	prjs, err := a.Services.Gerrit.GetProjects(context.Background())
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to list gerrit projects")
 	}
 	prjs = a.filterProjects(prjs)
 
 	userCtx := a.router.ContextWithUserAccessToken(ctx)
-	k8sService, err := a.k8sService.ServiceForContext(userCtx)
+	k8sService, err := a.Services.K8S.ServiceForContext(userCtx)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to init service for user context")
 	}
@@ -76,7 +77,7 @@ func headsCount(refs []string) int {
 func (a *App) filterProjects(projects []gerrit.GerritProject) []gerrit.GerritProject {
 	filteredProjects := make([]gerrit.GerritProject, 0, 4)
 	for _, prj := range projects {
-		if strings.Contains(prj.Spec.Name, a.gerritRegistryPrefix) {
+		if strings.Contains(prj.Spec.Name, a.Config.GerritRegistryPrefix) {
 			if headsCount(prj.Status.Branches) > 1 {
 				var branches []string
 				for _, br := range prj.Status.Branches {
@@ -95,7 +96,7 @@ func (a *App) filterProjects(projects []gerrit.GerritProject) []gerrit.GerritPro
 }
 
 func (a *App) getINITemplateContent() (string, error) {
-	iniTemplate, err := os.Open(a.hardwareINITemplatePath)
+	iniTemplate, err := os.Open(a.Config.HardwareINITemplatePath)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to open ini template file")
 	}
@@ -111,7 +112,7 @@ func (a *App) getINITemplateContent() (string, error) {
 func (a *App) createRegistryPost(ctx *gin.Context) (response *router.Response, retErr error) {
 	userCtx := a.router.ContextWithUserAccessToken(ctx)
 
-	k8sService, err := a.k8sService.ServiceForContext(userCtx)
+	k8sService, err := a.Services.K8S.ServiceForContext(userCtx)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get k8s service for user")
 	}
@@ -120,7 +121,7 @@ func (a *App) createRegistryPost(ctx *gin.Context) (response *router.Response, r
 		return nil, errors.Wrap(err, "error during create access check")
 	}
 
-	cbService, err := a.codebaseService.ServiceForContext(userCtx)
+	cbService, err := a.Services.Codebase.ServiceForContext(userCtx)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to init service for user context")
 	}
@@ -130,7 +131,7 @@ func (a *App) createRegistryPost(ctx *gin.Context) (response *router.Response, r
 		return nil, errors.Wrap(err, "unable to get ini template data")
 	}
 
-	prjs, err := a.gerritService.GetProjects(context.Background())
+	prjs, err := a.Services.Gerrit.GetProjects(context.Background())
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to list gerrit projects")
 	}
@@ -167,7 +168,7 @@ func (a *App) createRegistryPost(ctx *gin.Context) (response *router.Response, r
 }
 
 func (a *App) checkCreateAccess(userK8sService k8s.ServiceInterface) error {
-	allowedToCreate, err := a.codebaseService.CheckIsAllowedToCreate(userK8sService)
+	allowedToCreate, err := a.Services.Codebase.CheckIsAllowedToCreate(userK8sService)
 	if err != nil {
 		return errors.Wrap(err, "unable to check create access")
 	}
@@ -179,7 +180,7 @@ func (a *App) checkCreateAccess(userK8sService k8s.ServiceInterface) error {
 }
 
 func (a *App) validateCreateRegistryGitTemplate(r *registry) error {
-	prjs, err := a.gerritService.GetProjects(context.Background())
+	prjs, err := a.Services.Gerrit.GetProjects(context.Background())
 	if err != nil {
 		return errors.Wrap(err, "unable to list gerrit projects")
 	}
@@ -208,7 +209,11 @@ func (a *App) createRegistry(ctx context.Context, ginContext *gin.Context, r *re
 		return errors.Wrap(err, "unknown error")
 	}
 
-	if err := a.gerritService.CreateProject(ctx, r.Name); err != nil {
+	if err := a.createVaultSecrets(r); err != nil {
+		return errors.Wrap(err, "unable to create vault secrets")
+	}
+
+	if err := a.Services.Gerrit.CreateProject(ctx, r.Name); err != nil {
 		return errors.Wrap(err, "unable to create gerrit project")
 	}
 
@@ -245,6 +250,43 @@ func (a *App) createRegistry(ctx context.Context, ginContext *gin.Context, r *re
 
 	if err := cbService.CreateDefaultBranch(cb); err != nil {
 		return errors.Wrap(err, "unable to create default branch")
+	}
+
+	return nil
+}
+
+func (a *App) createVaultSecrets(r *registry) error {
+	if r.MailServerType == SMTPTypeExternal {
+		var mailServerOpts map[string]interface{}
+		if err := json.Unmarshal([]byte(r.MailServerOpts), &mailServerOpts); err != nil {
+			return errors.Wrap(err, "unable to decode mail server opts")
+		}
+
+		pwd, ok := mailServerOpts["password"]
+		if !ok {
+			return errors.New("no password in mail server opts")
+		}
+
+		vaultPath := strings.ReplaceAll(a.Config.VaultRegistrySMTPPwdSecretTemplate, "{name}", r.Name)
+		vaultPath = "kv/data/my-secret-password"
+		secretData := map[string]interface{}{
+			"data": map[string]interface{}{
+				a.Config.VaultRegistrySMTPPwdSecretKey: pwd,
+			},
+		}
+
+		if _, err := a.Vault.Write(
+			vaultPath, secretData); err != nil {
+			return errors.Wrap(err, "unable to write to vault")
+		}
+		mailServerOpts["vaultPath"] = vaultPath
+		//TODO: remove password from dict
+		bts, err := json.Marshal(mailServerOpts)
+		if err != nil {
+			return errors.Wrap(err, "unable to encode mail server opts")
+		}
+
+		r.MailServerOpts = string(bts)
 	}
 
 	return nil
@@ -464,3 +506,5 @@ func (a *App) setAllowedKeysSecretData(filesSecretData map[string][]byte, reg *r
 
 	return nil
 }
+
+//func (a *App) storeVaultSecrets()

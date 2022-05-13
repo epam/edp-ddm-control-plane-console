@@ -12,4 +12,5 @@ type ServiceInterface interface {
 	RecreateSecret(secretName string, data map[string][]byte) error
 	CanI(group, resource, verb, name string) (bool, error)
 	GetSecretFromNamespace(ctx context.Context, name, namespace string) (*v1.Secret, error)
+	GetSecretKey(ctx context.Context, namespace, name, key string) (string, error)
 }
