@@ -1,9 +1,10 @@
 package registry
 
 import (
+	"ddm-admin-console/service/keycloak"
+	"ddm-admin-console/service/vault"
 	"strings"
 
-	"ddm-admin-console/config"
 	"ddm-admin-console/router"
 	"ddm-admin-console/service/codebase"
 	edpComponent "ddm-admin-console/service/edp_component"
@@ -14,38 +15,44 @@ import (
 	"github.com/pkg/errors"
 )
 
-type App struct {
-	router                   router.Interface
-	codebaseService          codebase.ServiceInterface
-	gerritService            gerrit.ServiceInterface
-	edpComponentService      edpComponent.ServiceInterface
-	k8sService               k8s.ServiceInterface
-	gerritRegistryPrefix     string
-	gerritRegistryHost       string
-	jenkinsService           jenkins.ServiceInterface
-	timezone                 string
-	hardwareINITemplatePath  string
-	EnableBranchProvisioners bool
-	clusterCodebaseName      string
-	codebaseLabels           map[string]string
-	admins                   *Admins
+type Config struct {
+	GerritRegistryPrefix               string
+	GerritRegistryHost                 string
+	HardwareINITemplatePath            string
+	EnableBranchProvisioners           bool
+	ClusterCodebaseName                string
+	RegistryCodebaseLabels             string
+	Timezone                           string
+	UsersRealm                         string
+	UsersNamespace                     string
+	VaultRegistrySMTPPwdSecretTemplate string
+	VaultRegistrySMTPPwdSecretKey      string
 }
 
-func Make(router router.Interface, services *config.Services, cnf *config.Settings) (*App, error) {
+type Services struct {
+	Codebase     codebase.ServiceInterface
+	Gerrit       gerrit.ServiceInterface
+	EDPComponent edpComponent.ServiceInterface
+	K8S          k8s.ServiceInterface
+	Jenkins      jenkins.ServiceInterface
+	Keycloak     keycloak.ServiceInterface
+	Vault        vault.ServiceInterface
+}
+
+type App struct {
+	Config
+	Services
+	router         router.Interface
+	codebaseLabels map[string]string
+	admins         *Admins
+}
+
+func Make(router router.Interface, services Services, cnf Config) (*App, error) {
 	app := &App{
-		router:                   router,
-		codebaseService:          services.Codebase,
-		edpComponentService:      services.EDPComponent,
-		k8sService:               services.K8S,
-		jenkinsService:           services.Jenkins,
-		timezone:                 cnf.Timezone,
-		gerritService:            services.Gerrit,
-		gerritRegistryPrefix:     cnf.RegistryRepoPrefix,
-		gerritRegistryHost:       cnf.RegistryRepoHost,
-		hardwareINITemplatePath:  cnf.RegistryHardwareKeyINITemplatePath,
-		EnableBranchProvisioners: cnf.EnableBranchProvisioners,
-		clusterCodebaseName:      cnf.ClusterCodebaseName,
-		admins:                   MakeAdmins(services.Keycloak, cnf.UsersRealm, cnf.UsersNamespace),
+		Config:   cnf,
+		Services: services,
+		router:   router,
+		admins:   MakeAdmins(services.Keycloak, cnf.UsersRealm, cnf.UsersNamespace),
 	}
 
 	if cnf.RegistryCodebaseLabels != "" {

@@ -8,6 +8,7 @@ import (
 	"ddm-admin-console/service/k8s"
 	"ddm-admin-console/service/keycloak"
 	"ddm-admin-console/service/openshift"
+	"ddm-admin-console/service/vault"
 )
 
 type Settings struct {
@@ -34,6 +35,12 @@ type Settings struct {
 	EnableBranchProvisioners           bool   `envconfig:"ENABLE_BRANCH_PROVISIONERS"`
 	RegistryCodebaseLabels             string `envconfig:"REGISTRY_CODEBASE_LABELS"`
 	GerritAPIUrlTemplate               string `envconfig:"GERRIT_API_URL_TPL" default:"http://{HOST}:8080/a/"`
+	VaultNamespace                     string `envconfig:"VAULT_NAMESPACE" default:"user-management"`
+	VaultSecretName                    string `envconfig:"VAULT_SECRET_NAME" default:"vault-root-token"`
+	VaultSecretTokenKey                string `envconfig:"VAULT_SECRET_TOKEN_KEY" default:"VAULT_ROOT_TOKEN"`
+	VaultAPIAddr                       string `envconfig:"VAULT_API_ADDR" default:"https://hashicorp-vault.user-management:8200"`
+	VaultRegistrySecretTemplate        string `envconfig:"V_REG_SMTP_SEC_TPL" default:"kv/registry-demo"`
+	VaultRegistrySMTPPwdSecretKey      string `envconfig:"V_REG_SMTP_SEC_KEY" default:"password"`
 }
 
 type Services struct {
@@ -44,4 +51,5 @@ type Services struct {
 	Gerrit       gerrit.ServiceInterface
 	Jenkins      jenkins.ServiceInterface
 	Keycloak     keycloak.ServiceInterface
+	Vault        vault.ServiceInterface
 }

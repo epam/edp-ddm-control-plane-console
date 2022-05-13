@@ -18,12 +18,12 @@ import (
 
 func (a *App) editRegistryGet(ctx *gin.Context) (response *router.Response, retErr error) {
 	userCtx := a.router.ContextWithUserAccessToken(ctx)
-	cbService, err := a.codebaseService.ServiceForContext(userCtx)
+	cbService, err := a.Services.Codebase.ServiceForContext(userCtx)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to init service for user context")
 	}
 
-	k8sService, err := a.k8sService.ServiceForContext(userCtx)
+	k8sService, err := a.Services.K8S.ServiceForContext(userCtx)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to init service for user context")
 	}
@@ -52,21 +52,10 @@ func (a *App) editRegistryGet(ctx *gin.Context) (response *router.Response, retE
 		return nil, errors.Wrap(err, "unable to get ini template data")
 	}
 
-	hasUpdate, branches, err := HasUpdate(userCtx, a.gerritService, reg)
+	hasUpdate, branches, err := HasUpdate(userCtx, a.Services.Gerrit, reg)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to check for updates")
 	}
-
-	//if hasUpdate && len(branches) > 0 {
-	//	filteredBranches, err := a.filterUpdateBranchesByCluster(userCtx, branches)
-	//	if err != nil {
-	//		return nil, errors.Wrap(err, "unable to filter update branches by cluster")
-	//	}
-	//	if len(filteredBranches) > 1 {
-	//		filteredBranches = []string{filteredBranches[0]}
-	//	}
-	//	branches = filteredBranches
-	//}
 
 	return router.MakeResponse(200, "registry/edit.html", gin.H{
 		"registry":             reg,
@@ -79,7 +68,7 @@ func (a *App) editRegistryGet(ctx *gin.Context) (response *router.Response, retE
 }
 
 func (a *App) checkUpdateAccess(codebaseName string, userK8sService k8s.ServiceInterface) error {
-	allowedToUpdate, err := a.codebaseService.CheckIsAllowedToUpdate(codebaseName, userK8sService)
+	allowedToUpdate, err := a.Services.Codebase.CheckIsAllowedToUpdate(codebaseName, userK8sService)
 	if err != nil {
 		return errors.Wrap(err, "unable to check create access")
 	}
@@ -92,12 +81,12 @@ func (a *App) checkUpdateAccess(codebaseName string, userK8sService k8s.ServiceI
 
 func (a *App) editRegistryPost(ctx *gin.Context) (response *router.Response, retErr error) {
 	userCtx := a.router.ContextWithUserAccessToken(ctx)
-	cbService, err := a.codebaseService.ServiceForContext(userCtx)
+	cbService, err := a.Services.Codebase.ServiceForContext(userCtx)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to init service for user context")
 	}
 
-	k8sService, err := a.k8sService.ServiceForContext(userCtx)
+	k8sService, err := a.Services.K8S.ServiceForContext(userCtx)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to init service for user context")
 	}
@@ -171,7 +160,7 @@ func (a *App) editRegistry(ctx context.Context, ginContext *gin.Context, r *regi
 		return errors.Wrap(err, "unable to update codebase")
 	}
 
-	if err := a.jenkinsService.CreateJobBuildRun(fmt.Sprintf("registry-update-%d", time.Now().Unix()),
+	if err := a.Services.Jenkins.CreateJobBuildRun(fmt.Sprintf("registry-update-%d", time.Now().Unix()),
 		fmt.Sprintf("%s/job/MASTER-Build-%s/", r.Name, r.Name), nil); err != nil {
 		return errors.Wrap(err, "unable to trigger jenkins job build run")
 	}
