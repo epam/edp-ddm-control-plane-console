@@ -10,7 +10,7 @@ import (
 
 func (a *App) deleteRegistry(ctx *gin.Context) (response *router.Response, retErr error) {
 	userCtx := a.router.ContextWithUserAccessToken(ctx)
-	cbService, err := a.codebaseService.ServiceForContext(userCtx)
+	cbService, err := a.Services.Codebase.ServiceForContext(userCtx)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to init service for user context")
 	}

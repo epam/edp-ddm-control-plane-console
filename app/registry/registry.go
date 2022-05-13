@@ -35,6 +35,7 @@ type registry struct {
 	MailServerOpts      string   `form:"mail-server-opts"`
 }
 
+
 func (r *registry) KeysRequired() bool {
 	return r.Scenario == ScenarioKeyRequired
 }

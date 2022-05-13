@@ -70,7 +70,7 @@ func (a *App) addExternalReg(ctx *gin.Context) (*router.Response, error) {
 }
 
 func (a *App) getValuesFromGit(ctx context.Context, registryName string) (map[string]interface{}, []ExternalRegistration, error) {
-	values, err := a.gerritService.GetFileContents(ctx, registryName, "master", ValuesLocation)
+	values, err := a.Services.Gerrit.GetFileContents(ctx, registryName, "master", ValuesLocation)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "unable to get values yaml")
 	}
@@ -123,7 +123,7 @@ func (a *App) prepareRegistryValues(ctx context.Context, registryName string, er
 }
 
 func (a *App) createErMergeRequest(userCtx context.Context, ctx *gin.Context, registryName, erName, values string) error {
-	if err := a.gerritService.CreateMergeRequestWithContents(userCtx, &gerrit.MergeRequest{
+	if err := a.Services.Gerrit.CreateMergeRequestWithContents(userCtx, &gerrit.MergeRequest{
 		ProjectName:   registryName,
 		Name:          fmt.Sprintf("ers-mr-%s-%s-%d", registryName, erName, time.Now().Unix()),
 		AuthorEmail:   ctx.GetString(router.UserEmailSessionKey),

@@ -93,6 +93,20 @@ func (s *Service) GetSecret(name string) (*v1.Secret, error) {
 	return secret, nil
 }
 
+func (s *Service) GetSecretKey(ctx context.Context, namespace, name, key string) (string, error) {
+	sec, err := s.GetSecretFromNamespace(ctx, name, namespace)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to get secret")
+	}
+
+	val, ok := sec.Data[key]
+	if !ok {
+		return "", errors.Errorf("key [%s] from secret [%s] in namespace [%s] not found", key, name, namespace)
+	}
+
+	return string(val), nil
+}
+
 func (s *Service) CanI(group, resource, verb, name string) (bool, error) {
 	review := authorizationv1.SelfSubjectAccessReview{
 		//ObjectMeta: metav1.ObjectMeta{Namespace: s.namespace},

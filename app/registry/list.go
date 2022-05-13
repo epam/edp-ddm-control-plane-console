@@ -10,7 +10,7 @@ import (
 
 func (a *App) listRegistry(ctx *gin.Context) (response *router.Response, retErr error) {
 	userCtx := a.router.ContextWithUserAccessToken(ctx)
-	k8sService, err := a.k8sService.ServiceForContext(userCtx)
+	k8sService, err := a.Services.K8S.ServiceForContext(userCtx)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to init service for user context")
 	}
@@ -20,12 +20,12 @@ func (a *App) listRegistry(ctx *gin.Context) (response *router.Response, retErr 
 		return nil, errors.Wrap(err, "unable to check codebase creation access")
 	}
 
-	cbs, err := a.codebaseService.GetAllByType(codebase.RegistryCodebaseType)
+	cbs, err := a.Services.Codebase.GetAllByType(codebase.RegistryCodebaseType)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get codebases")
 	}
 
-	registries, err := a.codebaseService.CheckPermissions(cbs, k8sService)
+	registries, err := a.Services.Codebase.CheckPermissions(cbs, k8sService)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to check codebase permissions")
 	}
@@ -34,6 +34,6 @@ func (a *App) listRegistry(ctx *gin.Context) (response *router.Response, retErr 
 		"registries":      registries,
 		"page":            "registry",
 		"allowedToCreate": allowedToCreate,
-		"timezone":        a.timezone,
+		"timezone":        a.Config.Timezone,
 	}), nil
 }
