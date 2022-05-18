@@ -10,6 +10,7 @@ require (
 	github.com/go-playground/universal-translator v0.17.0
 	github.com/go-playground/validator/v10 v10.6.1
 	github.com/gosimple/slug v1.12.0
+	github.com/hashicorp/go-version v1.4.0
 	github.com/joho/godotenv v1.3.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/leonelquinteros/gotext v1.5.0
