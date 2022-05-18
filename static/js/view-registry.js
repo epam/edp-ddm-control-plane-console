@@ -26,6 +26,7 @@ let app = Vue.createApp({
             externalKey: false,
             systemToShowKey: '',
             keyValue: '******',
+            currentExternalKeyValue: '',
         }
     },
     methods: {
@@ -113,20 +114,27 @@ let app = Vue.createApp({
 
         },
         showExternalKeyValue(e) {
-            console.log(e);
+            if (this.keyValue === '******') {
+                this.keyValue = this.currentExternalKeyValue;
+            } else {
+                this.keyValue = '******'
+            }
+
             e.preventDefault();
         },
-        showExternalKey(name, e) {
-            console.log(name);
+        showExternalKey(name, keyValue, e) {
+            console.log(name, keyValue);
             e.preventDefault();
             this.backdropShow = true;
             this.externalKey = true;
             this.systemToShowKey = name;
+            this.currentExternalKeyValue = keyValue;
         },
         hideExternalKey(e) {
             e.preventDefault();
             this.backdropShow = false;
             this.externalKey = false;
+            this.keyValue = '******'
         },
         addExternalReg() {
 
