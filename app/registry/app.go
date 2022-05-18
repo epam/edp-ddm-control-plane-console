@@ -16,18 +16,18 @@ import (
 )
 
 type Config struct {
-	GerritRegistryPrefix               string
-	GerritRegistryHost                 string
-	HardwareINITemplatePath            string
-	EnableBranchProvisioners           bool
-	ClusterCodebaseName                string
-	RegistryCodebaseLabels             string
-	Timezone                           string
-	UsersRealm                         string
-	UsersNamespace                     string
-	VaultRegistrySMTPPwdSecretTemplate string
-	VaultRegistrySMTPPwdSecretKey      string
-	VaultKVEngineName                  string
+	GerritRegistryPrefix            string
+	GerritRegistryHost              string
+	HardwareINITemplatePath         string
+	EnableBranchProvisioners        bool
+	ClusterCodebaseName             string
+	RegistryCodebaseLabels          string
+	Timezone                        string
+	UsersRealm                      string
+	UsersNamespace                  string
+	VaultRegistrySecretPathTemplate string
+	VaultRegistrySMTPPwdSecretKey   string
+	VaultKVEngineName               string
 }
 
 type Services struct {
