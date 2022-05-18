@@ -5,12 +5,12 @@ go 1.14
 require (
 	github.com/gin-contrib/sessions v0.0.3
 	github.com/gin-gonic/gin v1.7.2
-	github.com/go-git/go-git v4.7.0+incompatible
+	github.com/go-git/go-git v4.7.0+incompatible // indirect
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-playground/universal-translator v0.17.0
 	github.com/go-playground/validator/v10 v10.6.1
 	github.com/gosimple/slug v1.12.0
-	github.com/hashicorp/vault/api v1.5.0 // indirect
+	github.com/hashicorp/vault/api v1.5.0
 	github.com/joho/godotenv v1.3.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/leonelquinteros/gotext v1.5.0
