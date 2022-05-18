@@ -4,18 +4,18 @@ import "ddm-admin-console/app/registry"
 
 func (cnf *Settings) RegistryConfig() registry.Config {
 	return registry.Config{
-		UsersNamespace:                     cnf.UsersNamespace,
-		UsersRealm:                         cnf.UsersRealm,
-		RegistryCodebaseLabels:             cnf.RegistryCodebaseLabels,
-		EnableBranchProvisioners:           cnf.EnableBranchProvisioners,
-		ClusterCodebaseName:                cnf.ClusterCodebaseName,
-		Timezone:                           cnf.Timezone,
-		GerritRegistryHost:                 cnf.RegistryRepoHost,
-		GerritRegistryPrefix:               cnf.RegistryRepoPrefix,
-		HardwareINITemplatePath:            cnf.RegistryHardwareKeyINITemplatePath,
-		VaultRegistrySMTPPwdSecretKey:      cnf.VaultRegistrySMTPPwdSecretKey,
-		VaultRegistrySMTPPwdSecretTemplate: cnf.VaultRegistrySecretTemplate,
-		VaultKVEngineName:                  cnf.VaultKVEngineName,
+		UsersNamespace:                  cnf.UsersNamespace,
+		UsersRealm:                      cnf.UsersRealm,
+		RegistryCodebaseLabels:          cnf.RegistryCodebaseLabels,
+		EnableBranchProvisioners:        cnf.EnableBranchProvisioners,
+		ClusterCodebaseName:             cnf.ClusterCodebaseName,
+		Timezone:                        cnf.Timezone,
+		GerritRegistryHost:              cnf.RegistryRepoHost,
+		GerritRegistryPrefix:            cnf.RegistryRepoPrefix,
+		HardwareINITemplatePath:         cnf.RegistryHardwareKeyINITemplatePath,
+		VaultRegistrySMTPPwdSecretKey:   cnf.VaultRegistrySMTPPwdSecretKey,
+		VaultRegistrySecretPathTemplate: cnf.VaultRegistrySecretPathTemplate,
+		VaultKVEngineName:               cnf.VaultKVEngineName,
 	}
 }
 
