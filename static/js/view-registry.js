@@ -11,7 +11,6 @@ let hasNewMergeRequests = function () {
 
 let app = Vue.createApp({
     mounted() {
-        console.log('view registry mounted');
     },
     data() {
         return {
@@ -85,7 +84,6 @@ let app = Vue.createApp({
                 return;
             }
 
-            console.log('disable external reg', name);
             this.systemToDisable = name;
             $("#disable-form-value").val(name);
             $("#disable-form").submit();
@@ -103,8 +101,6 @@ let app = Vue.createApp({
             this.removeExternalRegPopupShow = true;
             window.scrollTo(0, 0);
             $("body").css("overflow", "hidden");
-            console.log(name);
-            console.log('remove external reg');
         },
         hideRemoveExternalReg(e) {
             e.preventDefault();
@@ -123,7 +119,6 @@ let app = Vue.createApp({
             e.preventDefault();
         },
         showExternalKey(name, keyValue, e) {
-            console.log(name, keyValue);
             e.preventDefault();
             this.backdropShow = true;
             this.externalKey = true;
