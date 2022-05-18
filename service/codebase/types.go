@@ -158,6 +158,10 @@ func (in *Codebase) StrStatus() string {
 	return status
 }
 
+func (in *Codebase) Available() bool {
+	return !in.ForegroundDeletion() && in.StrStatus() != "failed"
+}
+
 func (in *Codebase) LocaleStatus() string {
 	return fmt.Sprintf("status-%s", in.StrStatus())
 }
