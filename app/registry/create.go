@@ -268,7 +268,7 @@ func (a *App) createVaultSecrets(r *registry) error {
 		}
 
 		vaultPath := strings.ReplaceAll(
-			strings.ReplaceAll(a.Config.VaultRegistrySMTPPwdSecretTemplate, "{registry}", r.Name),
+			strings.ReplaceAll(a.Config.VaultRegistrySecretPathTemplate, "{registry}", r.Name),
 			"{engine}", a.Config.VaultKVEngineName)
 
 		secretData := map[string]interface{}{

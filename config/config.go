@@ -39,8 +39,8 @@ type Settings struct {
 	VaultSecretName                    string `envconfig:"VAULT_SECRET_NAME" default:"vault-root-token"`
 	VaultSecretTokenKey                string `envconfig:"VAULT_SECRET_TOKEN_KEY" default:"VAULT_ROOT_TOKEN"`
 	VaultAPIAddr                       string `envconfig:"VAULT_API_ADDR" default:"https://hashicorp-vault.user-management:8200"`
-	VaultRegistrySecretTemplate        string `envconfig:"V_REG_SMTP_SEC_TPL" default:"{engine}/registry/{registry}"`
-	VaultRegistrySMTPPwdSecretKey      string `envconfig:"V_REG_SMTP_SEC_KEY" default:"password"`
+	VaultRegistrySecretPathTemplate    string `envconfig:"V_REG_SEC_PATH_TPL" default:"{engine}/registry/{registry}"`
+	VaultRegistrySMTPPwdSecretKey      string `envconfig:"V_REG_SMTP_SEC_KEY" default:"smtp-password"`
 	VaultKVEngineName                  string `envconfig:"VAULT_KV_ENGINE_NAME" default:"registry-kv"`
 }
 
