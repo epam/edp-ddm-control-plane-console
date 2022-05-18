@@ -8,5 +8,6 @@ func (cnf *Settings) VaultConfig() vault.Config {
 		SecretTokenKey:  cnf.VaultSecretTokenKey,
 		SecretName:      cnf.VaultSecretName,
 		APIAddr:         cnf.VaultAPIAddr,
+		KVEngineName:    cnf.VaultKVEngineName,
 	}
 }

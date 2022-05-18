@@ -15,6 +15,7 @@ func (cnf *Settings) RegistryConfig() registry.Config {
 		HardwareINITemplatePath:            cnf.RegistryHardwareKeyINITemplatePath,
 		VaultRegistrySMTPPwdSecretKey:      cnf.VaultRegistrySMTPPwdSecretKey,
 		VaultRegistrySMTPPwdSecretTemplate: cnf.VaultRegistrySecretTemplate,
+		VaultKVEngineName:                  cnf.VaultKVEngineName,
 	}
 }
 

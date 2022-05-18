@@ -27,6 +27,7 @@ type Config struct {
 	UsersNamespace                     string
 	VaultRegistrySMTPPwdSecretTemplate string
 	VaultRegistrySMTPPwdSecretKey      string
+	VaultKVEngineName                  string
 }
 
 type Services struct {
