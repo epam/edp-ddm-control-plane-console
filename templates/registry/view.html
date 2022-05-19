@@ -82,16 +82,18 @@
                         <td>
                             <div class="rg-external-system-actions {{if eq "status-inactive" $er.Status}}inactive{{end}}" >
                                 {{if $er.External}}
-                                    <a @click="{{if eq "status-inactive" $er.Status}}disabledLink{{else}}showExternalKey('{{$er.Name}}', $event){{end}}" href="#">
-                                        <img alt="key" src="{{ $.BasePath }}/static/img/key-{{$er.Status}}.png" />
+                                    <a @click="{{if eq "status-inactive" $er.Status}}disabledLink{{else}}showExternalKey('{{$er.Name}}', '{{$er.KeyValue}}}', $event){{end}}" href="#">
+                                        <img title="Перевірити пароль" alt="key" src="{{ $.BasePath }}/static/img/key-{{$er.Status}}.png" />
                                     </a>
                                 {{end}}
 
                                 <a @click="{{if eq "status-inactive" $er.Status}}disabledLink{{else}}disableExternalReg('{{$er.Name}}', $event){{end}}" href="#">
-                                    <img alt="key" src="{{ $.BasePath }}/static/img/lock-{{$er.Status}}.png" />
+                                    <img
+                                            title="{{if eq "status-disabled" $er.Status}}Розблокувати доступ{{else}}Заблокувати доступ{{end}}"
+                                            alt="key" src="{{ $.BasePath }}/static/img/lock-{{$er.Status}}.png" />
                                 </a>
                                 <a @click="{{if eq "status-inactive" $er.Status}}disabledLink{{else}}removeExternalReg('{{$er.Name}}', $event){{end}}" href="#">
-                                    <img alt="key" src="{{ $.BasePath }}/static/img/disable-{{$er.Status}}.png" />
+                                    <img title="Скасувати доступ" alt="key" src="{{ $.BasePath }}/static/img/disable-{{$er.Status}}.png" />
                                 </a>
                             </div>
                         </td>
@@ -267,7 +269,9 @@
                 <div class="er-ex-key">
                     <span id="key-value">[[ keyValue ]]</span>
                     <a @click="showExternalKeyValue" href="#">
-                        <img alt="display password" src="/static/img/eye.png" />
+                        <img title="Показати" v-cloak v-show="keyValue == '******'" alt="display password" src="/static/img/eye.png" />
+                        <img title="Приховати" v-cloak v-show="keyValue != '******'" alt="display password"
+                             style="height:20px;margin-top:2px;" src="/static/img/hide-eye.png" />
                     </a>
                 </div>
             </div>

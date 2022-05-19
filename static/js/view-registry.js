@@ -11,7 +11,6 @@ let hasNewMergeRequests = function () {
 
 let app = Vue.createApp({
     mounted() {
-        console.log('view registry mounted');
     },
     data() {
         return {
@@ -26,6 +25,7 @@ let app = Vue.createApp({
             externalKey: false,
             systemToShowKey: '',
             keyValue: '******',
+            currentExternalKeyValue: '',
         }
     },
     methods: {
@@ -84,7 +84,6 @@ let app = Vue.createApp({
                 return;
             }
 
-            console.log('disable external reg', name);
             this.systemToDisable = name;
             $("#disable-form-value").val(name);
             $("#disable-form").submit();
@@ -102,8 +101,6 @@ let app = Vue.createApp({
             this.removeExternalRegPopupShow = true;
             window.scrollTo(0, 0);
             $("body").css("overflow", "hidden");
-            console.log(name);
-            console.log('remove external reg');
         },
         hideRemoveExternalReg(e) {
             e.preventDefault();
@@ -113,20 +110,26 @@ let app = Vue.createApp({
 
         },
         showExternalKeyValue(e) {
-            console.log(e);
+            if (this.keyValue === '******') {
+                this.keyValue = this.currentExternalKeyValue;
+            } else {
+                this.keyValue = '******'
+            }
+
             e.preventDefault();
         },
-        showExternalKey(name, e) {
-            console.log(name);
+        showExternalKey(name, keyValue, e) {
             e.preventDefault();
             this.backdropShow = true;
             this.externalKey = true;
             this.systemToShowKey = name;
+            this.currentExternalKeyValue = keyValue;
         },
         hideExternalKey(e) {
             e.preventDefault();
             this.backdropShow = false;
             this.externalKey = false;
+            this.keyValue = '******'
         },
         addExternalReg() {
 
