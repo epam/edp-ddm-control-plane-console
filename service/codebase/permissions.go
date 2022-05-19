@@ -14,6 +14,10 @@ type WithPermissions struct {
 	CanDelete bool
 }
 
+func (r WithPermissions) Available() bool {
+	return r.Codebase.Available()
+}
+
 func (r WithPermissions) FormattedCreatedAtTimezone(timezone string) string {
 	loc, _ := time.LoadLocation(timezone)
 	return r.Codebase.CreationTimestamp.In(loc).Format(ViewTimeFormat)
