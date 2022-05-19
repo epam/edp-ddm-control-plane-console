@@ -13,6 +13,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 	"github.com/pkg/errors"
+	cssh "golang.org/x/crypto/ssh"
 )
 
 const (
@@ -205,6 +206,7 @@ func (s *Service) Pull(remoteName string) (*object.Commit, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create public keys")
 	}
+	publicKeys.HostKeyCallback = cssh.InsecureIgnoreHostKey()
 
 	if err := w.Pull(&git.PullOptions{RemoteName: remoteName, Auth: publicKeys}); err != nil {
 		return nil, errors.Wrap(err, "unable to pull")
