@@ -9,6 +9,8 @@ let hasNewMergeRequests = function () {
     return false;
 }
 
+/* ereg-name */
+
 let app = Vue.createApp({
     mounted() {
     },
@@ -26,6 +28,7 @@ let app = Vue.createApp({
             systemToShowKey: '',
             keyValue: '******',
             currentExternalKeyValue: '',
+            accessGrantError: false,
         }
     },
     methods: {
@@ -71,6 +74,7 @@ let app = Vue.createApp({
             this.externalRegPopupShow = false;
             this.internalRegistryReg = true;
             this.backdropShow = false;
+            this.accessGrantError = false;
         },
         disabledLink(e) {
             e.preventDefault();
@@ -131,8 +135,15 @@ let app = Vue.createApp({
             this.externalKey = false;
             this.keyValue = '******'
         },
-        addExternalReg() {
-
+        addExternalReg(e) {
+            let names = $(".ereg-name");
+            let inputName = $("#ex-system").val().trim();
+            for (let i=0;i<names.length;i++) {
+                if ($(names[i]).html().trim() === inputName) {
+                    this.accessGrantError = `Доступ з таким ім'ям системи/або платформи "${inputName}" вже існує, оберіть інше ім'я`;
+                    e.preventDefault();
+                }
+            }
         },
     }
 });

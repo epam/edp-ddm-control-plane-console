@@ -69,7 +69,7 @@
                             <img alt="{{ i18n $er.Status}}" src="{{ $.BasePath }}/static/img/{{$er.Status}}.png"
                             title="{{ i18n $er.Status}}"/>
                         </td>
-                        <td>
+                        <td class="ereg-name">
                             {{ $er.Name }}
                         </td>
                         <td>
@@ -322,7 +322,7 @@
         <form @submit="addExternalReg" id="external-reg-form" method="post"
               action="{{ .BasePath }}/admin/registry/external-reg-add/{{.registry.Name}}">
             <div class="popup-body">
-                <p class="popup-error" v-cloak v-if="accessGrantError">Всі поля обов'язкові для заповнення</p>
+                <p class="popup-error" v-cloak v-if="accessGrantError">[[ accessGrantError ]]</p>
 
                 <p>
                     Ви можете надати доступ до даних цього реєстру (master) іншим реєстрам на цій платформі або
@@ -352,8 +352,8 @@
                 <div v-if="!internalRegistryReg" class="er-system-opts">
                     <label for="ex-system">Назва системи</label>
                     <input required name="reg-name" id="ex-system" placeholder="Введіть назву" maxlength="32"
-                           pattern="^[a-zA-Z0-9-]+$" />
-                    <span>Допустимі символи: “a-z”, “-”. Назва не може перевищувати довжину у 32 символів.</span>
+                           pattern="^[a-z0-9-]+$" />
+                    <span>Допустимі символи: “a-z”, 0-9, “-”. Назва не може перевищувати довжину у 32 символів.</span>
                     <label>Пароль доступу</label>
                     <p>Пароль буде створено автоматично. Його можна буде перевірити після налагодження доступу до мастер-реєстру.</p>
                 </div>
