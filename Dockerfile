@@ -1,6 +1,6 @@
-FROM alpine:3.14.1
+FROM golang:1.17.9-alpine
 
-RUN apk update && apk add ca-certificates go git openssh-client
+RUN apk update && apk add ca-certificates git openssh-client
 
 ENV USER_UID=1001 \
     USER_NAME=admin-console \
@@ -9,14 +9,7 @@ ENV USER_UID=1001 \
 RUN addgroup --gid ${USER_UID} ${USER_NAME} \
     && adduser --disabled-password --uid ${USER_UID} --ingroup ${USER_NAME} --home ${HOME} ${USER_NAME}
 
-#FROM scratch
-#COPY --from=0 /etc/passwd /etc/passwd
-#COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-#COPY --from=0 /usr/lib/go/lib/time/zoneinfo.zip /usr/lib/go/lib/time/
-
 WORKDIR /go/bin
-#ENV PWD=/go/bin
-#ENV PATH=/go/bin
 ENV ZONEINFO=/usr/lib/go/lib/time/zoneinfo.zip
 
 COPY control-plane-console .
