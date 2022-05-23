@@ -82,7 +82,7 @@
                         <td>
                             <div class="rg-external-system-actions {{if eq "status-inactive" $er.Status}}inactive{{end}}" >
                                 {{if $er.External}}
-                                    <a @click="{{if eq "status-inactive" $er.Status}}disabledLink{{else}}showExternalKey('{{$er.Name}}', '{{$er.KeyValue}}}', $event){{end}}" href="#">
+                                    <a @click="{{if eq "status-inactive" $er.Status}}disabledLink{{else}}showExternalKey('{{$er.Name}}', '{{$er.KeyValue}}', $event){{end}}" href="#">
                                         <img title="Перевірити пароль" alt="key" src="{{ $.BasePath }}/static/img/key-{{$er.Status}}.png" />
                                     </a>
                                 {{end}}
