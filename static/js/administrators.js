@@ -1,11 +1,12 @@
 let app = Vue.createApp({
     mounted() {
-        // console.log(this.adminsValue);
-        let selectedSMTP = this.$refs.smtpServerTypeSelected.value
-        if (selectedSMTP === "") {
-            selectedSMTP = "platform-mail-server"
+        if (this.$refs.hasOwnProperty('smtpServerTypeSelected')) {
+            let selectedSMTP = this.$refs.smtpServerTypeSelected.value
+            if (selectedSMTP === "") {
+                selectedSMTP = "platform-mail-server"
+            }
+            this.smtpServerType = selectedSMTP;
         }
-        this.smtpServerType = selectedSMTP;
     },
     data() {
         return {
