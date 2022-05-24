@@ -24,6 +24,7 @@ const (
 	erStatusInactive           = "inactive"
 	erStatusActive             = "active"
 	erStatusDisabled           = "disabled"
+	MRLabelType                = "mr/type"
 )
 
 type ExternalRegistration struct {

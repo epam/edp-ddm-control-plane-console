@@ -243,10 +243,7 @@ func initApps(logger *zap.Logger, cnf *config.Settings, r *gin.Engine) error {
 		return errors.Wrap(err, "unable to make registry app")
 	}
 
-	_, err = cluster.Make(appRouter, serviceItems, cnf)
-	if err != nil {
-		return errors.Wrap(err, "unable to init cluster app")
-	}
+	cluster.Make(appRouter, serviceItems.ClusterServices(), cnf.ClusterConfig())
 
 	return nil
 }

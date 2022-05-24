@@ -31,17 +31,17 @@ type BackupConfig struct {
 func (a *App) editGet(ctx *gin.Context) (*router.Response, error) {
 	userCtx := a.router.ContextWithUserAccessToken(ctx)
 
-	k8sService, err := a.k8sService.ServiceForContext(userCtx)
+	k8sService, err := a.Services.K8S.ServiceForContext(userCtx)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to init service for user context")
 	}
 
-	cbService, err := a.codebaseService.ServiceForContext(userCtx)
+	cbService, err := a.Services.Codebase.ServiceForContext(userCtx)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to init cb service for user")
 	}
 
-	canUpdateCluster, err := k8sService.CanI("v2.edp.epam.com", "codebases", "update", a.codebaseName)
+	canUpdateCluster, err := k8sService.CanI("v2.edp.epam.com", "codebases", "update", a.Config.CodebaseName)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to check access to cluster codebase")
 	}
@@ -50,7 +50,7 @@ func (a *App) editGet(ctx *gin.Context) (*router.Response, error) {
 	}
 
 	var backupConfig BackupConfig
-	secret, err := k8sService.GetSecret(a.backupSecretName)
+	secret, err := k8sService.GetSecret(a.Config.BackupSecretName)
 	if err != nil && !k8sErrors.IsNotFound(err) {
 		return nil, errors.Wrap(err, "unable to get backup config secret")
 	}
@@ -62,12 +62,12 @@ func (a *App) editGet(ctx *gin.Context) (*router.Response, error) {
 		}
 	}
 
-	cb, err := cbService.Get(a.codebaseName)
+	cb, err := cbService.Get(a.Config.CodebaseName)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get registry")
 	}
 
-	hasUpdate, branches, err := registry.HasUpdate(userCtx, a.gerritService, cb)
+	hasUpdate, branches, err := registry.HasUpdate(userCtx, a.Services.Gerrit, cb)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to check for updates")
 	}
@@ -84,12 +84,12 @@ func (a *App) editGet(ctx *gin.Context) (*router.Response, error) {
 func (a *App) editPost(ctx *gin.Context) (*router.Response, error) {
 	userCtx := a.router.ContextWithUserAccessToken(ctx)
 
-	k8sService, err := a.k8sService.ServiceForContext(userCtx)
+	k8sService, err := a.Services.K8S.ServiceForContext(userCtx)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to init service for user context")
 	}
 
-	canUpdateCluster, err := k8sService.CanI("v2.edp.epam.com", "codebases", "update", a.codebaseName)
+	canUpdateCluster, err := k8sService.CanI("v2.edp.epam.com", "codebases", "update", a.Config.CodebaseName)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to check access to cluster codebase")
 	}
@@ -97,7 +97,7 @@ func (a *App) editPost(ctx *gin.Context) (*router.Response, error) {
 		return nil, errors.Wrap(err, "access denied")
 	}
 
-	jenkinsService, err := a.jenkinsService.ServiceForContext(userCtx)
+	jenkinsService, err := a.Services.Jenkins.ServiceForContext(userCtx)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to init jenkins client")
 	}
@@ -113,7 +113,7 @@ func (a *App) editPost(ctx *gin.Context) (*router.Response, error) {
 			gin.H{"page": "cluster", "errorsMap": validationErrors, "backupConf": backupConfig}), nil
 	}
 
-	if err := k8sService.RecreateSecret(a.backupSecretName, map[string][]byte{
+	if err := k8sService.RecreateSecret(a.Config.BackupSecretName, map[string][]byte{
 		StorageLocation:          []byte(backupConfig.StorageLocation),
 		StorageType:              []byte(backupConfig.StorageType),
 		StorageCredentialsKey:    []byte(backupConfig.StorageCredentialsKey),
@@ -123,7 +123,7 @@ func (a *App) editPost(ctx *gin.Context) (*router.Response, error) {
 	}
 
 	if err := jenkinsService.CreateJobBuildRun(fmt.Sprintf("cluster-update-%d", time.Now().Unix()),
-		fmt.Sprintf("%s/job/MASTER-Build-%s/", a.codebaseName, a.codebaseName), nil); err != nil {
+		fmt.Sprintf("%s/job/MASTER-Build-%s/", a.Config.CodebaseName, a.Config.CodebaseName), nil); err != nil {
 		return nil, errors.Wrap(err, "unable to trigger jenkins job build run")
 	}
 

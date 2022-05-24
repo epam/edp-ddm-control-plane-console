@@ -42,6 +42,8 @@ type Settings struct {
 	VaultRegistrySecretPathTemplate    string `envconfig:"V_REG_SEC_PATH_TPL" default:"{engine}/registry/{registry}"`
 	VaultRegistrySMTPPwdSecretKey      string `envconfig:"V_REG_SMTP_SEC_KEY" default:"smtp-password"`
 	VaultKVEngineName                  string `envconfig:"VAULT_KV_ENGINE_NAME" default:"registry-kv"`
+	VaultClusterAdminsPathTemplate     string `envconfig:"V_CLS_ADM_PATH_TPL" default:"{engine}/cluster/{admin}"`
+	VaultClusterAdminsPasswordKey      string `envconfig:"V_CLS_ADMIN_SEC_KEY" default:"password"`
 }
 
 type Services struct {
