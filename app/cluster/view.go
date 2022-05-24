@@ -9,22 +9,22 @@ import (
 
 func (a *App) view(ctx *gin.Context) (*router.Response, error) {
 	userCtx := a.router.ContextWithUserAccessToken(ctx)
-	k8sService, err := a.k8sService.ServiceForContext(userCtx)
+	k8sService, err := a.Services.K8S.ServiceForContext(userCtx)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to init k8s service for user")
 	}
 
-	canUpdateCluster, err := k8sService.CanI("v2.edp.epam.com", "codebases", "update", a.codebaseName)
+	canUpdateCluster, err := k8sService.CanI("v2.edp.epam.com", "codebases", "update", a.Config.CodebaseName)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to check access to cluster codebase")
 	}
 
-	cbService, err := a.codebaseService.ServiceForContext(userCtx)
+	cbService, err := a.Services.Codebase.ServiceForContext(userCtx)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to init codebase service for user")
 	}
 
-	cb, err := cbService.Get(a.codebaseName)
+	cb, err := cbService.Get(a.Config.CodebaseName)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get cluster codebase")
 	}
@@ -35,22 +35,22 @@ func (a *App) view(ctx *gin.Context) (*router.Response, error) {
 	}
 	cb.Branches = branches
 
-	jenkinsComponent, err := a.edpComponentService.Get(userCtx, "jenkins")
+	jenkinsComponent, err := a.Services.EDPComponent.Get(userCtx, "jenkins")
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get jenkins edp component")
 	}
 
-	gerritComponent, err := a.edpComponentService.Get(userCtx, "gerrit")
+	gerritComponent, err := a.Services.EDPComponent.Get(userCtx, "gerrit")
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get gerrit edp component")
 	}
 
-	namespacedEDPComponents, err := a.edpComponentService.GetAllNamespace(userCtx, cb.Name, true)
+	namespacedEDPComponents, err := a.Services.EDPComponent.GetAllNamespace(userCtx, cb.Name, true)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to list namespaced edp components")
 	}
 
-	mrs, err := a.gerritService.GetMergeRequestByProject(ctx, a.codebaseName)
+	mrs, err := a.Services.Gerrit.GetMergeRequestByProject(ctx, a.Config.CodebaseName)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to list gerrit merge requests")
 	}

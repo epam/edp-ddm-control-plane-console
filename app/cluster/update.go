@@ -29,16 +29,16 @@ func (a *App) clusterUpdate(ctx *gin.Context) (*router.Response, error) {
 			gin.H{"page": "cluster", "errorsMap": validationErrors, "backupConf": BackupConfig{}}), nil
 	}
 
-	prj, err := a.gerritService.GetProject(ctx, a.codebaseName)
+	prj, err := a.Services.Gerrit.GetProject(ctx, a.Config.CodebaseName)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get registry gerrit project")
 	}
 
-	if err := a.gerritService.CreateMergeRequest(ctx, &gerrit.MergeRequest{
+	if err := a.Services.Gerrit.CreateMergeRequest(ctx, &gerrit.MergeRequest{
 		CommitMessage: fmt.Sprintf("Update registry to %s", ur.Branch),
 		SourceBranch:  ur.Branch,
 		ProjectName:   prj.Spec.Name,
-		Name:          fmt.Sprintf("%s-update-%d", a.codebaseName, time.Now().Unix()),
+		Name:          fmt.Sprintf("%s-update-%d", a.Config.CodebaseName, time.Now().Unix()),
 		AuthorName:    ctx.GetString(router.UserNameSessionKey),
 		AuthorEmail:   ctx.GetString(router.UserEmailSessionKey),
 	}); err != nil {

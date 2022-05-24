@@ -1,6 +1,8 @@
 package config
 
-import "ddm-admin-console/app/registry"
+import (
+	"ddm-admin-console/app/registry"
+)
 
 func (cnf *Settings) RegistryConfig() registry.Config {
 	return registry.Config{

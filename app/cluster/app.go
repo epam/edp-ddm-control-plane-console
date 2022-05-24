@@ -1,19 +1,16 @@
 package cluster
 
 import (
-	"errors"
-	"fmt"
-	"strings"
-
-	"go.uber.org/zap"
-
-	"ddm-admin-console/config"
 	"ddm-admin-console/router"
 	"ddm-admin-console/service/codebase"
 	edpComponent "ddm-admin-console/service/edp_component"
 	"ddm-admin-console/service/gerrit"
 	"ddm-admin-console/service/jenkins"
 	"ddm-admin-console/service/k8s"
+	"ddm-admin-console/service/vault"
+	"fmt"
+
+	"go.uber.org/zap"
 )
 
 type Logger interface {
@@ -25,36 +22,41 @@ type JenkinsService interface {
 	CreateJobBuildRun(name, jobPath string, jobParams map[string]string) error
 }
 
-type App struct {
-	router              router.Interface
-	codebaseService     codebase.ServiceInterface
-	jenkinsService      jenkins.ServiceInterface
-	k8sService          k8s.ServiceInterface
-	gerritService       gerrit.ServiceInterface
-	edpComponentService edpComponent.ServiceInterface
-	codebaseName        string
-	repo                string
-	backupSecretName    string
+type Services struct {
+	Codebase     codebase.ServiceInterface
+	Jenkins      jenkins.ServiceInterface
+	K8S          k8s.ServiceInterface
+	Gerrit       gerrit.ServiceInterface
+	EDPComponent edpComponent.ServiceInterface
+	Vault        vault.ServiceInterface
 }
 
-func Make(router router.Interface, services *config.Services, cnf *config.Settings) (*App, error) {
-	if !strings.Contains(cnf.Host, "//") {
-		return nil, errors.New("wrong git repo")
-	}
+type Config struct {
+	CodebaseName                   string
+	BackupSecretName               string
+	RegistryRepoHost               string
+	ClusterRepo                    string
+	VaultClusterAdminsPathTemplate string
+	VaultClusterAdminsPasswordKey  string
+	VaultKVEngineName              string
+}
 
+type App struct {
+	Services
+	Config
+	router router.Interface
+	repo   string
+}
+
+func Make(router router.Interface, services Services, cnf Config) *App {
 	app := App{
-		router:              router,
-		codebaseService:     services.Codebase,
-		codebaseName:        cnf.ClusterCodebaseName,
-		repo:                fmt.Sprintf("%s/%s", cnf.RegistryRepoHost, cnf.ClusterRepo),
-		jenkinsService:      services.Jenkins,
-		edpComponentService: services.EDPComponent,
-		backupSecretName:    cnf.BackupSecretName,
-		k8sService:          services.K8S,
-		gerritService:       services.Gerrit,
+		Services: services,
+		Config:   cnf,
+		router:   router,
+		repo:     fmt.Sprintf("%s/%s", cnf.RegistryRepoHost, cnf.ClusterRepo),
 	}
 
 	app.createRoutes()
 
-	return &app, nil
+	return &app
 }
