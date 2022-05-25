@@ -18,6 +18,7 @@ import (
 
 const (
 	MRTypeClusterAdmins = "cluster-admins"
+	ValuesAdminsKey     = "administrators"
 )
 
 type Admin struct {
@@ -61,7 +62,7 @@ func (a *App) updateAdmins(ctx *gin.Context) error {
 		return errors.Wrap(err, "unable to decode values yaml")
 	}
 
-	valuesDict["administrators"] = admins
+	valuesDict[ValuesAdminsKey] = admins
 
 	valuesValue, err := yaml.Marshal(valuesDict)
 	if err != nil {
@@ -116,4 +117,28 @@ func (a *App) setAdminsVaultPassword(admins []Admin) error {
 	}
 
 	return nil
+}
+
+func (a *App) getAdminsJSON(ctx context.Context) (string, error) {
+	admContents, err := a.Gerrit.GetFileContents(ctx, a.Config.CodebaseName, "master", registry.ValuesLocation)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to get admin values yaml")
+	}
+
+	var valuesDict map[string]interface{}
+	if err := yaml.Unmarshal([]byte(admContents), &valuesDict); err != nil {
+		return "", errors.Wrap(err, "unable to decode values")
+	}
+
+	adminsInterface, ok := valuesDict[ValuesAdminsKey]
+	if !ok {
+		return "[]", nil
+	}
+
+	bts, err := json.Marshal(adminsInterface)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to json encode admins")
+	}
+
+	return string(bts), nil
 }
