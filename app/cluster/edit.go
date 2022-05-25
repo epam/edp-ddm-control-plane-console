@@ -72,12 +72,17 @@ func (a *App) editGet(ctx *gin.Context) (*router.Response, error) {
 		return nil, errors.Wrap(err, "unable to check for updates")
 	}
 
+	admins, err := a.getAdminsJSON(userCtx)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to decode admins")
+	}
+
 	return router.MakeResponse(200, "cluster/edit.html", gin.H{
 		"backupConf":     backupConfig,
 		"page":           "cluster",
 		"updateBranches": branches,
 		"hasUpdate":      hasUpdate,
-		"admins":         "[]",
+		"admins":         admins,
 	}), nil
 }
 
