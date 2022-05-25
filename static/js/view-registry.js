@@ -23,6 +23,7 @@ let app = Vue.createApp({
             removeExternalRegPopupShow: false,
             systemToDelete: '',
             systemToDisable: '',
+            systemToDisableType: '',
             mrError: false,
             externalKey: false,
             systemToShowKey: '',
@@ -80,7 +81,7 @@ let app = Vue.createApp({
             e.preventDefault();
             return false;
         },
-        disableExternalReg(name, e) {
+        disableExternalReg(name, _type, e) {
             e.preventDefault();
 
             if (hasNewMergeRequests()) {
@@ -89,7 +90,9 @@ let app = Vue.createApp({
             }
 
             this.systemToDisable = name;
+            this.systemToDisableType = _type;
             $("#disable-form-value").val(name);
+            $("#disable-form-type").val(_type);
             $("#disable-form").submit();
 
         },
