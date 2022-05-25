@@ -82,12 +82,12 @@
                         <td>
                             <div class="rg-external-system-actions {{if eq "status-inactive" $er.Status}}inactive{{end}}" >
                                 {{if $er.External}}
-                                    <a @click="{{if eq "status-inactive" $er.Status}}disabledLink{{else}}showExternalKey('{{$er.Name}}', '{{$er.KeyValue}}', $event){{end}}" href="#">
+                                    <a @click="{{if eq "status-active" $er.Status}}showExternalKey('{{$er.Name}}', '{{$er.KeyValue}}', $event){{else}}disabledLink{{end}}" href="#">
                                         <img title="Перевірити пароль" alt="key" src="{{ $.BasePath }}/static/img/key-{{$er.Status}}.png" />
                                     </a>
                                 {{end}}
 
-                                <a @click="{{if eq "status-inactive" $er.Status}}disabledLink{{else}}disableExternalReg('{{$er.Name}}', $event){{end}}" href="#">
+                                <a @click="{{if eq "status-inactive" $er.Status}}disabledLink{{else}}disableExternalReg('{{$er.Name}}', '{{if $er.External}}external-system{{else}}internal-registry{{end}}', $event){{end}}" href="#">
                                     <img
                                             title="{{if eq "status-disabled" $er.Status}}Розблокувати доступ{{else}}Заблокувати доступ{{end}}"
                                             alt="key" src="{{ $.BasePath }}/static/img/lock-{{$er.Status}}.png" />
@@ -117,6 +117,7 @@
 
     <form id="disable-form" method="POST" action="{{ .BasePath }}/admin/registry/external-reg-disable/{{.registry.Name}}">
         <input type="hidden" id="disable-form-value" :value="systemToDisable" name="reg-name" />
+        <input type="hidden" id="disable-form-type" :value="systemToDisableType" name="external-system-type" />
     </form>
 
     {{if .branches }}
@@ -352,8 +353,9 @@
                 <div v-if="!internalRegistryReg" class="er-system-opts">
                     <label for="ex-system">Назва системи</label>
                     <input required name="reg-name" id="ex-system" placeholder="Введіть назву" maxlength="32"
-                           pattern="^[a-z0-9-]+$" />
-                    <span>Допустимі символи: “a-z”, 0-9, “-”. Назва не може перевищувати довжину у 32 символів.</span>
+                           pattern="^[a-z0-9][-a-z0-9]+?[a-z0-9]$" />
+                    <span>Допустимі символи: “a-z”, 0-9, “-”. Назва не може перевищувати довжину у 32 символів.
+                        Назва повинна починатись і закінчуватися символами латинського алфавіту або цифрами.</span>
                     <label>Пароль доступу</label>
                     <p>Пароль буде створено автоматично. Його можна буде перевірити після налагодження доступу до мастер-реєстру.</p>
                 </div>
