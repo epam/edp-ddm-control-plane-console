@@ -22,6 +22,7 @@ const (
 	externalSystemTypeExternal = "external-system"
 	erValuesIndex              = "nontrembita-external-registration"
 	erStatusInactive           = "inactive"
+	erStatusFailed             = "failed"
 	erStatusActive             = "active"
 	erStatusDisabled           = "disabled"
 	MRLabelType                = "mr/type"
