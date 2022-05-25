@@ -36,6 +36,10 @@ type ExternalRegistration struct {
 	KeyValue string `yaml:"-"`
 }
 
+func (e ExternalRegistration) Inactive() bool {
+	return e.Status() == "status-disabled" || e.Status() == "status-failed"
+}
+
 func (e ExternalRegistration) Status() string {
 	s := e.status
 	if s == "" {

@@ -87,12 +87,12 @@
                                     </a>
                                 {{end}}
 
-                                <a @click="{{if eq "status-inactive" $er.Status}}disabledLink{{else}}disableExternalReg('{{$er.Name}}', '{{if $er.External}}external-system{{else}}internal-registry{{end}}', $event){{end}}" href="#">
+                                <a status="{{$er.Inactive}}" @click="{{if $er.Inactive}}disabledLink{{else}}disableExternalReg('{{$er.Name}}', '{{if $er.External}}external-system{{else}}internal-registry{{end}}', $event){{end}}" href="#">
                                     <img
                                             title="{{if eq "status-disabled" $er.Status}}Розблокувати доступ{{else}}Заблокувати доступ{{end}}"
                                             alt="key" src="{{ $.BasePath }}/static/img/lock-{{$er.Status}}.png" />
                                 </a>
-                                <a @click="{{if eq "status-inactive" $er.Status}}disabledLink{{else}}removeExternalReg('{{$er.Name}}', $event){{end}}" href="#">
+                                <a @click="{{if $er.Inactive}}disabledLink{{else}}removeExternalReg('{{$er.Name}}', $event){{end}}" href="#">
                                     <img title="Скасувати доступ" alt="key" src="{{ $.BasePath }}/static/img/disable-{{$er.Status}}.png" />
                                 </a>
                             </div>
