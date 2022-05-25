@@ -9,6 +9,7 @@ func (s *Services) ClusterServices() cluster.Services {
 		EDPComponent: s.EDPComponent,
 		Gerrit:       s.Gerrit,
 		Jenkins:      s.Jenkins,
+		Vault:        s.Vault,
 	}
 }
 
