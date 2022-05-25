@@ -57,6 +57,10 @@ func (a *App) viewRegistryExternalRegistration(userCtx context.Context, registry
 			eRegs = append(eRegs, ExternalRegistration{Name: mr.Annotations[mrAnnotationRegName], Enabled: true,
 				External: mr.Annotations[mrAnnotationRegType] == externalSystemTypeExternal, status: erStatusInactive})
 			mergeRequestsForER[mr.Annotations[mrAnnotationRegName]] = struct{}{}
+		} else if mr.Labels[mrLabelTarget] == "external-reg" && mr.Status.Value != "MERGED" && mr.Status.Value != "ABANDONED" {
+			eRegs = append(eRegs, ExternalRegistration{Name: mr.Annotations[mrAnnotationRegName], Enabled: true,
+				External: mr.Annotations[mrAnnotationRegType] == externalSystemTypeExternal, status: erStatusFailed})
+			mergeRequestsForER[mr.Annotations[mrAnnotationRegName]] = struct{}{}
 		}
 	}
 
