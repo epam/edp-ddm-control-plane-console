@@ -3,7 +3,7 @@ package registry
 import "testing"
 
 func TestPrepareRegistryCodebase(t *testing.T) {
-	app := App{EnableBranchProvisioners: true}
+	app := App{Config: Config{EnableBranchProvisioners: true}}
 	cb := app.prepareRegistryCodebase(&registry{
 		RegistryGitBranch: "1.2.4-snap.130",
 	})
