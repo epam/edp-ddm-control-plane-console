@@ -26,6 +26,12 @@
                     <span>Опис</span>
                     <span>{{ .codebase.Description }}</span>
                 </div>
+                {{if .admins}}
+                    <div class="rg-info-line-horizontal">
+                        <span>Адміністратори</span>
+                        <span>{{ .admins }}</span>
+                    </div>
+                {{end}}
                 <div class="rg-info-line-horizontal">
                     <span>Час створення</span>
                     <span>{{ .codebase.FormattedCreatedAt }}</span>

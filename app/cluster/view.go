@@ -1,6 +1,10 @@
 package cluster
 
 import (
+	"context"
+	"encoding/json"
+	"strings"
+
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 
@@ -55,6 +59,11 @@ func (a *App) view(ctx *gin.Context) (*router.Response, error) {
 		return nil, errors.Wrap(err, "unable to list gerrit merge requests")
 	}
 
+	adminsStr, err := a.displayAdmins(userCtx)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to get admins")
+	}
+
 	return router.MakeResponse(200, "cluster/view.html", gin.H{
 		"branches":         branches,
 		"codebase":         cb,
@@ -64,5 +73,25 @@ func (a *App) view(ctx *gin.Context) (*router.Response, error) {
 		"edpComponents":    namespacedEDPComponents,
 		"canUpdateCluster": canUpdateCluster,
 		"mergeRequests":    mrs,
+		"admins":           adminsStr,
 	}), nil
+}
+
+func (a *App) displayAdmins(ctx context.Context) (string, error) {
+	js, err := a.getAdminsJSON(ctx)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to get admins json")
+	}
+
+	var admins []Admin
+	if err := json.Unmarshal([]byte(js), &admins); err != nil {
+		return "", errors.Wrap(err, "unable to decode admins")
+	}
+
+	var adminsStr []string
+	for _, adm := range admins {
+		adminsStr = append(adminsStr, adm.Email)
+	}
+
+	return strings.Join(adminsStr, ", "), nil
 }
