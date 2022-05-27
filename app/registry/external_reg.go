@@ -37,7 +37,7 @@ type ExternalRegistration struct {
 }
 
 func (e ExternalRegistration) Inactive() bool {
-	return e.Status() == "status-disabled" || e.Status() == "status-failed"
+	return e.Status() == "status-inactive" || e.Status() == "status-failed"
 }
 
 func (e ExternalRegistration) Status() string {
