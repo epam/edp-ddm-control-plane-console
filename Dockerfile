@@ -18,6 +18,9 @@ COPY templates templates
 COPY default.env .
 COPY locale locale
 COPY osplm.ini .
+RUN mkdir /home/admin-console/.ssh && chown ${USER_NAME}:${USER_NAME} /home/admin-console/.ssh && chmod 700 /home/admin-console/.ssh
+COPY ssh-config.txt /home/admin-console/.ssh/config
+RUN chmod 700 /home/admin-console/.ssh/config
 
 USER ${USER_UID}
 
