@@ -2,18 +2,16 @@ package registry
 
 import (
 	"context"
+	"ddm-admin-console/router"
+	"ddm-admin-console/service/codebase"
+	"ddm-admin-console/service/gerrit"
 	"encoding/json"
 	"fmt"
 	"sort"
 
-	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
-
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
-
-	"ddm-admin-console/router"
-	"ddm-admin-console/service/codebase"
-	"ddm-admin-console/service/gerrit"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 func (a *App) viewRegistry(ctx *gin.Context) (*router.Response, error) {
@@ -53,11 +51,11 @@ func (a *App) viewRegistryExternalRegistration(userCtx context.Context, registry
 		return errors.Wrap(err, "unable to get gerrit merge requests")
 	}
 	for _, mr := range mrs {
-		if mr.Labels[mrLabelTarget] == "external-reg" && mr.Status.Value == "NEW" {
+		if mr.Labels[MRLabelTarget] == "external-reg" && mr.Status.Value == "NEW" {
 			eRegs = append(eRegs, ExternalRegistration{Name: mr.Annotations[mrAnnotationRegName], Enabled: true,
 				External: mr.Annotations[mrAnnotationRegType] == externalSystemTypeExternal, status: erStatusInactive})
 			mergeRequestsForER[mr.Annotations[mrAnnotationRegName]] = struct{}{}
-		} else if mr.Labels[mrLabelTarget] == "external-reg" && mr.Status.Value != "MERGED" && mr.Status.Value != "ABANDONED" {
+		} else if mr.Labels[MRLabelTarget] == "external-reg" && mr.Status.Value != "MERGED" && mr.Status.Value != "ABANDONED" {
 			eRegs = append(eRegs, ExternalRegistration{Name: mr.Annotations[mrAnnotationRegName], Enabled: true,
 				External: mr.Annotations[mrAnnotationRegType] == externalSystemTypeExternal, status: erStatusFailed})
 			mergeRequestsForER[mr.Annotations[mrAnnotationRegName]] = struct{}{}
@@ -163,7 +161,12 @@ func (a *App) viewRegistryGetMergeRequests(userCtx context.Context, registryName
 
 	sort.Sort(gerrit.SortByCreationDesc(mrs))
 
-	viewParams["mergeRequests"] = mrs
+	emrs := make([]ExtendedMergeRequests, 0, len(mrs))
+	for _, mr := range mrs {
+		emrs = append(emrs, ExtendedMergeRequests{GerritMergeRequest: mr})
+	}
+
+	viewParams["mergeRequests"] = emrs
 	return nil
 }
 
