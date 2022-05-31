@@ -16,7 +16,8 @@ import (
 
 const (
 	ValuesLocation             = "deploy-templates/values.yaml"
-	mrLabelTarget              = "console/target"
+	MRLabelTarget              = "console/target"
+	MRLabelSubTarget           = "console/sub-target"
 	mrAnnotationRegName        = "ext-reg/name"
 	mrAnnotationRegType        = "ext-reg/type"
 	externalSystemTypeExternal = "external-system"
@@ -25,7 +26,11 @@ const (
 	erStatusFailed             = "failed"
 	erStatusActive             = "active"
 	erStatusDisabled           = "disabled"
-	MRLabelType                = "mr/type"
+	mrTargetExternalReg        = "external-reg"
+	mrSubTargetCreation        = "creation"
+	mrSubTargetDisable         = "disable"
+	mrSubTargetEnable          = "enable"
+	mrSubTargetDeletion        = "deletion"
 )
 
 type ExternalRegistration struct {
@@ -67,7 +72,7 @@ func (a *App) addExternalReg(ctx *gin.Context) (*router.Response, error) {
 		return nil, errors.Wrap(err, "unable to prepare registry values")
 	}
 
-	if err := a.createErMergeRequest(userCtx, ctx, registryName, er.Name, values); err != nil {
+	if err := a.createErMergeRequest(userCtx, ctx, registryName, er.Name, values, mrSubTargetCreation); err != nil {
 		return nil, errors.Wrap(err, "unable to create MR")
 	}
 
@@ -128,7 +133,7 @@ func (a *App) prepareRegistryValues(ctx context.Context, registryName string, er
 	return string(newValues), nil
 }
 
-func (a *App) createErMergeRequest(userCtx context.Context, ctx *gin.Context, registryName, erName, values string) error {
+func (a *App) createErMergeRequest(userCtx context.Context, ctx *gin.Context, registryName, erName, values, action string) error {
 	if err := a.Services.Gerrit.CreateMergeRequestWithContents(userCtx, &gerrit.MergeRequest{
 		ProjectName:   registryName,
 		Name:          fmt.Sprintf("ers-mr-%s-%s-%d", registryName, erName, time.Now().Unix()),
@@ -137,7 +142,8 @@ func (a *App) createErMergeRequest(userCtx context.Context, ctx *gin.Context, re
 		CommitMessage: fmt.Sprintf("update registry external reg systems"),
 		TargetBranch:  "master",
 		Labels: map[string]string{
-			mrLabelTarget: "external-reg",
+			MRLabelTarget:    mrTargetExternalReg,
+			MRLabelSubTarget: action,
 		},
 		Annotations: map[string]string{
 			mrAnnotationRegName: erName,
@@ -167,10 +173,14 @@ func (a *App) disableExternalReg(ctx *gin.Context) (*router.Response, error) {
 	}
 
 	found := false
+	mrSubTarget := mrSubTargetDisable
 	for i, v := range eRegs {
 		if v.Name == systemName {
 			eRegs[i].Enabled = !eRegs[i].Enabled
 			found = true
+			if eRegs[i].Enabled {
+				mrSubTarget = mrSubTargetEnable
+			}
 		}
 	}
 	if !found {
@@ -183,7 +193,7 @@ func (a *App) disableExternalReg(ctx *gin.Context) (*router.Response, error) {
 		return nil, errors.Wrap(err, "unable to encode new values yaml")
 	}
 
-	if err := a.createErMergeRequest(userCtx, ctx, registryName, systemName, string(newValues)); err != nil {
+	if err := a.createErMergeRequest(userCtx, ctx, registryName, systemName, string(newValues), mrSubTarget); err != nil {
 		return nil, errors.Wrap(err, "unable to crete MR")
 	}
 
@@ -222,7 +232,7 @@ func (a *App) removeExternalReg(ctx *gin.Context) (*router.Response, error) {
 		return nil, errors.Wrap(err, "unable to encode new values yaml")
 	}
 
-	if err := a.createErMergeRequest(userCtx, ctx, registryName, systemName, string(newValues)); err != nil {
+	if err := a.createErMergeRequest(userCtx, ctx, registryName, systemName, string(newValues), mrSubTargetDeletion); err != nil {
 		return nil, errors.Wrap(err, "unable to crete MR")
 	}
 
