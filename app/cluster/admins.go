@@ -85,7 +85,7 @@ func (a *App) createAdminsMergeRequest(userCtx context.Context, ctx *gin.Context
 		CommitMessage: fmt.Sprintf("update cluster admins"),
 		TargetBranch:  "master",
 		Labels: map[string]string{
-			registry.MRLabelType: MRTypeClusterAdmins,
+			registry.MRLabelTarget: MRTypeClusterAdmins,
 		},
 	}, map[string]string{
 		registry.ValuesLocation: values,

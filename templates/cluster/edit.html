@@ -86,11 +86,11 @@
             </div>
         </form>
         {{if .hasUpdate}}
-        <h1>Оновлення кластеру</h1>
+        <h1>Оновлення платформи</h1>
         <br />
         <form id="cluster-update-form" class="registry-create-form" method="post" action="/admin/cluster/upgrade">
             <div class="rc-form-group {{ if .errorsMap.Branch }}error{{end}}">
-                <label for="branch">Оновити кластер</label>
+                <label for="branch">Оновити платформу</label>
                 <select id="branch" name="branch" required>
                     <option></option>
                     {{range $key, $val := .updateBranches}}

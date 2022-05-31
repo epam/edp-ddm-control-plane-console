@@ -14,6 +14,10 @@ import (
 	"ddm-admin-console/service/gerrit"
 )
 
+const (
+	mrTargetRegistryVersionUpdate = "registry-version-update"
+)
+
 type updateRequest struct {
 	Branch string `form:"branch" binding:"required"`
 }
@@ -86,6 +90,9 @@ func (a *App) createMergeRequest(registryName, updateBranch string, userContext 
 		Name:          fmt.Sprintf("%s-update-%d", registryName, time.Now().Unix()),
 		AuthorName:    ginContext.GetString(router.UserNameSessionKey),
 		AuthorEmail:   ginContext.GetString(router.UserEmailSessionKey),
+		Labels: map[string]string{
+			MRLabelTarget: mrTargetRegistryVersionUpdate,
+		},
 	}); err != nil {
 		return errors.Wrap(err, "unable to create update merge request")
 	}
