@@ -55,13 +55,19 @@ $(function (){
 });
 
 $(document).ready(function() {
+    // DataTable.datetime('DD.MM.YYYY hh:mm');
+
     $("#registry-table").DataTable({
         ordering: true,
         paging: true,
         columnDefs: [
             { orderable: false, targets: 0 },
             { orderable: false, targets: 4 },
-            { orderable: false, targets: 5 }
+            { orderable: false, targets: 5 },
+            {
+                targets: 3,
+                render: DataTable.render.datetime('DD.MM.YYYY h:mm'),
+            },
         ],
         order: [[3, 'desc']],
         language: {

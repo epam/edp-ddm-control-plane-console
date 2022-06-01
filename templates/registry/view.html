@@ -203,44 +203,50 @@
         </div>
     </div>
     {{end}}
-    {{ if .mergeRequests}}
-        <div class="rg-info-block">
-            <div class="rg-info-block-header">
-                <span>Запити на оновлення</span>
-                <img src="{{ .BasePath }}/static/img/action-toggle.png" alt="toggle block" />
-            </div>
-            <div class="rg-info-block-body mr-block-table">
-                <table class="rg-info-table rg-info-table-config" id="mr-table">
-                    <thead>
-                    <tr>
-                        <th>Дата</th>
-                        <th>Запит</th>
-                        <th>Операція</th>
-                        <th>Статус</th>
-                        <th></th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {{range $index, $al := .mergeRequests}}
-                        <tr>
-                            <td>{{$al.FormattedCreatedAt}}</td>
-                            <td>{{$al.RequestName}}</td>
-                            <td>{{ i18n $al.Action}}</td>
-                            <td class="mr-status">{{$al.Status.Value}}</td>
-                            <td>
-                                {{if $al.Status.ChangeURL}}
-                                    <a href="{{$al.Status.ChangeURL}}" target="_blank">
-                                        <img alt="vcs" src="{{ $.BasePath }}/static/img/action-link.png" />
-                                    </a>
-                                {{end}}
-                            </td>
-                        </tr>
-                    {{end}}
-                    </tbody>
-                </table>
-            </div>
+
+    <div class="rg-info-block">
+        <div class="rg-info-block-header">
+            <span>Запити на оновлення</span>
+            <img src="{{ .BasePath }}/static/img/action-toggle.png" alt="toggle block" />
         </div>
-    {{end}}
+        <div class="rg-info-block-body mr-block-table">
+            {{ if .mergeRequests}}
+            <table class="rg-info-table rg-info-table-config" id="mr-table">
+                <thead>
+                <tr>
+                    <th>Дата</th>
+                    <th>Запит</th>
+                    <th>Операція</th>
+                    <th>Статус</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {{range $index, $al := .mergeRequests}}
+                    <tr>
+                        <td>{{$al.FormattedCreatedAt}}</td>
+                        <td>{{$al.RequestName}}</td>
+                        <td>{{ i18n $al.Action}}</td>
+                        <td class="mr-status">{{$al.Status.Value}}</td>
+                        <td>
+                            {{if $al.Status.ChangeURL}}
+                                <a href="{{$al.Status.ChangeURL}}" target="_blank">
+                                    <img title="Переглянути в Gerrit" alt="vcs" src="{{ $.BasePath }}/static/img/action-link.png" />
+                                </a>
+                            {{end}}
+                        </td>
+                    </tr>
+                {{end}}
+                </tbody>
+            </table>
+            {{else}}
+                <div class="rg-info-block-no-content">
+                    Запитів немає
+                </div>
+            {{end}}
+        </div>
+    </div>
+
     {{ if .edpComponents}}
     <div class="dashboard-panel registry-dashboard-panel">
         <ul>
@@ -374,7 +380,8 @@
 </div>
 
     {{template "scripts" .}}
-    <script type="text/javascript" src="{{.BasePath}}/static/js/datatables.min.js"></script>
+    <script type="text/javascript" src="{{.BasePath}}/static/js/moment.min.js"></script>
+    <script type="text/javascript" src="{{.BasePath}}/static/js/jquery.dataTables-1.12.1.min.js"></script>
     <script type="text/javascript" src="{{.BasePath}}/static/js/view-registry.js"></script>
     {{template "footer" .}}
 
