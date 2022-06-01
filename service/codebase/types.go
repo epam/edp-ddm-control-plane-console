@@ -13,13 +13,14 @@ import (
 // CodebaseSpec defines the desired state of Codebase
 // +k8s:openapi-gen=true
 const (
-	Create           Strategy       = "create"
-	Clone            Strategy       = "clone"
-	Default          VersioningType = "default"
-	ViewTimeFormat                  = "02.01.2006 15:04"
-	statusActive                    = "active"
-	AdminsAnnotation                = "registry-parameters/administrators"
-	RepoNotReady                    = "NOT_READY"
+	Create              Strategy       = "create"
+	Clone               Strategy       = "clone"
+	Default             VersioningType = "default"
+	ViewTimeFormat                     = "02.01.2006 15:04"
+	DataTableTimeFormat                = "2006-01-02 15:04:05"
+	statusActive                       = "active"
+	AdminsAnnotation                   = "registry-parameters/administrators"
+	RepoNotReady                       = "NOT_READY"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -147,6 +148,11 @@ func (in *Codebase) ForegroundDeletion() bool {
 func (in *Codebase) FormattedCreatedAtTimezone(timezone string) string {
 	loc, _ := time.LoadLocation(timezone)
 	return in.CreationTimestamp.In(loc).Format(ViewTimeFormat)
+}
+
+func (in *Codebase) CreatedAtTimezone(timezone string) string {
+	loc, _ := time.LoadLocation(timezone)
+	return in.CreationTimestamp.In(loc).Format(DataTableTimeFormat)
 }
 
 func (in *Codebase) StrStatus() string {

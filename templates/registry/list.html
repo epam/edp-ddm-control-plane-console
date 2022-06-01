@@ -52,7 +52,7 @@
                             {{$registry.Codebase.Description}}
                         </td>
                         <td>
-                            {{ $registry.Codebase.FormattedCreatedAtTimezone $.timezone }}
+                            {{ $registry.Codebase.CreatedAtTimezone $.timezone }}
                         </td>
                         <td>
                             {{if $registry.CanUpdate}}
@@ -83,8 +83,8 @@
     </div>
 
     {{template "delete-block" .}}
-
-    <script type="text/javascript" src="{{.BasePath}}/static/js/datatables.min.js"></script>
+    <script type="text/javascript" src="{{.BasePath}}/static/js/moment.min.js"></script>
+    <script type="text/javascript" src="{{.BasePath}}/static/js/jquery.dataTables-1.12.1.min.js"></script>
     <script type="text/javascript" src="{{.BasePath}}/static/js/registry.js"></script>
     <script type="text/javascript" src="{{ .BasePath }}/static/js/jquery-ui.min.js"></script>
     {{template "footer" .}}
