@@ -24,7 +24,8 @@ import (
 )
 
 const (
-	ViewTimeFormat = "02.01.2006 15:04"
+	//ViewTimeFormat = "02.01.2006 15:04"
+	ViewTimeFormat = "2006-01-02 15:04:05"
 )
 
 type Service struct {

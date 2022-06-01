@@ -155,11 +155,17 @@ app.config.compilerOptions.delimiters = ['[[', ']]'];
 app.mount('#registry-view');
 
 $(document).ready(function() {
+    //DataTable.datetime('DD.MM.YYYY h:mm');
+
     $("#mr-table").DataTable({
         ordering: true,
         paging: true,
         columnDefs: [
             { orderable: false, targets: 4 },
+            {
+                targets: 0,
+                render: DataTable.render.datetime('DD.MM.YYYY h:mm'),
+            },
         ],
         order: [[0, 'desc']],
         language: {
