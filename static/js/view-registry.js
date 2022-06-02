@@ -24,6 +24,7 @@ let app = Vue.createApp({
             systemToDelete: '',
             systemToDisable: '',
             systemToDisableType: '',
+            systemToDeleteType: '',
             mrError: false,
             externalKey: false,
             systemToShowKey: '',
@@ -96,13 +97,14 @@ let app = Vue.createApp({
             $("#disable-form").submit();
 
         },
-        removeExternalReg(name, e) {
+        removeExternalReg(name, _type, e) {
             if (hasNewMergeRequests()) {
                 this.showMrError(e);
                 return;
             }
 
             this.systemToDelete = name;
+            this.systemToDeleteType = _type;
             e.preventDefault();
             this.backdropShow = true;
             this.removeExternalRegPopupShow = true;
