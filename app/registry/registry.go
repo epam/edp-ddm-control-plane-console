@@ -10,7 +10,7 @@ const (
 )
 
 type registry struct {
-	Name                string   `form:"name" binding:"required,min=3,max=12,registry-name"`
+	Name                string   `form:"name" binding:"required,min=3,max=40,registry-name"`
 	Description         string   `form:"description" valid:"max=250"`
 	Admins              string   `form:"admins"`
 	SignKeyIssuer       string   `form:"sign-key-issuer" binding:"required_if=KeyDeviceType file Scenario key-required"`
@@ -34,7 +34,6 @@ type registry struct {
 	MailServerType      string   `form:"smtp-server-type"`
 	MailServerOpts      string   `form:"mail-server-opts"`
 }
-
 
 func (r *registry) KeysRequired() bool {
 	return r.Scenario == ScenarioKeyRequired
