@@ -33,6 +33,12 @@ const (
 	mrSubTargetDeletion        = "deletion"
 )
 
+type MRExists string
+
+func (m MRExists) Error() string {
+	return string(m)
+}
+
 type ExternalRegistration struct {
 	Name     string `yaml:"name"`
 	Enabled  bool   `yaml:"enabled"`
@@ -81,7 +87,9 @@ func (a *App) addExternalReg(ctx *gin.Context) (*router.Response, error) {
 	}
 
 	if err := a.createErMergeRequest(userCtx, ctx, registryName, er.Name, values, mrSubTargetCreation); err != nil {
-		return nil, errors.Wrap(err, "unable to create MR")
+		if _, ok := err.(MRExists); !ok {
+			return nil, errors.Wrap(err, "unable to create MR")
+		}
 	}
 
 	return router.MakeRedirectResponse(http.StatusFound,
@@ -142,6 +150,17 @@ func (a *App) prepareRegistryValues(ctx context.Context, registryName string, er
 }
 
 func (a *App) createErMergeRequest(userCtx context.Context, ctx *gin.Context, registryName, erName, values, action string) error {
+	mrs, err := a.Services.Gerrit.GetMergeRequestByProject(userCtx, registryName)
+	if err != nil {
+		return errors.Wrap(err, "unable to get MRs")
+	}
+
+	for _, mr := range mrs {
+		if mr.Status.Value == "NEW" {
+			return MRExists("there is already open merge request(s) for this registry")
+		}
+	}
+
 	if err := a.Services.Gerrit.CreateMergeRequestWithContents(userCtx, &gerrit.MergeRequest{
 		ProjectName:   registryName,
 		Name:          fmt.Sprintf("ers-mr-%s-%s-%d", registryName, erName, time.Now().Unix()),
@@ -202,7 +221,9 @@ func (a *App) disableExternalReg(ctx *gin.Context) (*router.Response, error) {
 	}
 
 	if err := a.createErMergeRequest(userCtx, ctx, registryName, systemName, string(newValues), mrSubTarget); err != nil {
-		return nil, errors.Wrap(err, "unable to crete MR")
+		if _, ok := err.(MRExists); !ok {
+			return nil, errors.Wrap(err, "unable to create MR")
+		}
 	}
 
 	return router.MakeRedirectResponse(http.StatusFound,
@@ -241,7 +262,9 @@ func (a *App) removeExternalReg(ctx *gin.Context) (*router.Response, error) {
 	}
 
 	if err := a.createErMergeRequest(userCtx, ctx, registryName, systemName, string(newValues), mrSubTargetDeletion); err != nil {
-		return nil, errors.Wrap(err, "unable to crete MR")
+		if _, ok := err.(MRExists); !ok {
+			return nil, errors.Wrap(err, "unable to create MR")
+		}
 	}
 
 	return router.MakeRedirectResponse(http.StatusFound,
