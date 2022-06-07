@@ -1,4 +1,10 @@
+let forceMR = false;
+
 let hasNewMergeRequests = function () {
+    if (forceMR) {
+        return true;
+    }
+
     let statuses = $(".mr-status");
     for (let i=0;i<statuses.length;i++) {
         if ($(statuses[i]).html().trim() === "NEW") {
@@ -89,6 +95,7 @@ let app = Vue.createApp({
                 this.showMrError(e);
                 return;
             }
+            forceMR = true;
 
             this.systemToDisable = name;
             this.systemToDisableType = _type;
@@ -98,6 +105,8 @@ let app = Vue.createApp({
 
         },
         removeExternalReg(name, _type, e) {
+            e.preventDefault();
+
             if (hasNewMergeRequests()) {
                 this.showMrError(e);
                 return;
@@ -105,7 +114,6 @@ let app = Vue.createApp({
 
             this.systemToDelete = name;
             this.systemToDeleteType = _type;
-            e.preventDefault();
             this.backdropShow = true;
             this.removeExternalRegPopupShow = true;
             window.scrollTo(0, 0);
