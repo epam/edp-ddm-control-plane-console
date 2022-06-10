@@ -114,7 +114,7 @@ func (a *App) loadCodebasesForExternalRegistrations(registryName string, eRegs [
 	for _, cb := range cbs {
 		skip := false
 		for _, er := range eRegs {
-			if er.Name == cb.Name {
+			if er.Name == cb.Name && !er.External {
 				skip = true
 				break
 			}
