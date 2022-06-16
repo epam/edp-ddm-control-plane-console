@@ -1,0 +1,16 @@
+{{ define "reg-dns" }}
+    <h3>Налаштування DNS</h3>
+    <hr />
+    <div class="rc-form-group">
+        <label for="officer-dns">Доменне імʼя для кабінету громадянина</label>
+        <input type="text" name="officer-dns" id="officer-dns" value="" />
+        <label for="">SSL-сертифікат для кабінету громадянина (розширення .pem)</label>
+        <input id="officer-ssl" name="officer-ssl" type="file" />
+    </div>
+    <div class="rc-form-group">
+        <label for="citizen-dns">Доменне імʼя для кабінету чиновника</label>
+        <input type="text" name="citizen-dns" id="citizen-dns" value="" />
+        <label for="">SSL-сертифікат для кабінету чиновника (розширення .pem)</label>
+        <input id="citizen-ssl" name="citizen-ssl" type="file" />
+    </div>
+{{end}}

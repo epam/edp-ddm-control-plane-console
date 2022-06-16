@@ -8,7 +8,6 @@ import (
 	"os"
 	"path"
 	"reflect"
-	"strconv"
 	"strings"
 	"time"
 
@@ -313,30 +312,11 @@ func updateRegistryValues(instance *codebaseService.Codebase, gitService *git.Se
 		raw = make(map[string]interface{})
 	}
 
-	global, ok := raw["global"]
-	if !ok {
-		global = map[string]interface{}{}
+	var values map[string]interface{}
+	if err := json.Unmarshal([]byte(instance.Annotations[registry.AnnotationValues]), &values); err != nil {
+		return errors.Wrap(err, "unable to decode codebase values")
 	}
-	globalDict, ok := global.(map[string]interface{})
-	if !ok {
-		return errors.New("wrong yaml structure, global is not an object")
-	}
-
-	notifications, ok := globalDict["notifications"]
-	if !ok {
-		notifications = map[string]interface{}{}
-	}
-	notificationsDict, ok := notifications.(map[string]interface{})
-	if !ok {
-		return errors.New("wrong yaml structure, notifications is not an object")
-	}
-
-	if err := setNotificationsEmail(notificationsDict, instance); err != nil {
-		return errors.Wrap(err, "unable to set notifications email config")
-	}
-
-	globalDict["notifications"] = notificationsDict
-	raw["global"] = globalDict
+	raw["global"] = values
 
 	bts, err := yaml.Marshal(raw)
 	if err != nil {
@@ -353,44 +333,6 @@ func updateRegistryValues(instance *codebaseService.Codebase, gitService *git.Se
 			Email: instance.Annotations[registry.AnnotationCreatorEmail],
 		}); err != nil {
 		return errors.Wrap(err, "unable to commit values yaml")
-	}
-
-	return nil
-}
-
-func setNotificationsEmail(notificationsDict map[string]interface{}, instance *codebaseService.Codebase) error {
-	smtpType, ok := instance.Annotations[registry.AnnotationSMPTType]
-	if !ok {
-		return nil
-	}
-
-	if smtpType == registry.SMTPTypeExternal {
-		smtpOpts, ok := instance.Annotations[registry.AnnotationSMPTOpts]
-		if !ok {
-			return errors.New("smtp opts not found in annotation")
-		}
-
-		var smptOptsDict map[string]string
-		if err := json.Unmarshal([]byte(smtpOpts), &smptOptsDict); err != nil {
-			return errors.Wrap(err, "unable to decode smtp opts json")
-		}
-
-		port, err := strconv.ParseInt(smptOptsDict["port"], 10, 32)
-		if err != nil {
-			return errors.Wrapf(err, "wrong smtp port value: %s", smptOptsDict["port"])
-		}
-
-		notificationsDict["email"] = map[string]interface{}{
-			"type":     "external",
-			"host":     smptOptsDict["host"],
-			"port":     port,
-			"address":  smptOptsDict["address"],
-			"password": smptOptsDict["password"],
-		}
-	} else {
-		notificationsDict["email"] = map[string]interface{}{
-			"type": "internal",
-		}
 	}
 
 	return nil

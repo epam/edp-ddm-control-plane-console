@@ -33,6 +33,8 @@ type registry struct {
 	AllowedKeysIssuer   []string `form:"allowed-keys-issuer[]" binding:"required_if=Scenario key-required"`
 	MailServerType      string   `form:"smtp-server-type"`
 	MailServerOpts      string   `form:"mail-server-opts"`
+	DNSNameOfficer      string   `form:"officer-dns"`
+	DNSNameCitizen      string   `form:"citizen-dns"`
 }
 
 func (r *registry) KeysRequired() bool {
