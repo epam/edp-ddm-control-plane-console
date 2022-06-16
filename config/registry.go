@@ -18,6 +18,12 @@ func (cnf *Settings) RegistryConfig() registry.Config {
 		VaultRegistrySMTPPwdSecretKey:   cnf.VaultRegistrySMTPPwdSecretKey,
 		VaultRegistrySecretPathTemplate: cnf.VaultRegistrySecretPathTemplate,
 		VaultKVEngineName:               cnf.VaultKVEngineName,
+		VaultOfficerCACertKey:           cnf.VaultOfficerCACertKey,
+		VaultOfficerCertKey:             cnf.VaultOfficerCertKey,
+		VaultOfficerPKKey:               cnf.VaultOfficerPKKey,
+		VaultCitizenCACertKey:           cnf.VaultCitizenCACertKey,
+		VaultCitizenCertKey:             cnf.VaultCitizenCertKey,
+		VaultCitizenPKKey:               cnf.VaultCitizenPKKey,
 	}
 }
 

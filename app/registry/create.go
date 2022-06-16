@@ -1,13 +1,17 @@
 package registry
 
 import (
+	"bytes"
 	"context"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -31,6 +35,7 @@ const (
 	AnnotationTemplateName    = "registry-parameters/template-name"
 	AnnotationCreatorUsername = "registry-parameters/creator-username"
 	AnnotationCreatorEmail    = "registry-parameters/creator-email"
+	AnnotationValues          = "registry-parameters/values"
 )
 
 func (a *App) createRegistryGet(ctx *gin.Context) (response *router.Response, retErr error) {
@@ -149,7 +154,7 @@ func (a *App) createRegistryPost(ctx *gin.Context) (response *router.Response, r
 				"hwINITemplateContent": hwINITemplateContent, "gerritProjects": prjs}), nil
 	}
 
-	if err := a.validateCreateRegistryGitTemplate(&r); err != nil {
+	if err := a.validateCreateRegistryGitTemplate(ctx, &r); err != nil {
 		return nil, errors.Wrap(err, "unable to validate create registry git template")
 	}
 
@@ -179,8 +184,8 @@ func (a *App) checkCreateAccess(userK8sService k8s.ServiceInterface) error {
 	return nil
 }
 
-func (a *App) validateCreateRegistryGitTemplate(r *registry) error {
-	prjs, err := a.Services.Gerrit.GetProjects(context.Background())
+func (a *App) validateCreateRegistryGitTemplate(ctx context.Context, r *registry) error {
+	prjs, err := a.Services.Gerrit.GetProjects(ctx)
 	if err != nil {
 		return errors.Wrap(err, "unable to list gerrit projects")
 	}
@@ -209,7 +214,16 @@ func (a *App) createRegistry(ctx context.Context, ginContext *gin.Context, r *re
 		return errors.Wrap(err, "unknown error")
 	}
 
-	if err := a.createVaultSecrets(r); err != nil {
+	values, vaultSecretData := make(map[string]interface{}), make(map[string]interface{})
+	if err := a.prepareDNSConfig(ginContext, r, vaultSecretData, values); err != nil {
+		return errors.Wrap(err, "unable to prepare dns config")
+	}
+
+	if err := a.prepareMailServerConfig(r, vaultSecretData, values); err != nil {
+		return errors.Wrap(err, "unable to prepare mail server config")
+	}
+
+	if err := a.createVaultSecrets(r.Name, vaultSecretData); err != nil {
 		return errors.Wrap(err, "unable to create vault secrets")
 	}
 
@@ -223,6 +237,7 @@ func (a *App) createRegistry(ctx context.Context, ginContext *gin.Context, r *re
 			return errors.Wrap(err, "unable to validate admins")
 		}
 
+		//TODO: move admins creation to values yaml
 		if err := a.admins.SyncAdmins(ctx, r.Name, admins); err != nil {
 			return errors.Wrap(err, "unable to sync admins")
 		}
@@ -233,16 +248,19 @@ func (a *App) createRegistry(ctx context.Context, ginContext *gin.Context, r *re
 	}
 
 	cb := a.prepareRegistryCodebase(r)
-
-	annotations := map[string]string{
-		AnnotationTemplateName:    r.RegistryGitTemplate,
-		AnnotationSMPTType:        r.MailServerType,
-		AnnotationSMPTOpts:        r.MailServerOpts,
-		AnnotationCreatorUsername: ginContext.GetString(router.UserNameSessionKey),
-		AnnotationCreatorEmail:    ginContext.GetString(router.UserEmailSessionKey),
+	valuesEncoded, err := a.encodeValues(r.Name, values)
+	if err != nil {
+		return errors.Wrap(err, "unable to encode values")
 	}
 
-	cb.Annotations = annotations
+	cb.Annotations = map[string]string{
+		AnnotationTemplateName:    r.RegistryGitTemplate,
+		AnnotationSMPTType:        r.MailServerType, //TODO: remove
+		AnnotationSMPTOpts:        r.MailServerOpts, //TODO: remove
+		AnnotationCreatorUsername: ginContext.GetString(router.UserNameSessionKey),
+		AnnotationCreatorEmail:    ginContext.GetString(router.UserEmailSessionKey),
+		AnnotationValues:          valuesEncoded,
+	}
 
 	if err := cbService.Create(cb); err != nil {
 		return errors.Wrap(err, "unable to create codebase")
@@ -255,39 +273,182 @@ func (a *App) createRegistry(ctx context.Context, ginContext *gin.Context, r *re
 	return nil
 }
 
-func (a *App) createVaultSecrets(r *registry) error {
+func (a *App) createVaultSecrets(registryName string, secretData map[string]interface{}) error {
+	vaultPath := a.vaultRegistryPath(registryName)
+
+	if _, err := a.Vault.Write(
+		vaultPath, secretData); err != nil {
+		return errors.Wrap(err, "unable to write to vault")
+	}
+
+	return nil
+}
+
+func (a *App) encodeValues(registryName string, values map[string]interface{}) (string, error) {
+	values["registryVaultPath"] = a.vaultRegistryPath(registryName)
+	bts, err := json.Marshal(values)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to encode values to JSON")
+	}
+
+	return string(bts), nil
+}
+
+func (a *App) vaultRegistryPath(registryName string) string {
+	return strings.ReplaceAll(
+		strings.ReplaceAll(a.Config.VaultRegistrySecretPathTemplate, "{registry}", registryName),
+		"{engine}", a.Config.VaultKVEngineName)
+}
+
+func (a *App) prepareDNSConfig(ginContext *gin.Context, r *registry, secretData map[string]interface{}, values map[string]interface{}) error {
+	dns := make(map[string]string)
+
+	if r.DNSNameOfficer != "" {
+		dns["officerPortal"] = r.DNSNameOfficer
+
+		certFile, _, err := ginContext.Request.FormFile("officer-ssl")
+		if err != nil {
+			return errors.Wrap(err, "unable to get officer ssl certificate")
+		}
+
+		certData, err := ioutil.ReadAll(certFile)
+		if err != nil {
+			return errors.Wrap(err, "unable to read officer ssl data")
+		}
+
+		caCert, cert, key, err := decodePEM(certData)
+		if err != nil {
+			return errors.Wrap(err, "unable to decode officer key file")
+		}
+		secretData[a.Config.VaultOfficerCACertKey] = caCert
+		secretData[a.Config.VaultOfficerCertKey] = cert
+		secretData[a.Config.VaultOfficerPKKey] = key
+
+		dns["officerPortalVaultCaKey"] = a.Config.VaultOfficerCACertKey
+		dns["officerPortalVaultCertKey"] = a.Config.VaultOfficerCertKey
+		dns["officerPortalVaultPKKey"] = a.Config.VaultOfficerPKKey
+	}
+
+	if r.DNSNameCitizen != "" {
+		dns["citizenPortal"] = r.DNSNameCitizen
+
+		certFile, _, err := ginContext.Request.FormFile("citizen-ssl")
+		if err != nil {
+			return errors.Wrap(err, "unable to get citizen ssl certificate")
+		}
+
+		certData, err := ioutil.ReadAll(certFile)
+		if err != nil {
+			return errors.Wrap(err, "unable to read citizen ssl data")
+		}
+
+		caCert, cert, key, err := decodePEM(certData)
+		if err != nil {
+			return errors.Wrap(err, "unable to decode citizen key file")
+		}
+		secretData[a.Config.VaultCitizenCACertKey] = caCert
+		secretData[a.Config.VaultCitizenCertKey] = cert
+		secretData[a.Config.VaultCitizenPKKey] = key
+
+		dns["citizenPortalVaultCaKey"] = a.Config.VaultCitizenCACertKey
+		dns["citizenPortalVaultCertKey"] = a.Config.VaultCitizenCertKey
+		dns["citizenPortalVaultPKKey"] = a.Config.VaultCitizenPKKey
+	}
+
+	values["customDNS"] = dns
+
+	return nil
+}
+
+func decodePEM(buf []byte) (caCert string, cert string, privateKey string, retErr error) {
+	var (
+		block   *pem.Block
+		caBlock bytes.Buffer
+	)
+
+	for {
+		var tmp bytes.Buffer
+
+		block, buf = pem.Decode(buf)
+		if block == nil {
+			break
+		}
+		if block.Type == "CERTIFICATE" {
+			x509Cert, err := x509.ParseCertificate(block.Bytes)
+			if err != nil {
+				panic(err)
+			}
+
+			if x509Cert.IsCA {
+				if retErr = pem.Encode(&caBlock, block); retErr != nil {
+					return
+				}
+			} else {
+				if retErr = pem.Encode(&tmp, block); retErr != nil {
+					return
+				}
+				cert = tmp.String()
+			}
+		} else {
+			if retErr = pem.Encode(&tmp, block); retErr != nil {
+				return
+			}
+
+			privateKey = tmp.String()
+		}
+	}
+
+	caCert = caBlock.String()
+
+	if privateKey == "" {
+		retErr = errors.New("no key found in PEM file")
+	} else if caCert == "" {
+		retErr = errors.New("no CA certs found in PEM file")
+	} else if cert == "" {
+		retErr = errors.New("no cert found in PEM file")
+	}
+
+	return
+}
+
+func (a *App) prepareMailServerConfig(r *registry, secretData map[string]interface{}, values map[string]interface{}) error {
+	notifications := make(map[string]interface{})
+
 	if r.MailServerType == SMTPTypeExternal {
-		var mailServerOpts map[string]interface{}
-		if err := json.Unmarshal([]byte(r.MailServerOpts), &mailServerOpts); err != nil {
+		var smptOptsDict map[string]string
+		if err := json.Unmarshal([]byte(r.MailServerOpts), &smptOptsDict); err != nil {
 			return errors.Wrap(err, "unable to decode mail server opts")
 		}
 
-		pwd, ok := mailServerOpts["password"]
+		pwd, ok := smptOptsDict["password"]
 		if !ok {
 			return errors.New("no password in mail server opts")
 		}
 
-		vaultPath := strings.ReplaceAll(
-			strings.ReplaceAll(a.Config.VaultRegistrySecretPathTemplate, "{registry}", r.Name),
-			"{engine}", a.Config.VaultKVEngineName)
-
-		secretData := map[string]interface{}{
-			a.Config.VaultRegistrySMTPPwdSecretKey: pwd,
-		}
-
-		if _, err := a.Vault.Write(
-			vaultPath, secretData); err != nil {
-			return errors.Wrap(err, "unable to write to vault")
-		}
-		mailServerOpts["vaultPath"] = vaultPath
+		secretData[a.Config.VaultRegistrySMTPPwdSecretKey] = pwd
 		//TODO: remove password from dict
-		bts, err := json.Marshal(mailServerOpts)
+
+		port, err := strconv.ParseInt(smptOptsDict["port"], 10, 32)
 		if err != nil {
-			return errors.Wrap(err, "unable to encode mail server opts")
+			return errors.Wrapf(err, "wrong smtp port value: %s", smptOptsDict["port"])
 		}
 
-		r.MailServerOpts = string(bts)
+		notifications["email"] = map[string]interface{}{
+			"type":      "external",
+			"host":      smptOptsDict["host"],
+			"port":      port,
+			"address":   smptOptsDict["address"],
+			"password":  smptOptsDict["password"],
+			"vaultPath": a.vaultRegistryPath(r.Name),
+			"vaultKey":  a.Config.VaultRegistrySMTPPwdSecretKey,
+		}
+	} else {
+		notifications["email"] = map[string]interface{}{
+			"type": "internal",
+		}
 	}
+
+	values["notifications"] = notifications
 
 	return nil
 }
@@ -506,5 +667,3 @@ func (a *App) setAllowedKeysSecretData(filesSecretData map[string][]byte, reg *r
 
 	return nil
 }
-
-//func (a *App) storeVaultSecrets()

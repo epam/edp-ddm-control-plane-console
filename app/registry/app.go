@@ -28,6 +28,12 @@ type Config struct {
 	VaultRegistrySecretPathTemplate string
 	VaultRegistrySMTPPwdSecretKey   string
 	VaultKVEngineName               string
+	VaultOfficerCACertKey           string
+	VaultOfficerCertKey             string
+	VaultOfficerPKKey               string
+	VaultCitizenCACertKey           string
+	VaultCitizenCertKey             string
+	VaultCitizenPKKey               string
 }
 
 type Services struct {
