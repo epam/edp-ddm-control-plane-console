@@ -27,6 +27,7 @@ const (
 	erStatusActive             = "active"
 	erStatusDisabled           = "disabled"
 	mrTargetExternalReg        = "external-reg"
+	mrTargetEditRegistry       = "edit-registry"
 	mrSubTargetCreation        = "creation"
 	mrSubTargetDisable         = "disable"
 	mrSubTargetEnable          = "enable"
