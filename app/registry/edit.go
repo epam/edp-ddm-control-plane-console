@@ -2,10 +2,13 @@ package registry
 
 import (
 	"context"
+	"ddm-admin-console/service/gerrit"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
+
+	"gopkg.in/yaml.v3"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -148,6 +151,23 @@ func (a *App) editRegistry(ctx context.Context, ginContext *gin.Context, r *regi
 		cb.Annotations = make(map[string]string)
 	}
 
+	values, vaultSecretData := make(map[string]interface{}), make(map[string]interface{})
+	if err := a.prepareDNSConfig(ginContext, r, vaultSecretData, values); err != nil {
+		return errors.Wrap(err, "unable to prepare dns config")
+	}
+
+	//if err := a.prepareMailServerConfig(r, vaultSecretData, values); err != nil {
+	//	return errors.Wrap(err, "unable to prepare mail server config")
+	//}
+
+	if err := a.createVaultSecrets(r.Name, vaultSecretData); err != nil {
+		return errors.Wrap(err, "unable to create vault secrets")
+	}
+
+	if err := a.createEditMergeRequest(ginContext, r, values); err != nil {
+		return errors.Wrap(err, "unable to create edit merge request")
+	}
+
 	admins, err := validateAdmins(r.Admins)
 	if err != nil {
 		return errors.Wrap(err, "unable to validate admins")
@@ -163,6 +183,64 @@ func (a *App) editRegistry(ctx context.Context, ginContext *gin.Context, r *regi
 	if err := a.Services.Jenkins.CreateJobBuildRun(fmt.Sprintf("registry-update-%d", time.Now().Unix()),
 		fmt.Sprintf("%s/job/MASTER-Build-%s/", r.Name, r.Name), nil); err != nil {
 		return errors.Wrap(err, "unable to trigger jenkins job build run")
+	}
+
+	return nil
+}
+
+func (a *App) createEditMergeRequest(ctx *gin.Context, r *registry, globalValues map[string]interface{}) error {
+	values, _, err := a.getValuesFromGit(ctx, r.Name)
+	if err != nil {
+		return errors.Wrap(err, "unable to get values from git")
+	}
+
+	globalInterface, ok := values["global"]
+	if !ok {
+		globalInterface = make(map[string]interface{})
+	}
+
+	globalDict, ok := globalInterface.(map[string]interface{})
+	if !ok {
+		return errors.New("wrong global dict type")
+	}
+
+	for k, v := range globalValues {
+		globalDict[k] = v
+	}
+
+	values["global"] = globalDict
+
+	valuesYaml, err := yaml.Marshal(values)
+	if err != nil {
+		return errors.Wrap(err, "unable to encode values yaml")
+	}
+
+	mrs, err := a.Services.Gerrit.GetMergeRequestByProject(ctx, r.Name)
+	if err != nil {
+		return errors.Wrap(err, "unable to get MRs")
+	}
+
+	for _, mr := range mrs {
+		if mr.Status.Value == "NEW" {
+			return MRExists("there is already open merge request(s) for this registry")
+		}
+	}
+
+	if err := a.Services.Gerrit.CreateMergeRequestWithContents(ctx, &gerrit.MergeRequest{
+		ProjectName:   r.Name,
+		Name:          fmt.Sprintf("reg-edit-mr-%s-%d", r.Name, time.Now().Unix()),
+		AuthorEmail:   ctx.GetString(router.UserEmailSessionKey),
+		AuthorName:    ctx.GetString(router.UserNameSessionKey),
+		CommitMessage: fmt.Sprintf("edit registry"),
+		TargetBranch:  "master",
+		Labels: map[string]string{
+			MRLabelTarget: mrTargetEditRegistry,
+		},
+		Annotations: map[string]string{},
+	}, map[string]string{
+		ValuesLocation: string(valuesYaml),
+	}); err != nil {
+		return errors.Wrap(err, "unable to create MR with new values")
 	}
 
 	return nil

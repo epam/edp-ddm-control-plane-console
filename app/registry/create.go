@@ -320,13 +320,18 @@ func (a *App) prepareDNSConfig(ginContext *gin.Context, r *registry, secretData 
 		if err != nil {
 			return errors.Wrap(err, "unable to decode officer key file")
 		}
-		secretData[a.Config.VaultOfficerCACertKey] = caCert
-		secretData[a.Config.VaultOfficerCertKey] = cert
-		secretData[a.Config.VaultOfficerPKKey] = key
 
-		dns["officerPortalVaultCaKey"] = a.Config.VaultOfficerCACertKey
-		dns["officerPortalVaultCertKey"] = a.Config.VaultOfficerCertKey
-		dns["officerPortalVaultPKKey"] = a.Config.VaultOfficerPKKey
+		caCertKey := fmt.Sprintf("%s-%d", a.Config.VaultOfficerCACertKey, time.Now().Unix())
+		certKey := fmt.Sprintf("%s-%d", a.Config.VaultOfficerCertKey, time.Now().Unix())
+		PKKey := fmt.Sprintf("%s-%d", a.Config.VaultOfficerPKKey, time.Now().Unix())
+
+		secretData[caCertKey] = caCert
+		secretData[certKey] = cert
+		secretData[PKKey] = key
+
+		dns["officerPortalVaultCaKey"] = caCertKey
+		dns["officerPortalVaultCertKey"] = certKey
+		dns["officerPortalVaultPKKey"] = PKKey
 	}
 
 	if r.DNSNameCitizen != "" {
@@ -346,13 +351,18 @@ func (a *App) prepareDNSConfig(ginContext *gin.Context, r *registry, secretData 
 		if err != nil {
 			return errors.Wrap(err, "unable to decode citizen key file")
 		}
-		secretData[a.Config.VaultCitizenCACertKey] = caCert
-		secretData[a.Config.VaultCitizenCertKey] = cert
-		secretData[a.Config.VaultCitizenPKKey] = key
 
-		dns["citizenPortalVaultCaKey"] = a.Config.VaultCitizenCACertKey
-		dns["citizenPortalVaultCertKey"] = a.Config.VaultCitizenCertKey
-		dns["citizenPortalVaultPKKey"] = a.Config.VaultCitizenPKKey
+		caCertKey := fmt.Sprintf("%s-%d", a.Config.VaultCitizenCACertKey, time.Now().Unix())
+		certKey := fmt.Sprintf("%s-%d", a.Config.VaultCitizenCertKey, time.Now().Unix())
+		PKKey := fmt.Sprintf("%s-%d", a.Config.VaultCitizenPKKey, time.Now().Unix())
+
+		secretData[caCertKey] = caCert
+		secretData[certKey] = cert
+		secretData[PKKey] = key
+
+		dns["citizenPortalVaultCaKey"] = caCertKey
+		dns["citizenPortalVaultCertKey"] = certKey
+		dns["citizenPortalVaultPKKey"] = PKKey
 	}
 
 	values["customDNS"] = dns
