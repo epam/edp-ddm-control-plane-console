@@ -61,6 +61,7 @@ func (a *App) createRegistryGet(ctx *gin.Context) (response *router.Response, re
 	}
 
 	return router.MakeResponse(200, "registry/create.html", gin.H{
+		"dnsManual":            false,
 		"page":                 "registry",
 		"gerritProjects":       prjs,
 		"model":                registry{KeyDeviceType: KeyDeviceTypeFile},
@@ -214,7 +215,7 @@ func (a *App) createRegistry(ctx context.Context, ginContext *gin.Context, r *re
 		return errors.Wrap(err, "unknown error")
 	}
 
-	values, vaultSecretData := make(map[string]interface{}), make(map[string]interface{})
+	values, vaultSecretData := make(map[string]interface{}), make(map[string]map[string]interface{})
 	if err := a.prepareDNSConfig(ginContext, r, vaultSecretData, values); err != nil {
 		return errors.Wrap(err, "unable to prepare dns config")
 	}
@@ -223,7 +224,7 @@ func (a *App) createRegistry(ctx context.Context, ginContext *gin.Context, r *re
 		return errors.Wrap(err, "unable to prepare mail server config")
 	}
 
-	if err := a.createVaultSecrets(r.Name, vaultSecretData); err != nil {
+	if err := a.createVaultSecrets(vaultSecretData); err != nil {
 		return errors.Wrap(err, "unable to create vault secrets")
 	}
 
@@ -273,12 +274,17 @@ func (a *App) createRegistry(ctx context.Context, ginContext *gin.Context, r *re
 	return nil
 }
 
-func (a *App) createVaultSecrets(registryName string, secretData map[string]interface{}) error {
-	vaultPath := a.vaultRegistryPath(registryName)
+func (a *App) createVaultSecrets(secretData map[string]map[string]interface{}) error {
+	for vaultPath, pathSecretData := range secretData {
+		pathParts := strings.Split(vaultPath, "/")
+		pathParts = append(pathParts[:1], append([]string{"data"}, pathParts[1:]...)...)
+		vaultPath = strings.Join(pathParts, "/")
 
-	if _, err := a.Vault.Write(
-		vaultPath, secretData); err != nil {
-		return errors.Wrap(err, "unable to write to vault")
+		if _, err := a.Vault.Write(vaultPath, map[string]interface{}{
+			"data": pathSecretData,
+		}); err != nil {
+			return errors.Wrap(err, "unable to write to vault")
+		}
 	}
 
 	return nil
@@ -300,7 +306,7 @@ func (a *App) vaultRegistryPath(registryName string) string {
 		"{engine}", a.Config.VaultKVEngineName)
 }
 
-func (a *App) prepareDNSConfig(ginContext *gin.Context, r *registry, secretData map[string]interface{}, values map[string]interface{}) error {
+func (a *App) prepareDNSConfig(ginContext *gin.Context, r *registry, secretData map[string]map[string]interface{}, values map[string]interface{}) error {
 	dns := make(map[string]string)
 
 	if r.DNSNameOfficer != "" {
@@ -321,17 +327,21 @@ func (a *App) prepareDNSConfig(ginContext *gin.Context, r *registry, secretData 
 			return errors.Wrap(err, "unable to decode officer key file")
 		}
 
-		caCertKey := fmt.Sprintf("%s-%d", a.Config.VaultOfficerCACertKey, time.Now().Unix())
-		certKey := fmt.Sprintf("%s-%d", a.Config.VaultOfficerCertKey, time.Now().Unix())
-		PKKey := fmt.Sprintf("%s-%d", a.Config.VaultOfficerPKKey, time.Now().Unix())
+		secretPath := strings.ReplaceAll(a.Config.VaultOfficerSSLPath, "{registry}", r.Name)
+		secretPath = strings.ReplaceAll(secretPath, "{host}", r.DNSNameOfficer)
 
-		secretData[caCertKey] = caCert
-		secretData[certKey] = cert
-		secretData[PKKey] = key
+		if _, ok := secretData[secretPath]; !ok {
+			secretData[secretPath] = make(map[string]interface{})
+		}
 
-		dns["officerPortalVaultCaKey"] = caCertKey
-		dns["officerPortalVaultCertKey"] = certKey
-		dns["officerPortalVaultPKKey"] = PKKey
+		secretData[secretPath][a.Config.VaultOfficerCACertKey] = caCert
+		secretData[secretPath][a.Config.VaultOfficerCertKey] = cert
+		secretData[secretPath][a.Config.VaultOfficerPKKey] = key
+
+		dns["officerPortalVaultCaKey"] = a.Config.VaultOfficerCACertKey
+		dns["officerPortalVaultCertKey"] = a.Config.VaultOfficerCertKey
+		dns["officerPortalVaultPKKey"] = a.Config.VaultOfficerPKKey
+		dns["officerPortalVaultSecretPath"] = secretPath
 	}
 
 	if r.DNSNameCitizen != "" {
@@ -352,20 +362,26 @@ func (a *App) prepareDNSConfig(ginContext *gin.Context, r *registry, secretData 
 			return errors.Wrap(err, "unable to decode citizen key file")
 		}
 
-		caCertKey := fmt.Sprintf("%s-%d", a.Config.VaultCitizenCACertKey, time.Now().Unix())
-		certKey := fmt.Sprintf("%s-%d", a.Config.VaultCitizenCertKey, time.Now().Unix())
-		PKKey := fmt.Sprintf("%s-%d", a.Config.VaultCitizenPKKey, time.Now().Unix())
+		secretPath := strings.ReplaceAll(a.Config.VaultCitizenSSLPath, "{registry}", r.Name)
+		secretPath = strings.ReplaceAll(secretPath, "{host}", r.DNSNameCitizen)
 
-		secretData[caCertKey] = caCert
-		secretData[certKey] = cert
-		secretData[PKKey] = key
+		if _, ok := secretData[secretPath]; !ok {
+			secretData[secretPath] = make(map[string]interface{})
+		}
 
-		dns["citizenPortalVaultCaKey"] = caCertKey
-		dns["citizenPortalVaultCertKey"] = certKey
-		dns["citizenPortalVaultPKKey"] = PKKey
+		secretData[secretPath][a.Config.VaultCitizenCACertKey] = caCert
+		secretData[secretPath][a.Config.VaultCitizenCertKey] = cert
+		secretData[secretPath][a.Config.VaultCitizenPKKey] = key
+
+		dns["citizenPortalVaultCaKey"] = a.Config.VaultCitizenCACertKey
+		dns["citizenPortalVaultCertKey"] = a.Config.VaultCitizenCertKey
+		dns["citizenPortalVaultPKKey"] = a.Config.VaultCitizenPKKey
+		dns["citizenPortalVaultSecretPath"] = secretPath
 	}
 
-	values["customDNS"] = dns
+	if len(dns) > 0 {
+		values["customDNS"] = dns
+	}
 
 	return nil
 }
@@ -421,7 +437,7 @@ func decodePEM(buf []byte) (caCert string, cert string, privateKey string, retEr
 	return
 }
 
-func (a *App) prepareMailServerConfig(r *registry, secretData map[string]interface{}, values map[string]interface{}) error {
+func (a *App) prepareMailServerConfig(r *registry, secretData map[string]map[string]interface{}, values map[string]interface{}) error {
 	notifications := make(map[string]interface{})
 
 	if r.MailServerType == SMTPTypeExternal {
@@ -435,7 +451,11 @@ func (a *App) prepareMailServerConfig(r *registry, secretData map[string]interfa
 			return errors.New("no password in mail server opts")
 		}
 
-		secretData[a.Config.VaultRegistrySMTPPwdSecretKey] = pwd
+		if _, ok := secretData[a.vaultRegistryPath(r.Name)]; !ok {
+			secretData[a.vaultRegistryPath(r.Name)] = make(map[string]interface{})
+		}
+
+		secretData[a.vaultRegistryPath(r.Name)][a.Config.VaultRegistrySMTPPwdSecretKey] = pwd
 		//TODO: remove password from dict
 
 		port, err := strconv.ParseInt(smptOptsDict["port"], 10, 32)

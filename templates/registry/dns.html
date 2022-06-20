@@ -13,4 +13,15 @@
         <label for="">SSL-сертифікат для кабінету чиновника (розширення .pem)</label>
         <input id="citizen-ssl" name="citizen-ssl" type="file" />
     </div>
+    <div class="yellow-banner">
+        <div class="banner-title">
+            Увага!
+        </div>
+        <div class="banner-body">
+            Необхідно виконати додаткову зовнішню конфігурацію за межами OpenShift кластеру та реєстру.
+            {{ if .dnsManual }}
+            Інструкція доступна <a href="#">за посиланням</a>.
+            {{end}}
+        </div>
+    </div>
 {{end}}
