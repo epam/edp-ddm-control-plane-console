@@ -60,6 +60,11 @@ func (a *App) editRegistryGet(ctx *gin.Context) (response *router.Response, retE
 		return nil, errors.Wrap(err, "unable to check for updates")
 	}
 
+	smtpConfig, err := a.getSMTPConfig(userCtx, registryName)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to get registry SMTP config")
+	}
+
 	return router.MakeResponse(200, "registry/edit.html", gin.H{
 		"dnsManual":            false,
 		"registry":             reg,
@@ -68,7 +73,26 @@ func (a *App) editRegistryGet(ctx *gin.Context) (response *router.Response, retE
 		"hwINITemplateContent": hwINITemplateContent,
 		"updateBranches":       branches,
 		"hasUpdate":            hasUpdate,
+		"smtpConfig":           smtpConfig,
 	}), nil
+}
+
+func (a *App) getSMTPConfig(ctx context.Context, registryName string) (map[string]interface{}, error) {
+	values, err := a.getValuesFromGit(ctx, registryName)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to get values from git")
+	}
+
+	smtpConfig := make(map[string]interface{})
+	global, ok := values["global"]
+	if !ok {
+		return smtpConfig, nil
+	}
+
+	globalDict := global.(map[string]interface{})
+	emailDict := globalDict["notifications"].(map[string]interface{})["email"].(map[string]interface{})
+
+	return emailDict, nil
 }
 
 func (a *App) checkUpdateAccess(codebaseName string, userK8sService k8s.ServiceInterface) error {
@@ -194,7 +218,7 @@ func (a *App) editRegistry(ctx context.Context, ginContext *gin.Context, r *regi
 }
 
 func (a *App) createEditMergeRequest(ctx *gin.Context, r *registry, globalValues map[string]interface{}) error {
-	values, _, err := a.getValuesFromGit(ctx, r.Name)
+	values, err := a.getValuesFromGit(ctx, r.Name)
 	if err != nil {
 		return errors.Wrap(err, "unable to get values from git")
 	}

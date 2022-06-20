@@ -97,36 +97,46 @@ func (a *App) addExternalReg(ctx *gin.Context) (*router.Response, error) {
 		fmt.Sprintf("/admin/registry/view/%s", registryName)), nil
 }
 
-func (a *App) getValuesFromGit(ctx context.Context, registryName string) (map[string]interface{}, []ExternalRegistration, error) {
+func (a *App) getValuesFromGit(ctx context.Context, registryName string) (map[string]interface{}, error) {
 	values, err := a.Services.Gerrit.GetFileContents(ctx, registryName, "master", ValuesLocation)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "unable to get values yaml")
+		return nil, errors.Wrap(err, "unable to get values yaml")
 	}
 
 	var valuesDict map[string]interface{}
 	if err := yaml.Unmarshal([]byte(values), &valuesDict); err != nil {
-		return nil, nil, errors.Wrap(err, "unable to decode values yaml")
+		return nil, errors.Wrap(err, "unable to decode values yaml")
 	}
 	if valuesDict == nil {
 		valuesDict = make(map[string]interface{})
 	}
 
+	return valuesDict, nil
+}
+
+func decodeExternalRegsFromValues(valuesDict map[string]interface{}) ([]ExternalRegistration, error) {
 	eRegs := make([]ExternalRegistration, 0)
+	var err error
 	externalReg, ok := valuesDict[erValuesIndex]
 	if ok {
 		eRegs, err = convertExternalRegFromInterface(externalReg)
 		if err != nil {
-			return nil, nil, errors.Wrap(err, "unable to convert external regs")
+			return nil, errors.Wrap(err, "unable to convert external regs")
 		}
 	}
 
-	return valuesDict, eRegs, nil
+	return eRegs, nil
 }
 
 func (a *App) prepareRegistryValues(ctx context.Context, registryName string, er *ExternalRegistration) (string, error) {
-	valuesDict, eRegs, err := a.getValuesFromGit(ctx, registryName)
+	valuesDict, err := a.getValuesFromGit(ctx, registryName)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to get values from git")
+	}
+
+	eRegs, err := decodeExternalRegsFromValues(valuesDict)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to decode external regs")
 	}
 
 	for _, _er := range eRegs {
@@ -195,9 +205,14 @@ func (a *App) disableExternalReg(ctx *gin.Context) (*router.Response, error) {
 		return nil, errors.New("reg-name is required")
 	}
 
-	values, eRegs, err := a.getValuesFromGit(ctx, registryName)
+	values, err := a.getValuesFromGit(ctx, registryName)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get values from git")
+	}
+
+	eRegs, err := decodeExternalRegsFromValues(values)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to decode external regs")
 	}
 
 	found := false
@@ -240,9 +255,14 @@ func (a *App) removeExternalReg(ctx *gin.Context) (*router.Response, error) {
 		return nil, errors.New("reg-name is required")
 	}
 
-	values, eRegs, err := a.getValuesFromGit(ctx, registryName)
+	values, err := a.getValuesFromGit(ctx, registryName)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get values from git")
+	}
+
+	eRegs, err := decodeExternalRegsFromValues(values)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to decode external regs")
 	}
 
 	found := false

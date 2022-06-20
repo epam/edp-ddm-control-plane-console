@@ -128,4 +128,16 @@ $(function () {
             citizenSSL.attr("required", "required");
         }
     });
+
+    $(".hide-check").change(function (e){
+        let target = $(e.target),
+            dataTarget = target.data("target");
+
+        if (target.prop("checked")) {
+            $(`#${dataTarget}`).show();
+        } else {
+            $(`#${dataTarget}`).hide();
+        }
+
+    });
 });
