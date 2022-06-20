@@ -130,7 +130,7 @@ func (a *App) prepareRegistryValues(ctx context.Context, registryName string, er
 	}
 
 	for _, _er := range eRegs {
-		if er.Name == _er.Name {
+		if er.Name == _er.Name && _er.External == er.External {
 			return "", errors.New("external reg system already exists")
 		}
 	}
