@@ -63,10 +63,16 @@ func (a *App) viewRegistryExternalRegistration(userCtx context.Context, registry
 		}
 	}
 
-	values, _eRegs, err := a.getValuesFromGit(userCtx, registryName)
+	values, err := a.getValuesFromGit(userCtx, registryName)
 	if err != nil {
 		return errors.Wrap(err, "unable to get values from git")
 	}
+
+	_eRegs, err := decodeExternalRegsFromValues(values)
+	if err != nil {
+		return errors.Wrap(err, "unable to decode external regs")
+	}
+
 	for _, _er := range _eRegs {
 		if _, ok := mergeRequestsForER[_er.Name]; !ok {
 			eRegs = append(eRegs, _er)
@@ -158,7 +164,7 @@ func (a *App) viewRegistryGetAdmins(userCtx context.Context, registryName string
 func (a *App) viewDNSConfig(userCtx context.Context, registryName string, viewParams gin.H) error {
 	values, ok := viewParams["values"]
 	if !ok {
-		_values, _, err := a.getValuesFromGit(userCtx, registryName)
+		_values, err := a.getValuesFromGit(userCtx, registryName)
 		if err != nil {
 			return errors.Wrap(err, "unable to get values from git")
 		}
