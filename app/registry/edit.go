@@ -61,6 +61,7 @@ func (a *App) editRegistryGet(ctx *gin.Context) (response *router.Response, retE
 	}
 
 	return router.MakeResponse(200, "registry/edit.html", gin.H{
+		"dnsManual":            false,
 		"registry":             reg,
 		"model":                model,
 		"page":                 "registry",
@@ -151,7 +152,7 @@ func (a *App) editRegistry(ctx context.Context, ginContext *gin.Context, r *regi
 		cb.Annotations = make(map[string]string)
 	}
 
-	values, vaultSecretData := make(map[string]interface{}), make(map[string]interface{})
+	values, vaultSecretData := make(map[string]interface{}), make(map[string]map[string]interface{})
 	if err := a.prepareDNSConfig(ginContext, r, vaultSecretData, values); err != nil {
 		return errors.Wrap(err, "unable to prepare dns config")
 	}
@@ -160,12 +161,16 @@ func (a *App) editRegistry(ctx context.Context, ginContext *gin.Context, r *regi
 	//	return errors.Wrap(err, "unable to prepare mail server config")
 	//}
 
-	if err := a.createVaultSecrets(r.Name, vaultSecretData); err != nil {
-		return errors.Wrap(err, "unable to create vault secrets")
+	if len(vaultSecretData) > 0 {
+		if err := a.createVaultSecrets(vaultSecretData); err != nil {
+			return errors.Wrap(err, "unable to create vault secrets")
+		}
 	}
 
-	if err := a.createEditMergeRequest(ginContext, r, values); err != nil {
-		return errors.Wrap(err, "unable to create edit merge request")
+	if len(values) > 0 {
+		if err := a.createEditMergeRequest(ginContext, r, values); err != nil {
+			return errors.Wrap(err, "unable to create edit merge request")
+		}
 	}
 
 	admins, err := validateAdmins(r.Admins)

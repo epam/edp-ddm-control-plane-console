@@ -24,6 +24,8 @@ func (cnf *Settings) RegistryConfig() registry.Config {
 		VaultCitizenCACertKey:           cnf.VaultCitizenCACertKey,
 		VaultCitizenCertKey:             cnf.VaultCitizenCertKey,
 		VaultCitizenPKKey:               cnf.VaultCitizenPKKey,
+		VaultCitizenSSLPath:             cnf.VaultCitizenSSLPath,
+		VaultOfficerSSLPath:             cnf.VaultOfficerSSLPath,
 	}
 }
 
