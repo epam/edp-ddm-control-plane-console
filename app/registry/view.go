@@ -41,6 +41,7 @@ func (a *App) viewRegistryProcessFunctions() []func(ctx context.Context, registr
 		a.viewRegistryGetMergeRequests,
 		a.viewRegistryGetAdmins,
 		a.viewRegistryExternalRegistration,
+		a.viewDNSConfig,
 	}
 }
 
@@ -62,7 +63,7 @@ func (a *App) viewRegistryExternalRegistration(userCtx context.Context, registry
 		}
 	}
 
-	_, _eRegs, err := a.getValuesFromGit(userCtx, registryName)
+	values, _eRegs, err := a.getValuesFromGit(userCtx, registryName)
 	if err != nil {
 		return errors.Wrap(err, "unable to get values from git")
 	}
@@ -77,6 +78,7 @@ func (a *App) viewRegistryExternalRegistration(userCtx context.Context, registry
 	}
 
 	viewParams["externalRegs"] = eRegs
+	viewParams["values"] = values
 
 	if err := a.loadCodebasesForExternalRegistrations(registryName, eRegs, viewParams); err != nil {
 		return errors.Wrap(err, "unable to load codebases for external reg")
@@ -150,6 +152,32 @@ func (a *App) viewRegistryGetAdmins(userCtx context.Context, registryName string
 	}
 
 	viewParams["admins"] = admins
+	return nil
+}
+
+func (a *App) viewDNSConfig(userCtx context.Context, registryName string, viewParams gin.H) error {
+	values, ok := viewParams["values"]
+	if !ok {
+		_values, _, err := a.getValuesFromGit(userCtx, registryName)
+		if err != nil {
+			return errors.Wrap(err, "unable to get values from git")
+		}
+		values = _values
+	}
+
+	valuesDict, ok := values.(map[string]interface{})
+	if !ok {
+		return errors.New("wrong values format")
+	}
+
+	global := valuesDict["global"].(map[string]interface{})
+	customDNS, ok := global["customDNS"]
+	if ok {
+		dnsDict, _ := customDNS.(map[string]interface{})
+		viewParams["citizenPortalHost"] = dnsDict["citizenPortal"].(string)
+		viewParams["officerPortalHost"] = dnsDict["officerPortal"].(string)
+	}
+
 	return nil
 }
 

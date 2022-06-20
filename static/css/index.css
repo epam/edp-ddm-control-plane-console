@@ -12074,3 +12074,16 @@ div#kubernetes-component {
 #mr-table {
     margin-bottom: 4px;
 }
+
+.yellow-banner {
+    background: #FFFBE6;
+    padding: 16px 24px;
+    margin-bottom: 32px;
+}
+
+.yellow-banner .banner-title {
+    margin-bottom: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 18px;
+}

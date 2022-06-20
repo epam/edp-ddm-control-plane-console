@@ -106,4 +106,26 @@ $(function () {
 
         return false;
     });
+
+    $("#officer-dns").change(function(e){
+        let val = $(e.target).val();
+        let officerSSL = $("#officer-ssl");
+
+        if (val === "") {
+            officerSSL.removeAttr("required");
+        } else {
+            officerSSL.attr("required", "required");
+        }
+    });
+
+    $("#citizen-dns").change(function (e){
+        let val = $(e.target).val();
+        let citizenSSL = $("#citizen-ssl");
+
+        if (val === "") {
+            citizenSSL.removeAttr("required");
+        } else {
+            citizenSSL.attr("required", "required");
+        }
+    });
 });

@@ -18,6 +18,10 @@ func (e ExtendedMergeRequests) RequestName() string {
 		return e.Spec.SourceBranch
 	}
 
+	if e.Labels[MRLabelTarget] == mrTargetEditRegistry {
+		return "Редагування реєстру"
+	}
+
 	return e.Name
 }
 

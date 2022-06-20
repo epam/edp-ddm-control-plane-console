@@ -44,12 +44,14 @@ type Settings struct {
 	VaultKVEngineName                  string `envconfig:"VAULT_KV_ENGINE_NAME" default:"registry-kv"`
 	VaultClusterAdminsPathTemplate     string `envconfig:"V_CLS_ADM_PATH_TPL" default:"{engine}/cluster/{admin}"`
 	VaultClusterAdminsPasswordKey      string `envconfig:"V_CLS_ADMIN_SEC_KEY" default:"password"`
-	VaultOfficerCACertKey              string `envconfig:"V_SSL_OFFICER_CA_CERT_KEY" default:"dns-officer-ca-cert"`
-	VaultOfficerCertKey                string `envconfig:"V_SSL_OFFICER_CA_CERT_KEY" default:"dns-officer-cert"`
-	VaultOfficerPKKey                  string `envconfig:"V_SSL_OFFICER_PK_KEY" default:"dns-officer-pk"`
-	VaultCitizenCACertKey              string `envconfig:"V_SSL_CITIZEN_CA_CERT_KEY" default:"dns-citizen-ca-cert"`
-	VaultCitizenCertKey                string `envconfig:"V_SSL_CITIZEN_CA_CERT_KEY" default:"dns-citizen-cert"`
-	VaultCitizenPKKey                  string `envconfig:"V_SSL_CITIZEN_PK_KEY" default:"dns-citizen-pk"`
+	VaultOfficerCACertKey              string `envconfig:"V_SSL_OFFICER_CA_CERT_KEY" default:"caCertificate"`
+	VaultOfficerCertKey                string `envconfig:"V_SSL_OFFICER_CA_CERT_KEY" default:"certificate"`
+	VaultOfficerPKKey                  string `envconfig:"V_SSL_OFFICER_PK_KEY" default:"key"`
+	VaultCitizenCACertKey              string `envconfig:"V_SSL_CITIZEN_CA_CERT_KEY" default:"caCertificate"`
+	VaultCitizenCertKey                string `envconfig:"V_SSL_CITIZEN_CA_CERT_KEY" default:"certificate"`
+	VaultCitizenPKKey                  string `envconfig:"V_SSL_CITIZEN_PK_KEY" default:"key"`
+	VaultCitizenSSLPath                string `encvonfig:"V_SSL_CITIZEN_PATH" default:"custom-dns-names/{registry}/citizenPortal/{host}"`
+	VaultOfficerSSLPath                string `encvonfig:"V_SSL_CITIZEN_PATH" default:"custom-dns-names/{registry}/officerPortal/{host}"`
 }
 
 type Services struct {

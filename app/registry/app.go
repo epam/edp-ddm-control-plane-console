@@ -34,6 +34,8 @@ type Config struct {
 	VaultCitizenCACertKey           string
 	VaultCitizenCertKey             string
 	VaultCitizenPKKey               string
+	VaultCitizenSSLPath             string
+	VaultOfficerSSLPath             string
 }
 
 type Services struct {

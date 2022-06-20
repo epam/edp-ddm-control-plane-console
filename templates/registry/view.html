@@ -45,6 +45,19 @@
                 <span>Час створення</span>
                 <span>{{ .registry.FormattedCreatedAtTimezone $.timezone }}</span>
             </div>
+            {{if .citizenPortalHost}}
+            <div class="rg-info-line-horizontal">
+                <span>DNS ім’я для портала громадянина</span>
+                <span>{{ .citizenPortalHost }}</span>
+            </div>
+            {{end}}
+            {{if .officerPortalHost}}
+                <div class="rg-info-line-horizontal">
+                    <span>DNS ім’я для портала чиновника</span>
+                    <span>{{ .officerPortalHost }}</span>
+                </div>
+            {{end}}
+
         </div>
     </div>
     <div class="rg-info-block">
