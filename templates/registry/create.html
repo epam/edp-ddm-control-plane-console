@@ -12,6 +12,7 @@
 
         <form @submit="registryFormSubmit" id="create-form" class="registry-create-form" method="post"
               enctype="multipart/form-data" action="">
+            <input type="hidden" name="action" value="create" />
             {{ if .error }}
             <div class="rc-global-error">{{.error}}</div>
             {{ end }}
