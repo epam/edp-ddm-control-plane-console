@@ -4,6 +4,7 @@
     <div class="rc-form-group {{ if .errorsMap.MailServerType }}error{{end}}">
         <label for="smtp-server-type">Поштовий сервер</label>
         <input type="hidden" ref="smtpServerTypeSelected" value="{{ .model.MailServerType }}" />
+        <input type="hidden" ref="smtpEditConfig" value="{{ .smtpConfig }}" />
         <select v-model="smtpServerType" id="smtp-server-type" name="smtp-server-type">
             <option value="platform-mail-server">Платформенний поштовий сервер</option>
             <option value="external-mail-server">Зовнішній поштовий сервер</option>
