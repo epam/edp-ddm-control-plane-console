@@ -10,8 +10,9 @@
         <h1>Редагувати реєстр "{{.registry.Name}}"</h1>
         <div class="registry-description">Можлива зміна опису реєстру. Змінити назву неможливо.</div>
 
-        <form class="registry-create-form" method="post" action="" enctype="multipart/form-data">
+        <form @submit="registryFormSubmit" class="registry-create-form" method="post" action="" enctype="multipart/form-data">
             <input type="hidden" name="_xsrf" value="{{ .xsrfdata }}" />
+            <input type="hidden" name="action" value="edit" />
             <div class="rc-form-group">
                 <label for="description">Опис</label>
                 <textarea rows="3" name="description" id="description" maxlength="250">{{ .registry.Description }}</textarea>

@@ -7,6 +7,17 @@ let app = Vue.createApp({
             }
             this.smtpServerType = selectedSMTP;
         }
+
+        if (this.$refs.hasOwnProperty('smtpEditConfig')) {
+            let smtpConfig = JSON.parse(this.$refs.smtpEditConfig.value);
+            if (smtpConfig['type'] === 'external') {
+                this.smtpServerType = 'external-mail-server';
+                this.externalSMTPOpts = smtpConfig;
+                this.externalSMTPOpts['port'] = smtpConfig['port'].toString();
+            } else {
+                this.smtpServerType = 'platform-mail-server';
+            }
+        }
     },
     data() {
         return {

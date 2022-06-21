@@ -42,6 +42,7 @@ func (a *App) viewRegistryProcessFunctions() []func(ctx context.Context, registr
 		a.viewRegistryGetAdmins,
 		a.viewRegistryExternalRegistration,
 		a.viewDNSConfig,
+		a.viewSMTPConfig,
 	}
 }
 
@@ -161,25 +162,51 @@ func (a *App) viewRegistryGetAdmins(userCtx context.Context, registryName string
 	return nil
 }
 
-func (a *App) viewDNSConfig(userCtx context.Context, registryName string, viewParams gin.H) error {
+func (a *App) viewGetValues(userCtx context.Context, registryName string, viewParams gin.H) (map[string]interface{}, error) {
 	values, ok := viewParams["values"]
 	if !ok {
 		_values, err := a.getValuesFromGit(userCtx, registryName)
 		if err != nil {
-			return errors.Wrap(err, "unable to get values from git")
+			return nil, errors.Wrap(err, "unable to get values from git")
 		}
 		values = _values
 	}
 
 	valuesDict, ok := values.(map[string]interface{})
 	if !ok {
-		return errors.New("wrong values format")
+		return nil, errors.New("wrong values format")
+	}
+
+	return valuesDict, nil
+}
+
+func (a *App) viewSMTPConfig(userCtx context.Context, registryName string, viewParams gin.H) error {
+	valuesDict, err := a.viewGetValues(userCtx, registryName, viewParams)
+	if err != nil {
+		return errors.Wrap(err, "unable to get values")
+	}
+
+	global := valuesDict["global"].(map[string]interface{})
+	notifications, ok := global["notifications"]
+	if !ok {
+		return nil
+	}
+
+	mailType := notifications.(map[string]interface{})["email"].(map[string]interface{})["type"].(string)
+	viewParams["smtpType"] = mailType
+	return nil
+}
+
+func (a *App) viewDNSConfig(userCtx context.Context, registryName string, viewParams gin.H) error {
+	valuesDict, err := a.viewGetValues(userCtx, registryName, viewParams)
+	if err != nil {
+		return errors.Wrap(err, "unable to get values")
 	}
 
 	global := valuesDict["global"].(map[string]interface{})
 	customDNS, ok := global["customDNS"]
 	if ok {
-		dnsDict, _ := customDNS.(map[string]interface{})
+		dnsDict := customDNS.(map[string]interface{})
 		viewParams["citizenPortalHost"] = dnsDict["citizenPortal"].(string)
 		viewParams["officerPortalHost"] = dnsDict["officerPortal"].(string)
 	}

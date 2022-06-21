@@ -66,6 +66,7 @@ func (a *App) createRegistryGet(ctx *gin.Context) (response *router.Response, re
 		"gerritProjects":       prjs,
 		"model":                registry{KeyDeviceType: KeyDeviceTypeFile},
 		"hwINITemplateContent": hwINITemplateContent,
+		"smtpConfig":           "{}",
 	}), nil
 }
 
@@ -220,7 +221,7 @@ func (a *App) createRegistry(ctx context.Context, ginContext *gin.Context, r *re
 		return errors.Wrap(err, "unable to prepare dns config")
 	}
 
-	if err := a.prepareMailServerConfig(r, vaultSecretData, values); err != nil {
+	if err := a.prepareMailServerConfig(ginContext, r, vaultSecretData, values); err != nil {
 		return errors.Wrap(err, "unable to prepare mail server config")
 	}
 
@@ -437,7 +438,15 @@ func decodePEM(buf []byte) (caCert string, cert string, privateKey string, retEr
 	return
 }
 
-func (a *App) prepareMailServerConfig(r *registry, secretData map[string]map[string]interface{}, values map[string]interface{}) error {
+func (a *App) prepareMailServerConfig(ginContext *gin.Context, r *registry, secretData map[string]map[string]interface{}, values map[string]interface{}) error {
+	action := ginContext.PostForm("action")
+	if action == "edit" {
+		performEdit := ginContext.PostForm("edit-smtp")
+		if performEdit == "" {
+			return nil
+		}
+	}
+
 	notifications := make(map[string]interface{})
 
 	if r.MailServerType == SMTPTypeExternal {

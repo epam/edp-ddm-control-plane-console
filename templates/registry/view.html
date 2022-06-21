@@ -57,7 +57,19 @@
                     <span>{{ .officerPortalHost }}</span>
                 </div>
             {{end}}
+            {{if .smtpType}}
+            <div class="rg-info-line-horizontal">
+                <span>Поштовий сервер</span>
+                <span>
+                {{if eq .smtpType "external"}}
+                    Зовнішній поштовий сервер
+                {{else}}
+                    Платформенний поштовий сервер
+                {{end}}
+                </span>
 
+            </div>
+            {{end}}
         </div>
     </div>
     <div class="rg-info-block">

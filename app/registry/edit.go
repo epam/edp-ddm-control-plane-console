@@ -77,22 +77,26 @@ func (a *App) editRegistryGet(ctx *gin.Context) (response *router.Response, retE
 	}), nil
 }
 
-func (a *App) getSMTPConfig(ctx context.Context, registryName string) (map[string]interface{}, error) {
+func (a *App) getSMTPConfig(ctx context.Context, registryName string) (string, error) {
 	values, err := a.getValuesFromGit(ctx, registryName)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to get values from git")
+		return "", errors.Wrap(err, "unable to get values from git")
 	}
 
-	smtpConfig := make(map[string]interface{})
 	global, ok := values["global"]
 	if !ok {
-		return smtpConfig, nil
+		return "{}", nil
 	}
 
 	globalDict := global.(map[string]interface{})
 	emailDict := globalDict["notifications"].(map[string]interface{})["email"].(map[string]interface{})
 
-	return emailDict, nil
+	mailConfig, err := json.Marshal(emailDict)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to encode ot JSON smtp config")
+	}
+
+	return string(mailConfig), nil
 }
 
 func (a *App) checkUpdateAccess(codebaseName string, userK8sService k8s.ServiceInterface) error {
@@ -181,9 +185,9 @@ func (a *App) editRegistry(ctx context.Context, ginContext *gin.Context, r *regi
 		return errors.Wrap(err, "unable to prepare dns config")
 	}
 
-	//if err := a.prepareMailServerConfig(r, vaultSecretData, values); err != nil {
-	//	return errors.Wrap(err, "unable to prepare mail server config")
-	//}
+	if err := a.prepareMailServerConfig(ginContext, r, vaultSecretData, values); err != nil {
+		return errors.Wrap(err, "unable to prepare mail server config")
+	}
 
 	if len(vaultSecretData) > 0 {
 		if err := a.createVaultSecrets(vaultSecretData); err != nil {
