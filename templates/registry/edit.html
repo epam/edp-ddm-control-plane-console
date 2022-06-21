@@ -11,6 +11,10 @@
         <div class="registry-description">Можлива зміна опису реєстру. Змінити назву неможливо.</div>
 
         <form @submit="registryFormSubmit" class="registry-create-form" method="post" action="" enctype="multipart/form-data">
+            {{if .MRExists}}
+            <p class="error">Наразі є один або більше відкритих запитів на оновлення.</p>
+            {{end}}
+
             <input type="hidden" name="_xsrf" value="{{ .xsrfdata }}" />
             <input type="hidden" name="action" value="edit" />
             <div class="rc-form-group">

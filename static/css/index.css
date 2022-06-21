@@ -12087,3 +12087,9 @@ div#kubernetes-component {
     text-transform: uppercase;
     font-size: 18px;
 }
+
+p.error {
+    color: #c10000;
+    background: #ffaaaa;
+    padding: 8px;
+}
