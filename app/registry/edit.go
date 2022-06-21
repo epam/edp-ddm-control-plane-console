@@ -156,6 +156,12 @@ func (a *App) editRegistryPost(ctx *gin.Context) (response *router.Response, ret
 	}
 
 	if err := a.editRegistry(userCtx, ctx, &r, cb, cbService, k8sService); err != nil {
+		_, ok := errors.Cause(err).(MRExists)
+		if ok {
+			return router.MakeResponse(200, "registry/edit.html",
+				gin.H{"page": "registry", "MRExists": true, "registry": r, "model": r}), nil
+		}
+
 		validationErrors, ok := errors.Cause(err).(validator.ValidationErrors)
 		if !ok {
 			return nil, errors.Wrap(err, "unable to parse registry form")
@@ -189,15 +195,15 @@ func (a *App) editRegistry(ctx context.Context, ginContext *gin.Context, r *regi
 		return errors.Wrap(err, "unable to prepare mail server config")
 	}
 
-	if len(vaultSecretData) > 0 {
-		if err := a.createVaultSecrets(vaultSecretData); err != nil {
-			return errors.Wrap(err, "unable to create vault secrets")
-		}
-	}
-
 	if len(values) > 0 {
 		if err := a.createEditMergeRequest(ginContext, r, values); err != nil {
 			return errors.Wrap(err, "unable to create edit merge request")
+		}
+	}
+
+	if len(vaultSecretData) > 0 {
+		if err := a.createVaultSecrets(vaultSecretData); err != nil {
+			return errors.Wrap(err, "unable to create vault secrets")
 		}
 	}
 
