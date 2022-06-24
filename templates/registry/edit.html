@@ -117,25 +117,25 @@
         </div>
     </script>
     <script type="text/javascript">
-        let editKeyChecked = function(){
-            let checked = $("#edit-key").prop('checked'),
-                keyBlock = $("#key-block");
-            keyBlock.find("input").prop('disabled', !checked);
-
-            if (checked) {
-                keyBlock.show();
-                $("#key-device-type").change();
-            } else {
-                keyBlock.hide();
-            }
-        };
-
-        $(function () {
-            let editKey = $("#edit-key");
-            editKey.change(editKeyChecked);
-            editKey.prop("checked", false);
-            editKeyChecked();
-        });
+        // let editKeyChecked = function(){
+        //     let checked = $("#edit-key").prop('checked'),
+        //         keyBlock = $("#key-block");
+        //     keyBlock.find("input").prop('disabled', !checked);
+        //
+        //     if (checked) {
+        //         keyBlock.show();
+        //         $("#key-device-type").change();
+        //     } else {
+        //         keyBlock.hide();
+        //     }
+        // };
+        //
+        // $(function () {
+        //     let editKey = $("#edit-key");
+        //     editKey.change(editKeyChecked);
+        //     editKey.prop("checked", false);
+        //     editKeyChecked();
+        // });
 
     </script>
     <script type="text/javascript" src="{{ .BasePath }}/static/js/registry-form.js"></script>
