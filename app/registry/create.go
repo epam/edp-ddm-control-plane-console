@@ -38,6 +38,23 @@ const (
 	AnnotationValues          = "registry-parameters/values"
 )
 
+type KeyManagement interface {
+	KeyDeviceType() string
+	AllowedKeysIssuer() []string
+	AllowedKeysSerial() []string
+	SignKeyIssuer() string
+	SignKeyPwd() string
+	RemoteType() string
+	RemoteSerialNumber() string
+	RemoteKeyPort() string
+	RemoteKeyHost() string
+	RemoteKeyPassword() string
+	INIConfig() string
+	KeysRequired() bool
+	FilesSecretName() string
+	EnvVarsSecretName() string
+}
+
 func (a *App) createRegistryGet(ctx *gin.Context) (response *router.Response, retErr error) {
 	prjs, err := a.Services.Gerrit.GetProjects(context.Background())
 	if err != nil {
@@ -55,7 +72,7 @@ func (a *App) createRegistryGet(ctx *gin.Context) (response *router.Response, re
 		return nil, errors.Wrap(err, "error during create access check")
 	}
 
-	hwINITemplateContent, err := a.getINITemplateContent()
+	hwINITemplateContent, err := GetINITemplateContent(a.Config.HardwareINITemplatePath)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get ini template data")
 	}
@@ -102,8 +119,8 @@ func (a *App) filterProjects(projects []gerrit.GerritProject) []gerrit.GerritPro
 	return filteredProjects
 }
 
-func (a *App) getINITemplateContent() (string, error) {
-	iniTemplate, err := os.Open(a.Config.HardwareINITemplatePath)
+func GetINITemplateContent(path string) (string, error) {
+	iniTemplate, err := os.Open(path)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to open ini template file")
 	}
@@ -133,7 +150,7 @@ func (a *App) createRegistryPost(ctx *gin.Context) (response *router.Response, r
 		return nil, errors.Wrap(err, "unable to init service for user context")
 	}
 
-	hwINITemplateContent, err := a.getINITemplateContent()
+	hwINITemplateContent, err := GetINITemplateContent(a.Config.HardwareINITemplatePath)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get ini template data")
 	}
@@ -245,7 +262,7 @@ func (a *App) createRegistry(ctx context.Context, ginContext *gin.Context, r *re
 		}
 	}
 
-	if err := a.createRegistryKeys(r, ginContext.Request, k8sService); err != nil {
+	if err := CreateRegistryKeys(keyManagement{r: r}, ginContext.Request, k8sService); err != nil {
 		return errors.Wrap(err, "unable to create registry keys")
 	}
 
@@ -558,7 +575,7 @@ func branchProvisioner(branch string) string {
 		strings.ToLower(branch), ".", "-", -1)
 }
 
-func validateRegistryKeys(rq *http.Request, r *registry) (createKeys bool, key6Fl, caCertFl,
+func validateRegistryKeys(rq *http.Request, r KeyManagement) (createKeys bool, key6Fl, caCertFl,
 	caJSONFl multipart.File, err error) {
 
 	var fieldErrors []validator.FieldError
@@ -577,7 +594,7 @@ func validateRegistryKeys(rq *http.Request, r *registry) (createKeys bool, key6F
 		fieldErrors = append(fieldErrors, router.MakeFieldError("CAsJSON", "required"))
 	}
 
-	if r.KeyDeviceType == KeyDeviceTypeFile {
+	if r.KeyDeviceType() == KeyDeviceTypeFile {
 		key6Fl, _, err = rq.FormFile("key6")
 		if err != nil {
 			fieldErrors = append(fieldErrors, router.MakeFieldError("Key6", "required"))
@@ -593,7 +610,7 @@ func validateRegistryKeys(rq *http.Request, r *registry) (createKeys bool, key6F
 	return
 }
 
-func (a *App) createRegistryKeys(reg *registry, rq *http.Request, k8sService k8s.ServiceInterface) error {
+func CreateRegistryKeys(reg KeyManagement, rq *http.Request, k8sService k8s.ServiceInterface) error {
 	createKeys, key6Fl, caCertFl, caJSONFl, err := validateRegistryKeys(rq, reg)
 	if err != nil {
 		return errors.Wrap(err, "unable to validate registry keys")
@@ -604,45 +621,43 @@ func (a *App) createRegistryKeys(reg *registry, rq *http.Request, k8sService k8s
 
 	filesSecretData := make(map[string][]byte)
 	envVarsSecretData := map[string][]byte{
-		"sign.key.device-type": []byte(reg.KeyDeviceType),
+		"sign.key.device-type": []byte(reg.KeyDeviceType()),
 	}
 
-	if err := a.setCASecretData(filesSecretData, caCertFl, caJSONFl); err != nil {
+	if err := SetCASecretData(filesSecretData, caCertFl, caJSONFl); err != nil {
 		return errors.Wrap(err, "unable to set ca secret data for registry")
 	}
 
-	if err := a.setKeySecretDataFromRegistry(reg, key6Fl, filesSecretData, envVarsSecretData); err != nil {
+	if err := SetKeySecretDataFromRegistry(reg, key6Fl, filesSecretData, envVarsSecretData); err != nil {
 		return errors.Wrap(err, "unable to set key vars from registry form")
 	}
 
-	if err := a.setAllowedKeysSecretData(filesSecretData, reg); err != nil {
+	if err := SetAllowedKeysSecretData(filesSecretData, reg); err != nil {
 		return errors.Wrap(err, "unable to set allowed keys secret data")
 	}
 
-	if err := k8sService.RecreateSecret(fmt.Sprintf("digital-signature-ops-%s-data", reg.Name),
-		filesSecretData); err != nil {
+	if err := k8sService.RecreateSecret(reg.FilesSecretName(), filesSecretData); err != nil {
 		return errors.Wrap(err, "unable to create secret")
 	}
 
-	if err := k8sService.RecreateSecret(fmt.Sprintf("digital-signature-ops-%s-env-vars", reg.Name),
-		envVarsSecretData); err != nil {
+	if err := k8sService.RecreateSecret(reg.EnvVarsSecretName(), envVarsSecretData); err != nil {
 		return errors.Wrap(err, "unable to create secret")
 	}
 
 	return nil
 }
 
-func (a *App) setKeySecretDataFromRegistry(reg *registry, key6Fl multipart.File,
+func SetKeySecretDataFromRegistry(reg KeyManagement, key6Fl multipart.File,
 	filesSecretData, envVarsSecretData map[string][]byte) error {
 
-	if reg.KeyDeviceType == KeyDeviceTypeFile {
+	if reg.KeyDeviceType() == KeyDeviceTypeFile {
 		key6Bytes, err := ioutil.ReadAll(key6Fl)
 		if err != nil {
 			return errors.Wrap(err, "unable to read file")
 		}
 		filesSecretData["Key-6.dat"] = key6Bytes
-		envVarsSecretData["sign.key.file.issuer"] = []byte(reg.SignKeyIssuer)
-		envVarsSecretData["sign.key.file.password"] = []byte(reg.SignKeyPwd)
+		envVarsSecretData["sign.key.file.issuer"] = []byte(reg.SignKeyIssuer())
+		envVarsSecretData["sign.key.file.password"] = []byte(reg.SignKeyPwd())
 
 		//TODO: temporary hack, remote in future
 		envVarsSecretData["sign.key.hardware.type"] = []byte{}
@@ -651,12 +666,12 @@ func (a *App) setKeySecretDataFromRegistry(reg *registry, key6Fl multipart.File,
 		filesSecretData["osplm.ini"] = []byte{}
 		// end todo
 
-	} else if reg.KeyDeviceType == KeyDeviceTypeHardware {
-		envVarsSecretData["sign.key.hardware.type"] = []byte(reg.RemoteType)
+	} else if reg.KeyDeviceType() == KeyDeviceTypeHardware {
+		envVarsSecretData["sign.key.hardware.type"] = []byte(reg.RemoteType())
 		envVarsSecretData["sign.key.hardware.device"] = []byte(fmt.Sprintf("%s:%s (%s)",
-			reg.RemoteSerialNumber, reg.RemoteKeyPort, reg.RemoteKeyHost))
-		envVarsSecretData["sign.key.hardware.password"] = []byte(reg.RemoteKeyPassword)
-		filesSecretData["osplm.ini"] = []byte(reg.INIConfig)
+			reg.RemoteSerialNumber(), reg.RemoteKeyPort(), reg.RemoteKeyHost()))
+		envVarsSecretData["sign.key.hardware.password"] = []byte(reg.RemoteKeyPassword())
+		filesSecretData["osplm.ini"] = []byte(reg.INIConfig())
 
 		//TODO: temporary hack, remote in future
 		filesSecretData["Key-6.dat"] = []byte{}
@@ -668,7 +683,7 @@ func (a *App) setKeySecretDataFromRegistry(reg *registry, key6Fl multipart.File,
 	return nil
 }
 
-func (a *App) setCASecretData(filesSecretData map[string][]byte, caCertFl, caJSONFl multipart.File) error {
+func SetCASecretData(filesSecretData map[string][]byte, caCertFl, caJSONFl multipart.File) error {
 	caCertBytes, err := ioutil.ReadAll(caCertFl)
 	if err != nil {
 		return errors.Wrap(err, "unable to read file")
@@ -684,17 +699,20 @@ func (a *App) setCASecretData(filesSecretData map[string][]byte, caCertFl, caJSO
 	return nil
 }
 
-func (a *App) setAllowedKeysSecretData(filesSecretData map[string][]byte, reg *registry) error {
+func SetAllowedKeysSecretData(filesSecretData map[string][]byte, reg KeyManagement) error {
 	//TODO tmp hack, remote in future
 	filesSecretData["allowed-keys.yml"] = []byte{}
 	//end todo
 
-	if len(reg.AllowedKeysIssuer) > 0 {
+	allowedKeysIssuer := reg.AllowedKeysIssuer()
+	allowedKeysSerial := reg.AllowedKeysSerial()
+
+	if len(allowedKeysIssuer) > 0 {
 		var allowedKeysConf allowedKeysConfig
-		for i := range reg.AllowedKeysIssuer {
+		for i := range allowedKeysIssuer {
 			allowedKeysConf.AllowedKeys = append(allowedKeysConf.AllowedKeys, allowedKey{
-				Issuer: reg.AllowedKeysIssuer[i],
-				Serial: reg.AllowedKeysSerial[i],
+				Issuer: allowedKeysIssuer[i],
+				Serial: allowedKeysSerial[i],
 			})
 		}
 		allowedKeysYaml, err := yaml.Marshal(&allowedKeysConf)

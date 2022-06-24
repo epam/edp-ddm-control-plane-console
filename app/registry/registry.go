@@ -1,5 +1,7 @@
 package registry
 
+import "fmt"
+
 const (
 	ScenarioKeyRequired    = "key-required"
 	ScenarioKeyNotRequired = "key-not-required"
@@ -48,4 +50,64 @@ type allowedKeysConfig struct {
 type allowedKey struct {
 	Issuer string `yaml:"issuer"`
 	Serial string `yaml:"serial"`
+}
+
+type keyManagement struct {
+	r *registry
+}
+
+func (k keyManagement) KeyDeviceType() string {
+	return k.r.KeyDeviceType
+}
+
+func (k keyManagement) AllowedKeysIssuer() []string {
+	return k.r.AllowedKeysIssuer
+}
+
+func (k keyManagement) AllowedKeysSerial() []string {
+	return k.r.AllowedKeysSerial
+}
+
+func (k keyManagement) SignKeyIssuer() string {
+	return k.r.SignKeyIssuer
+}
+
+func (k keyManagement) SignKeyPwd() string {
+	return k.r.SignKeyPwd
+}
+
+func (k keyManagement) RemoteType() string {
+	return k.r.RemoteType
+}
+
+func (k keyManagement) RemoteSerialNumber() string {
+	return k.r.RemoteSerialNumber
+}
+
+func (k keyManagement) RemoteKeyPort() string {
+	return k.r.RemoteKeyPort
+}
+
+func (k keyManagement) RemoteKeyHost() string {
+	return k.r.RemoteKeyHost
+}
+
+func (k keyManagement) RemoteKeyPassword() string {
+	return k.r.RemoteKeyPassword
+}
+
+func (k keyManagement) INIConfig() string {
+	return k.r.INIConfig
+}
+
+func (k keyManagement) KeysRequired() bool {
+	return k.r.KeysRequired()
+}
+
+func (k keyManagement) FilesSecretName() string {
+	return fmt.Sprintf("digital-signature-ops-%s-data", k.r.Name)
+}
+
+func (k keyManagement) EnvVarsSecretName() string {
+	return fmt.Sprintf("digital-signature-ops-%s-env-vars", k.r.Name)
 }
