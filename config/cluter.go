@@ -22,5 +22,6 @@ func (cnf *Settings) ClusterConfig() cluster.Config {
 		VaultClusterAdminsPasswordKey:  cnf.VaultClusterAdminsPasswordKey,
 		VaultClusterAdminsPathTemplate: cnf.VaultClusterAdminsPathTemplate,
 		VaultKVEngineName:              cnf.VaultKVEngineName,
+		HardwareINITemplatePath:        cnf.RegistryHardwareKeyINITemplatePath,
 	}
 }

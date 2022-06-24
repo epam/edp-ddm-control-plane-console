@@ -39,6 +39,7 @@ type Config struct {
 	VaultClusterAdminsPathTemplate string
 	VaultClusterAdminsPasswordKey  string
 	VaultKVEngineName              string
+	HardwareINITemplatePath        string
 }
 
 type App struct {

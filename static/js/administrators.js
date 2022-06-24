@@ -131,5 +131,25 @@ let app = Vue.createApp({
     }
 })
 
-app.config.compilerOptions.delimiters = ['[[', ']]']
-app.mount('#registry-form')
+app.config.compilerOptions.delimiters = ['[[', ']]'];
+app.mount('#registry-form');
+
+let editKeyChecked = function(){
+    let checked = $("#edit-key").prop('checked'),
+        keyBlock = $("#key-block");
+    keyBlock.find("input").prop('disabled', !checked);
+
+    if (checked) {
+        keyBlock.show();
+        $("#key-device-type").change();
+    } else {
+        keyBlock.hide();
+    }
+};
+
+$(function () {
+    let editKey = $("#edit-key");
+    editKey.change(editKeyChecked);
+    editKey.prop("checked", false);
+    editKeyChecked();
+});

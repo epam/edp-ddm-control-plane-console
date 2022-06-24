@@ -77,12 +77,18 @@ func (a *App) editGet(ctx *gin.Context) (*router.Response, error) {
 		return nil, errors.Wrap(err, "unable to decode admins")
 	}
 
+	hwINITemplateContent, err := registry.GetINITemplateContent(a.Config.HardwareINITemplatePath)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to get ini template data")
+	}
+
 	return router.MakeResponse(200, "cluster/edit.html", gin.H{
-		"backupConf":     backupConfig,
-		"page":           "cluster",
-		"updateBranches": branches,
-		"hasUpdate":      hasUpdate,
-		"admins":         admins,
+		"backupConf":           backupConfig,
+		"page":                 "cluster",
+		"updateBranches":       branches,
+		"hasUpdate":            hasUpdate,
+		"admins":               admins,
+		"hwINITemplateContent": hwINITemplateContent,
 	}), nil
 }
 

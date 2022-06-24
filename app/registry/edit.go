@@ -50,7 +50,7 @@ func (a *App) editRegistryGet(ctx *gin.Context) (response *router.Response, retE
 	adminsJs, _ := json.Marshal(admins)
 	model.Admins = string(adminsJs)
 
-	hwINITemplateContent, err := a.getINITemplateContent()
+	hwINITemplateContent, err := GetINITemplateContent(a.Config.HardwareINITemplatePath)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get ini template data")
 	}
@@ -177,7 +177,7 @@ func (a *App) editRegistryPost(ctx *gin.Context) (response *router.Response, ret
 
 func (a *App) editRegistry(ctx context.Context, ginContext *gin.Context, r *registry, cb *codebase.Codebase,
 	cbService codebase.ServiceInterface, k8sService k8s.ServiceInterface) error {
-	if err := a.createRegistryKeys(r, ginContext.Request, k8sService); err != nil {
+	if err := CreateRegistryKeys(keyManagement{r: r}, ginContext.Request, k8sService); err != nil {
 		return errors.Wrap(err, "unable to create registry keys")
 	}
 
