@@ -21,9 +21,16 @@ let app = Vue.createApp({
     },
     data() {
         return {
+            officerCIDRValue: '',
+            officerCIDR: [],
+            citizenCIDRValue: '',
+            citizenCIDR: [],
+            adminCIDRValue: '',
+            adminCIDR: [],
             adminsValue: '',
             message: 'Hello Vue!',
             adminPopupShow: false,
+            cidrPopupShow: false,
             admins: [],
             editAdmin: {
                 firstName: "",
@@ -71,6 +78,15 @@ let app = Vue.createApp({
             this.requiredError = false;
             this.adminPopupShow = true;
             $("body").css("overflow", "hidden");
+        },
+        showCIDRForm(param1, param2) {
+            this.cidrPopupShow = true;
+            $("body").css("overflow", "hidden");
+            console.log(param1, param2);
+        },
+        hideCIDRForm() {
+            this.cidrPopupShow = false;
+            $("body").css("overflow", "scroll");
         },
         hideAdminForm() {
             this.adminPopupShow = false;
