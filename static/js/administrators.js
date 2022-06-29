@@ -21,17 +21,20 @@ let app = Vue.createApp({
     },
     data() {
         return {
-            officerCIDRValue: '',
+            officerCIDRValue: { value: '' },
             officerCIDR: [],
-            citizenCIDRValue: '',
+            citizenCIDRValue: { value: '' },
             citizenCIDR: [],
-            adminCIDRValue: '',
+            adminCIDRValue: { value: '' },
             adminCIDR: [],
             adminsValue: '',
-            message: 'Hello Vue!',
+            currentCIDR: [],
+            currentCIDRValue: '',
+            cidrFormatError: false,
             adminPopupShow: false,
             cidrPopupShow: false,
             admins: [],
+            editCIDR: '',
             editAdmin: {
                 firstName: "",
                 lastName: "",
@@ -79,14 +82,42 @@ let app = Vue.createApp({
             this.adminPopupShow = true;
             $("body").css("overflow", "hidden");
         },
-        showCIDRForm(param1, param2) {
+        showCIDRForm(cidr, value) {
             this.cidrPopupShow = true;
             $("body").css("overflow", "hidden");
-            console.log(param1, param2);
+
+            this.editCIDR = '';
+            this.currentCIDR = cidr;
+            this.currentCIDRValue = value;
+            this.cidrFormatError = false;
         },
         hideCIDRForm() {
             this.cidrPopupShow = false;
             $("body").css("overflow", "scroll");
+        },
+        createCIDR(e) {
+            e.preventDefault();
+            if (!String(this.editCIDR).toLowerCase().match(/^([01]?\d\d?|2[0-4]\d|25[0-5])(?:\.(?:[01]?\d\d?|2[0-4]\d|25[0-5])){3}(?:\/[0-2]\d|\/3[0-2])?$/)) {
+                this.cidrFormatError = true;
+                return;
+            }
+
+            this.currentCIDR.push(this.editCIDR);
+            this.currentCIDRValue.value = JSON.stringify(this.currentCIDR);
+            this.hideCIDRForm();
+
+        },
+        deleteCIDR(c, cidr, value, e) {
+            e.preventDefault();
+
+            for (let v in cidr) {
+                if (cidr[v] === c) {
+                    cidr.splice(v, 1);
+                    break;
+                }
+            }
+
+            value = JSON.stringify(cidr);
         },
         hideAdminForm() {
             this.adminPopupShow = false;

@@ -73,6 +73,15 @@
             {{template "reg-dns" .}}
             </div>
 
+            <div>
+                <input class="hide-check" data-target="cidr-block" name="edit-cidr" type="checkbox" id="edit-cidr">
+                <label for="edit-cidr">Редагувати налаштування CIDR</label>
+            </div>
+
+            <div id="cidr-block" style="display: none;margin-bottom: 10px;">
+                {{template "cidr-block" .}}
+            </div>
+
             <div class="rc-form-group">
                 <button type="submit" name="submit">Підтвердити</button>
             </div>
@@ -104,6 +113,7 @@
         </form>
         {{end}}
         {{template "admin-block" .}}
+        {{template "cidr-form" .}}
     </div>
     <script src="{{ .BasePath }}/static/js/mustache.js"></script>
     <script id="ini-template" type="x-tmpl-mustache">

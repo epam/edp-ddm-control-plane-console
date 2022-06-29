@@ -70,6 +70,38 @@
 
             </div>
             {{end}}
+
+            {{if .officerCIDR}}
+            <div class="rg-info-line-horizontal">
+                <span>CIDR для портала чиновника</span>
+                <span>
+                    {{range .officerCIDR}}
+                        <p class="view-cidr">{{ . }}</p>
+                    {{end}}
+                </span>
+            </div>
+            {{end}}
+            {{if .citizenCIDR}}
+            <div class="rg-info-line-horizontal">
+                <span>CIDR для портала громадянина</span>
+                <span>
+                    {{range .citizenCIDR}}
+                        <p class="view-cidr">{{ . }}</p>
+                    {{end}}
+                </span>
+            </div>
+            {{end}}
+            {{if .adminCIDR}}
+            <div class="rg-info-line-horizontal">
+                <span>CIDR для адміністративних компонент</span>
+                <span>
+                    {{range .adminCIDR}}
+                        <p class="view-cidr">{{ . }}</p>
+                    {{end}}
+                </span>
+            </div>
+            {{end}}
+
         </div>
     </div>
     <div class="rg-info-block">

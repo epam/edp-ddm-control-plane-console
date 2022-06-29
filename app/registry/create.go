@@ -84,6 +84,7 @@ func (a *App) createRegistryGet(ctx *gin.Context) (response *router.Response, re
 		"model":                registry{KeyDeviceType: KeyDeviceTypeFile},
 		"hwINITemplateContent": hwINITemplateContent,
 		"smtpConfig":           "{}",
+		"cidr":                 "{}",
 	}), nil
 }
 
@@ -238,6 +239,10 @@ func (a *App) createRegistry(ctx context.Context, ginContext *gin.Context, r *re
 		return errors.Wrap(err, "unable to prepare dns config")
 	}
 
+	if err := a.prepareCIDRConfig(r, values); err != nil {
+		return errors.Wrap(err, "unable to prepare cidr config")
+	}
+
 	if err := a.prepareMailServerConfig(ginContext, r, vaultSecretData, values); err != nil {
 		return errors.Wrap(err, "unable to prepare mail server config")
 	}
@@ -322,6 +327,43 @@ func (a *App) vaultRegistryPath(registryName string) string {
 	return strings.ReplaceAll(
 		strings.ReplaceAll(a.Config.VaultRegistrySecretPathTemplate, "{registry}", registryName),
 		"{engine}", a.Config.VaultKVEngineName)
+}
+
+func (a *App) prepareCIDRConfig(r *registry, values map[string]interface{}) error {
+	cidrDict := make(map[string][]string)
+
+	if r.CIDRCitizen != "" {
+		var cidr []string
+		if err := json.Unmarshal([]byte(r.CIDRCitizen), &cidr); err != nil {
+			return errors.Wrap(err, "unable to decode cidr")
+		}
+
+		cidrDict["citizen"] = cidr
+	}
+
+	if r.CIDROfficer != "" {
+		var cidr []string
+		if err := json.Unmarshal([]byte(r.CIDROfficer), &cidr); err != nil {
+			return errors.Wrap(err, "unable to decode cidr")
+		}
+
+		cidrDict["officer"] = cidr
+	}
+
+	if r.CIDRAdmin != "" {
+		var cidr []string
+		if err := json.Unmarshal([]byte(r.CIDRAdmin), &cidr); err != nil {
+			return errors.Wrap(err, "unable to decode cidr")
+		}
+
+		cidrDict["admin"] = cidr
+	}
+
+	if len(cidrDict) > 0 {
+		values["cidr"] = cidrDict
+	}
+
+	return nil
 }
 
 func (a *App) prepareDNSConfig(ginContext *gin.Context, r *registry, secretData map[string]map[string]interface{}, values map[string]interface{}) error {
