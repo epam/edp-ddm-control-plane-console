@@ -18,6 +18,25 @@ let app = Vue.createApp({
                 this.smtpServerType = 'platform-mail-server';
             }
         }
+
+        if (this.$refs.hasOwnProperty('cidrEditConfig')) {
+            let cidrConfig = JSON.parse(this.$refs.cidrEditConfig.value);
+
+            if (cidrConfig.hasOwnProperty('citizen')) {
+                this.citizenCIDR = cidrConfig.citizen;
+                this.citizenCIDRValue.value = JSON.stringify(this.citizenCIDR);
+            }
+
+            if (cidrConfig.hasOwnProperty('officer')) {
+                this.officerCIDR = cidrConfig.officer;
+                this.officerCIDRValue.value = JSON.stringify(this.officerCIDR);
+            }
+
+            if (cidrConfig.hasOwnProperty('admin')) {
+                this.adminCIDR = cidrConfig.admin;
+                this.adminCIDRValue.value = JSON.stringify(this.adminCIDR);
+            }
+        }
     },
     data() {
         return {

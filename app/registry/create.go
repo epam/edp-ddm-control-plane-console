@@ -84,7 +84,7 @@ func (a *App) createRegistryGet(ctx *gin.Context) (response *router.Response, re
 		"model":                registry{KeyDeviceType: KeyDeviceTypeFile},
 		"hwINITemplateContent": hwINITemplateContent,
 		"smtpConfig":           "{}",
-		"cidr":                 "{}",
+		"cidrConfig":           "{}",
 	}), nil
 }
 

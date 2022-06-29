@@ -60,12 +60,7 @@ func (a *App) editRegistryGet(ctx *gin.Context) (response *router.Response, retE
 		return nil, errors.Wrap(err, "unable to check for updates")
 	}
 
-	smtpConfig, err := a.getSMTPConfig(userCtx, registryName)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to get registry SMTP config")
-	}
-
-	return router.MakeResponse(200, "registry/edit.html", gin.H{
+	responseParams := gin.H{
 		"dnsManual":            false,
 		"registry":             reg,
 		"model":                model,
@@ -73,19 +68,60 @@ func (a *App) editRegistryGet(ctx *gin.Context) (response *router.Response, retE
 		"hwINITemplateContent": hwINITemplateContent,
 		"updateBranches":       branches,
 		"hasUpdate":            hasUpdate,
-		"smtpConfig":           smtpConfig,
-	}), nil
-}
-
-func (a *App) getSMTPConfig(ctx context.Context, registryName string) (string, error) {
-	values, err := a.getValuesFromGit(ctx, registryName)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to get values from git")
 	}
 
+	if err := a.loadValuesEditConfig(ctx, registryName, responseParams); err != nil {
+		return nil, errors.Wrap(err, "unable to load edit values from config")
+	}
+
+	return router.MakeResponse(200, "registry/edit.html", responseParams), nil
+}
+
+func (a *App) loadValuesEditConfig(ctx context.Context, registryName string, rspParams gin.H) error {
+	values, err := a.getValuesFromGit(ctx, registryName)
+	if err != nil {
+		return errors.Wrap(err, "unable to get values from git")
+	}
+
+	if err := a.loadSMTPConfig(values, rspParams); err != nil {
+		return errors.Wrap(err, "unable to load smtp config")
+	}
+
+	if err := a.loadCIDRConfig(values, rspParams); err != nil {
+		return errors.Wrap(err, "unable to load cidr config")
+	}
+
+	return nil
+}
+
+func (a *App) loadCIDRConfig(values map[string]interface{}, rspParams gin.H) error {
 	global, ok := values["global"]
 	if !ok {
-		return "{}", nil
+		rspParams["cidrConfig"] = "{}"
+		return nil
+	}
+
+	globalDict := global.(map[string]interface{})
+	cidr, ok := globalDict["cidr"]
+	if !ok {
+		rspParams["cidrConfig"] = "{}"
+		return nil
+	}
+
+	cidrConfig, err := json.Marshal(cidr)
+	if err != nil {
+		return errors.Wrap(err, "unable to encode cidr to JSON")
+	}
+
+	rspParams["cidrConfig"] = string(cidrConfig)
+	return nil
+}
+
+func (a *App) loadSMTPConfig(values map[string]interface{}, rspParams gin.H) error {
+	global, ok := values["global"]
+	if !ok {
+		rspParams["smtpConfig"] = "{}"
+		return nil
 	}
 
 	globalDict := global.(map[string]interface{})
@@ -93,10 +129,11 @@ func (a *App) getSMTPConfig(ctx context.Context, registryName string) (string, e
 
 	mailConfig, err := json.Marshal(emailDict)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to encode ot JSON smtp config")
+		return errors.Wrap(err, "unable to encode ot JSON smtp config")
 	}
 
-	return string(mailConfig), nil
+	rspParams["smtpConfig"] = string(mailConfig)
+	return nil
 }
 
 func (a *App) checkUpdateAccess(codebaseName string, userK8sService k8s.ServiceInterface) error {
@@ -193,6 +230,10 @@ func (a *App) editRegistry(ctx context.Context, ginContext *gin.Context, r *regi
 
 	if err := a.prepareMailServerConfig(ginContext, r, vaultSecretData, values); err != nil {
 		return errors.Wrap(err, "unable to prepare mail server config")
+	}
+
+	if err := a.prepareCIDRConfig(r, values); err != nil {
+		return errors.Wrap(err, "unable to prepare cidr config")
 	}
 
 	if len(values) > 0 {
