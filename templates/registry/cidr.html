@@ -4,11 +4,12 @@
     <p>Ці налаштування є необов’язковими.</p>
     <div class="rc-form-group">
         <label for="admins">CIDR для портала чиновника</label>
-        <input type="hidden" id="officer-cidr" name="officer-cidr" v-model="officerCIDRValue" />
+        <input type="hidden" id="preload-cidr" ref="cidr" value="{{ .cidr }}" />
+        <input type="hidden" id="officer-cidr" name="officer-cidr" v-model="officerCIDRValue.value" />
         <div class="advanced-admins">
             <div v-cloak v-for="c in officerCIDR" class="child-admin">
                 [[ c ]]
-                <a @click="deleteCIDR" :tp="officer" :cidr="c" href="#">
+                <a @click="deleteCIDR(c, officerCIDR, officerCIDRValue, $event)" :tp="officer" :cidr="c" href="#">
                     <img src="/static/img/action-delete.png" />
                 </a>
             </div>
@@ -18,11 +19,11 @@
 
     <div class="rc-form-group">
         <label for="admins">CIDR для портала громадянина</label>
-        <input type="hidden" id="citizen-cidr" name="officer-cidr" v-model="citizenCIDRValue" />
+        <input type="hidden" id="citizen-cidr" name="citizen-cidr" v-model="citizenCIDRValue.value" />
         <div class="advanced-admins">
             <div v-cloak v-for="c in citizenCIDR" class="child-admin">
                 [[ c ]]
-                <a @click="deleteCIDR" :tp="citizen" :cidr="c" href="#">
+                <a @click="deleteCIDR(c, citizenCIDR, citizenCIDRValue, $event)" :tp="citizen" :cidr="c" href="#">
                     <img src="/static/img/action-delete.png" />
                 </a>
             </div>
@@ -32,11 +33,11 @@
 
     <div class="rc-form-group">
         <label for="admins">CIDR для адміністративних компонент</label>
-        <input type="hidden" id="admin-cidr" name="admin-cidr" v-model="adminCIDRValue" />
+        <input type="hidden" id="admin-cidr" name="admin-cidr" v-model="adminCIDRValue.value" />
         <div class="advanced-admins">
             <div v-cloak v-for="c in adminCIDR" class="child-admin">
                 [[ c ]]
-                <a @click="deleteCIDR" :tp="admin" :cidr="c" href="#">
+                <a @click="deleteCIDR(c, adminCIDR, adminCIDRValue, $event)" :tp="admin" :cidr="c" href="#">
                     <img src="/static/img/action-delete.png" />
                 </a>
             </div>
@@ -45,40 +46,4 @@
     </div>
 
 
-    <div class="popup-window admin-window visible" v-cloak v-if="cidrPopupShow">
-        <div class="popup-header">
-            <p>Додати CIDR</p>
-            <a href="#" @click="hideCIDRForm" class="popup-close hide-popup">
-                <img alt="close popup window" src="{{.BasePath}}/static/img/close.png" />
-            </a>
-        </div>
-        <form @submit="createAdmin" id="admin-form" method="post" action="">
-            <div class="popup-body">
-                <p class="popup-error" v-cloak v-if="requiredError">Всі поля обов'язкові для заповнення</p>
-                <p class="popup-error" v-cloak v-if="emailFormatError">Невірний формат електронной пошти</p>
-                <p class="popup-error" v-cloak v-if="usernameFormatError">Невірний формат ім'я користувача</p>
-
-                <div class="rc-form-group">
-                    <input aria-label="admin first name" type="text"
-                           placeholder="Ім'я" v-model="editAdmin.firstName" />
-                </div>
-                <div class="rc-form-group">
-                    <input aria-label="admin last name" type="text"
-                           placeholder="Прізвище" v-model="editAdmin.lastName" />
-                </div>
-                <div class="rc-form-group">
-                    <input aria-label="email" type="email"
-                           placeholder="Електронна пошта" v-model="editAdmin.email" />
-                </div>
-                <div class="rc-form-group">
-                    <input aria-label="password" type="password" v-model="editAdmin.tmpPassword"
-                           placeholder="Тимчасовий пароль" />
-                </div>
-            </div>
-            <div class="popup-footer active">
-                <a href="#" id="admin-cancel" class="hide-popup" @click="hideAdminForm">відмінити</a>
-                <button value="submit" name="admin-apply" @click="createAdmin" type="submit">Підтвердити</button>
-            </div>
-        </form>
-    </div>
 {{ end }}

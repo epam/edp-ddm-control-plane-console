@@ -43,6 +43,7 @@ func (a *App) viewRegistryProcessFunctions() []func(ctx context.Context, registr
 		a.viewRegistryExternalRegistration,
 		a.viewDNSConfig,
 		a.viewSMTPConfig,
+		a.viewCIDRConfig,
 	}
 }
 
@@ -178,6 +179,34 @@ func (a *App) viewGetValues(userCtx context.Context, registryName string, viewPa
 	}
 
 	return valuesDict, nil
+}
+
+func (a *App) viewCIDRConfig(userCtx context.Context, registryName string, viewParams gin.H) error {
+	valuesDict, err := a.viewGetValues(userCtx, registryName, viewParams)
+	if err != nil {
+		return errors.Wrap(err, "unable to get values")
+	}
+
+	global := valuesDict["global"].(map[string]interface{})
+	cidr, ok := global["cidr"]
+	if !ok {
+		return nil
+	}
+
+	cidrDict := cidr.(map[string]interface{})
+	if _, ok := cidrDict["admin"]; ok {
+		viewParams["adminCIDR"] = cidrDict["admin"].([]interface{})
+	}
+
+	if _, ok := cidrDict["citizen"]; ok {
+		viewParams["citizenCIDR"] = cidrDict["citizen"].([]interface{})
+	}
+
+	if _, ok := cidrDict["officer"]; ok {
+		viewParams["officerCIDR"] = cidrDict["officer"].([]interface{})
+	}
+
+	return nil
 }
 
 func (a *App) viewSMTPConfig(userCtx context.Context, registryName string, viewParams gin.H) error {
