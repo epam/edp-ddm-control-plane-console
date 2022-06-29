@@ -11536,6 +11536,10 @@ div#kubernetes-component {
     margin-top: 8px;
 }
 
+/*.rc-form-group button[type=submit] {*/
+/*    margin-bottom: 16px;*/
+/*}*/
+
 .rc-form-group button:focus {
     outline: none;
 }
@@ -12092,4 +12096,13 @@ p.error {
     color: #c10000;
     background: #ffaaaa;
     padding: 8px;
+}
+
+.view-cidr {
+    font-weight: normal;
+    padding: 8px;
+    background: #F2F2F2;
+    display: inline;
+    border-radius: 4px;
+    margin-right: 3px;
 }
