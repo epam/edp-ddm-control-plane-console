@@ -187,8 +187,7 @@ func (a *App) viewCIDRConfig(userCtx context.Context, registryName string, viewP
 		return errors.Wrap(err, "unable to get values")
 	}
 
-	global := valuesDict["global"].(map[string]interface{})
-	cidr, ok := global["cidr"]
+	cidr, ok := valuesDict["cidr"]
 	if !ok {
 		return nil
 	}
@@ -232,12 +231,21 @@ func (a *App) viewDNSConfig(userCtx context.Context, registryName string, viewPa
 		return errors.Wrap(err, "unable to get values")
 	}
 
-	global := valuesDict["global"].(map[string]interface{})
-	customDNS, ok := global["customDNS"]
-	if ok {
-		dnsDict := customDNS.(map[string]interface{})
-		viewParams["citizenPortalHost"] = dnsDict["citizenPortal"].(string)
-		viewParams["officerPortalHost"] = dnsDict["officerPortal"].(string)
+	portals, ok := valuesDict["portals"]
+	if !ok {
+		return nil
+	}
+
+	portalsDict := portals.(map[string]interface{})
+	citizenDict := portalsDict["citizen"].(map[string]interface{})
+	officerDict := portalsDict["citizen"].(map[string]interface{})
+
+	if citizenCustomDNS, ok := citizenDict["customDns"]; ok {
+		viewParams["citizenPortalHost"] = citizenCustomDNS.(map[string]interface{})["host"].(string)
+	}
+
+	if officerCustomDNS, ok := officerDict["customDns"]; ok {
+		viewParams["officerPortalHost"] = officerCustomDNS.(map[string]interface{})["host"].(string)
 	}
 
 	return nil
