@@ -50,8 +50,8 @@ type Settings struct {
 	VaultCitizenCACertKey              string `envconfig:"V_SSL_CITIZEN_CA_CERT_KEY" default:"caCertificate"`
 	VaultCitizenCertKey                string `envconfig:"V_SSL_CITIZEN_CA_CERT_KEY" default:"certificate"`
 	VaultCitizenPKKey                  string `envconfig:"V_SSL_CITIZEN_PK_KEY" default:"key"`
-	VaultCitizenSSLPath                string `encvonfig:"V_SSL_CITIZEN_PATH" default:"custom-dns-names/{registry}/citizenPortal/{host}"`
-	VaultOfficerSSLPath                string `encvonfig:"V_SSL_CITIZEN_PATH" default:"custom-dns-names/{registry}/officerPortal/{host}"`
+	VaultCitizenSSLPath                string `encvonfig:"V_SSL_CITIZEN_PATH" default:"custom-dns-names/{registry}/citizen-portal/{host}"`
+	VaultOfficerSSLPath                string `encvonfig:"V_SSL_CITIZEN_PATH" default:"custom-dns-names/{registry}/officer-portal/{host}"`
 }
 
 type Services struct {

@@ -367,10 +367,29 @@ func (a *App) prepareCIDRConfig(r *registry, values map[string]interface{}) erro
 }
 
 func (a *App) prepareDNSConfig(ginContext *gin.Context, r *registry, secretData map[string]map[string]interface{}, values map[string]interface{}) error {
-	dns := make(map[string]string)
+	portals, ok := values["portals"]
+	if !ok {
+		portals = make(map[string]interface{})
+	}
+	portalsDict := portals.(map[string]interface{})
+
+	citizen, ok := portalsDict["citizen"]
+	if !ok {
+		citizen = make(map[string]interface{})
+	}
+	citizenDict := citizen.(map[string]interface{})
+
+	officer, ok := portalsDict["officer"]
+	if !ok {
+		officer = make(map[string]interface{})
+	}
+	officerDict := officer.(map[string]interface{})
 
 	if r.DNSNameOfficer != "" {
-		dns["officerPortal"] = r.DNSNameOfficer
+		customDNS := make(map[string]interface{})
+		customDNS["enabled"] = true
+		customDNS["host"] = r.DNSNameOfficer
+		officerDict["customDns"] = customDNS
 
 		certFile, _, err := ginContext.Request.FormFile("officer-ssl")
 		if err != nil {
@@ -397,15 +416,13 @@ func (a *App) prepareDNSConfig(ginContext *gin.Context, r *registry, secretData 
 		secretData[secretPath][a.Config.VaultOfficerCACertKey] = caCert
 		secretData[secretPath][a.Config.VaultOfficerCertKey] = cert
 		secretData[secretPath][a.Config.VaultOfficerPKKey] = key
-
-		dns["officerPortalVaultCaKey"] = a.Config.VaultOfficerCACertKey
-		dns["officerPortalVaultCertKey"] = a.Config.VaultOfficerCertKey
-		dns["officerPortalVaultPKKey"] = a.Config.VaultOfficerPKKey
-		dns["officerPortalVaultSecretPath"] = secretPath
 	}
 
 	if r.DNSNameCitizen != "" {
-		dns["citizenPortal"] = r.DNSNameCitizen
+		customDNS := make(map[string]interface{})
+		customDNS["enabled"] = true
+		customDNS["host"] = r.DNSNameCitizen
+		citizenDict["customDns"] = customDNS
 
 		certFile, _, err := ginContext.Request.FormFile("citizen-ssl")
 		if err != nil {
@@ -432,16 +449,12 @@ func (a *App) prepareDNSConfig(ginContext *gin.Context, r *registry, secretData 
 		secretData[secretPath][a.Config.VaultCitizenCACertKey] = caCert
 		secretData[secretPath][a.Config.VaultCitizenCertKey] = cert
 		secretData[secretPath][a.Config.VaultCitizenPKKey] = key
-
-		dns["citizenPortalVaultCaKey"] = a.Config.VaultCitizenCACertKey
-		dns["citizenPortalVaultCertKey"] = a.Config.VaultCitizenCertKey
-		dns["citizenPortalVaultPKKey"] = a.Config.VaultCitizenPKKey
-		dns["citizenPortalVaultSecretPath"] = secretPath
 	}
 
-	if len(dns) > 0 {
-		values["customDNS"] = dns
-	}
+	portalsDict["citizen"] = citizenDict
+	portalsDict["officer"] = officerDict
+
+	values["portals"] = portalsDict
 
 	return nil
 }
@@ -546,7 +559,9 @@ func (a *App) prepareMailServerConfig(ginContext *gin.Context, r *registry, secr
 		}
 	}
 
-	values["notifications"] = notifications
+	global := make(map[string]interface{})
+	global["notifications"] = notifications
+	values["global"] = global
 
 	return nil
 }
