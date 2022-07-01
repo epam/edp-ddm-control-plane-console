@@ -316,7 +316,10 @@ func updateRegistryValues(instance *codebaseService.Codebase, gitService *git.Se
 	if err := json.Unmarshal([]byte(instance.Annotations[registry.AnnotationValues]), &values); err != nil {
 		return errors.Wrap(err, "unable to decode codebase values")
 	}
-	raw["global"] = values
+	//raw["global"] = values
+	for k, v := range values {
+		raw[k] = v
+	}
 
 	bts, err := yaml.Marshal(raw)
 	if err != nil {
