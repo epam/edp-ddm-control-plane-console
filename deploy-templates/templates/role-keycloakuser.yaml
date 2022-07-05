@@ -12,6 +12,7 @@ rules:
   - keycloakrealmusers
   - keycloakrealmusers/finalizers
   - keycloakrealmusers/status
+  - secrets
   verbs:
   - create
   - get
