@@ -102,12 +102,16 @@ func (a *App) setAdminsVaultPassword(admins []Admin) error {
 			strings.ReplaceAll(a.Config.VaultClusterAdminsPathTemplate, "{admin}", admin.Email),
 			"{engine}", a.Config.VaultKVEngineName)
 
+		vaultPath = registry.ModifyVaultPath(vaultPath)
+
 		secretData := map[string]interface{}{
 			a.Config.VaultClusterAdminsPasswordKey: admin.TmpPassword,
 		}
 
 		if _, err := a.Services.Vault.Write(
-			vaultPath, secretData); err != nil {
+			vaultPath, map[string]interface{}{
+				"data": secretData,
+			}); err != nil {
 			return errors.Wrap(err, "unable to write to vault")
 		}
 

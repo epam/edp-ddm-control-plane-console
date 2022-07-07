@@ -297,11 +297,19 @@ func (a *App) createRegistry(ctx context.Context, ginContext *gin.Context, r *re
 	return nil
 }
 
+func ModifyVaultPath(path string) string {
+	if strings.Contains(path, "/data/") {
+		return path
+	}
+
+	pathParts := strings.Split(path, "/")
+	pathParts = append(pathParts[:1], append([]string{"data"}, pathParts[1:]...)...)
+	return strings.Join(pathParts, "/")
+}
+
 func (a *App) createVaultSecrets(secretData map[string]map[string]interface{}) error {
 	for vaultPath, pathSecretData := range secretData {
-		pathParts := strings.Split(vaultPath, "/")
-		pathParts = append(pathParts[:1], append([]string{"data"}, pathParts[1:]...)...)
-		vaultPath = strings.Join(pathParts, "/")
+		vaultPath = ModifyVaultPath(vaultPath)
 
 		if _, err := a.Vault.Write(vaultPath, map[string]interface{}{
 			"data": pathSecretData,
