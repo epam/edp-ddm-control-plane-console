@@ -22,7 +22,7 @@
             </div>
             <div class="rc-form-group {{ if .errorsMap.Name }}error{{end}}">
                 <label for="name">Назва реєстру</label>
-                <input type="text" id="name" name="name" maxlength="40" required
+                <input type="text" id="name" name="name" maxlength="12" required
                        pattern="^[a-z0-9]([-a-z0-9]*[a-z0-9])?([a-z0-9]([-a-z0-9]*[a-z0-9])?)*$"
                        value="{{.model.Name}}" />
                 <span>

@@ -130,7 +130,7 @@ func (a *App) loadCodebasesForExternalRegistrations(registryName string, eRegs [
 			}
 		}
 
-		if !skip && cb.Name != registryName && cb.Status.Available {
+		if !skip && cb.Name != registryName && cb.Status.Available && cb.DeletionTimestamp.IsZero() && cb.StrStatus() != "failed" {
 			availableRegs = append(availableRegs, cb)
 		}
 	}
