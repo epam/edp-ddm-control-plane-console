@@ -12,7 +12,7 @@ const (
 )
 
 type registry struct {
-	Name                string   `form:"name" binding:"required,min=3,max=40,registry-name"`
+	Name                string   `form:"name" binding:"required,min=3,max=12,registry-name"`
 	Description         string   `form:"description" valid:"max=250"`
 	Admins              string   `form:"admins"`
 	SignKeyIssuer       string   `form:"sign-key-issuer" binding:"required_if=KeyDeviceType file Scenario key-required"`
