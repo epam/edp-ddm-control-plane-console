@@ -12,6 +12,7 @@ rules:
   attributeRestrictions: null
   resources:
   - configmaps
+  - secrets
   verbs:
   - get
 - apiGroups:
