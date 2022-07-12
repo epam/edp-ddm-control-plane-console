@@ -30,7 +30,7 @@
                         {{ i18n $val.Tag $val.Param }}
                     {{end}}
                 </span>
-                <p>Допустимі символи: "a-z", "-". Назва не може перевищувати довжину у 40 символів.</p>
+                <p>Допустимі символи: "a-z", "-". Назва не може перевищувати довжину у 12 символів.</p>
             </div>
             <div :class="{ error: adminsError }" class="rc-form-group {{ if .errorsMap.Admins }}error{{end}}">
                 <label for="admins">Адміністратори</label>
