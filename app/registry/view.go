@@ -214,8 +214,13 @@ func (a *App) viewSMTPConfig(userCtx context.Context, registryName string, viewP
 		return errors.Wrap(err, "unable to get values")
 	}
 
-	global := valuesDict["global"].(map[string]interface{})
-	notifications, ok := global["notifications"]
+	global, ok := valuesDict["global"]
+	if !ok {
+		return nil
+	}
+
+	globalDict := global.(map[string]interface{})
+	notifications, ok := globalDict["notifications"]
 	if !ok {
 		return nil
 	}
