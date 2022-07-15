@@ -38,15 +38,16 @@ type Service struct {
 }
 
 type MergeRequest struct {
-	Name          string
-	ProjectName   string
-	TargetBranch  string
-	SourceBranch  string
-	CommitMessage string
-	AuthorName    string
-	AuthorEmail   string
-	Labels        map[string]string
-	Annotations   map[string]string
+	Name                string
+	ProjectName         string
+	TargetBranch        string
+	SourceBranch        string
+	CommitMessage       string
+	AuthorName          string
+	AuthorEmail         string
+	Labels              map[string]string
+	Annotations         map[string]string
+	AdditionalArguments []string
 }
 
 type MRConfigMapFile struct {
@@ -165,13 +166,14 @@ func (s *Service) CreateMergeRequest(ctx context.Context, mr *MergeRequest) erro
 		ObjectMeta: metav1.ObjectMeta{Namespace: s.Namespace, Name: mr.Name, Labels: mr.Labels,
 			Annotations: mr.Annotations},
 		Spec: GerritMergeRequestSpec{
-			OwnerName:     s.RootGerritName,
-			ProjectName:   mr.ProjectName,
-			TargetBranch:  mr.TargetBranch,
-			SourceBranch:  mr.SourceBranch,
-			CommitMessage: mr.CommitMessage,
-			AuthorEmail:   mr.AuthorEmail,
-			AuthorName:    mr.AuthorName,
+			OwnerName:           s.RootGerritName,
+			ProjectName:         mr.ProjectName,
+			TargetBranch:        mr.TargetBranch,
+			SourceBranch:        mr.SourceBranch,
+			CommitMessage:       mr.CommitMessage,
+			AuthorEmail:         mr.AuthorEmail,
+			AuthorName:          mr.AuthorName,
+			AdditionalArguments: mr.AdditionalArguments,
 		},
 	}); err != nil {
 		return errors.Wrap(err, "unable to create merge request")

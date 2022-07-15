@@ -93,6 +93,7 @@ func (a *App) createMergeRequest(registryName, updateBranch string, userContext 
 		Labels: map[string]string{
 			MRLabelTarget: mrTargetRegistryVersionUpdate,
 		},
+		AdditionalArguments: []string{"-X", "ours"},
 	}); err != nil {
 		return errors.Wrap(err, "unable to create update merge request")
 	}
