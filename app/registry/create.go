@@ -184,8 +184,11 @@ func (a *App) createRegistryPost(ctx *gin.Context) (response *router.Response, r
 			return nil, errors.Wrap(err, "unable to parse registry form")
 		}
 
+		cidrConfig, _ := r.CIDRConfig()
+		cidrConfigJSON, _ := json.Marshal(cidrConfig)
+
 		return router.MakeResponse(200, "registry/create.html",
-			gin.H{"page": "registry", "errorsMap": validationErrors, "model": r,
+			gin.H{"page": "registry", "errorsMap": validationErrors, "model": r, "cidrConfig": string(cidrConfigJSON),
 				"hwINITemplateContent": hwINITemplateContent, "gerritProjects": prjs}), nil
 	}
 
@@ -338,33 +341,9 @@ func (a *App) vaultRegistryPath(registryName string) string {
 }
 
 func (a *App) prepareCIDRConfig(r *registry, values map[string]interface{}) error {
-	cidrDict := make(map[string][]string)
-
-	if r.CIDRCitizen != "" {
-		var cidr []string
-		if err := json.Unmarshal([]byte(r.CIDRCitizen), &cidr); err != nil {
-			return errors.Wrap(err, "unable to decode cidr")
-		}
-
-		cidrDict["citizen"] = cidr
-	}
-
-	if r.CIDROfficer != "" {
-		var cidr []string
-		if err := json.Unmarshal([]byte(r.CIDROfficer), &cidr); err != nil {
-			return errors.Wrap(err, "unable to decode cidr")
-		}
-
-		cidrDict["officer"] = cidr
-	}
-
-	if r.CIDRAdmin != "" {
-		var cidr []string
-		if err := json.Unmarshal([]byte(r.CIDRAdmin), &cidr); err != nil {
-			return errors.Wrap(err, "unable to decode cidr")
-		}
-
-		cidrDict["admin"] = cidr
+	cidrDict, err := r.CIDRConfig()
+	if err != nil {
+		return errors.Wrap(err, "unable to decode cidr")
 	}
 
 	if len(cidrDict) > 0 {
@@ -411,7 +390,8 @@ func (a *App) prepareDNSConfig(ginContext *gin.Context, r *registry, secretData 
 
 		caCert, cert, key, err := decodePEM(certData)
 		if err != nil {
-			return errors.Wrap(err, "unable to decode officer key file")
+			return validator.ValidationErrors([]validator.FieldError{
+				router.MakeFieldError("DNSNameOfficer", "pem-decode-error")})
 		}
 
 		secretPath := strings.ReplaceAll(a.Config.VaultOfficerSSLPath, "{registry}", r.Name)
@@ -444,7 +424,8 @@ func (a *App) prepareDNSConfig(ginContext *gin.Context, r *registry, secretData 
 
 		caCert, cert, key, err := decodePEM(certData)
 		if err != nil {
-			return errors.Wrap(err, "unable to decode citizen key file")
+			return validator.ValidationErrors([]validator.FieldError{
+				router.MakeFieldError("DNSNameCitizen", "pem-decode-error")})
 		}
 
 		secretPath := strings.ReplaceAll(a.Config.VaultCitizenSSLPath, "{registry}", r.Name)
