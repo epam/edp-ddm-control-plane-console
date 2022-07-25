@@ -440,8 +440,13 @@ func (a *App) prepareDNSConfig(ginContext *gin.Context, r *registry, secretData 
 		secretData[secretPath][a.Config.VaultCitizenPKKey] = key
 	}
 
-	portalsDict["citizen"] = citizenDict
-	portalsDict["officer"] = officerDict
+	if len(citizenDict) > 0 {
+		portalsDict["citizen"] = citizenDict
+	}
+
+	if len(officerDict) > 0 {
+		portalsDict["officer"] = officerDict
+	}
 
 	values["portals"] = portalsDict
 
