@@ -61,3 +61,6 @@ msgstr "Створення"
 
 msgid "mre-action-deletion"
 msgstr "Скасування"
+
+msgid "pem-decode-error"
+msgstr "Помилка при обробці сертифікату"

@@ -1,6 +1,11 @@
 package registry
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+
+	"github.com/pkg/errors"
+)
 
 const (
 	ScenarioKeyRequired    = "key-required"
@@ -44,6 +49,39 @@ type registry struct {
 
 func (r *registry) KeysRequired() bool {
 	return r.Scenario == ScenarioKeyRequired
+}
+
+func (r *registry) CIDRConfig() (map[string][]string, error) {
+	cidrDict := make(map[string][]string)
+
+	if r.CIDRCitizen != "" {
+		var cidr []string
+		if err := json.Unmarshal([]byte(r.CIDRCitizen), &cidr); err != nil {
+			return nil, errors.Wrap(err, "unable to decode cidr")
+		}
+
+		cidrDict["citizen"] = cidr
+	}
+
+	if r.CIDROfficer != "" {
+		var cidr []string
+		if err := json.Unmarshal([]byte(r.CIDROfficer), &cidr); err != nil {
+			return nil, errors.Wrap(err, "unable to decode cidr")
+		}
+
+		cidrDict["officer"] = cidr
+	}
+
+	if r.CIDRAdmin != "" {
+		var cidr []string
+		if err := json.Unmarshal([]byte(r.CIDRAdmin), &cidr); err != nil {
+			return nil, errors.Wrap(err, "unable to decode cidr")
+		}
+
+		cidrDict["admin"] = cidr
+	}
+
+	return cidrDict, nil
 }
 
 type allowedKeysConfig struct {

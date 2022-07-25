@@ -9,32 +9,36 @@ let app = Vue.createApp({
         }
 
         if (this.$refs.hasOwnProperty('smtpEditConfig')) {
-            let smtpConfig = JSON.parse(this.$refs.smtpEditConfig.value);
-            if (smtpConfig['type'] === 'external') {
-                this.smtpServerType = 'external-mail-server';
-                this.externalSMTPOpts = smtpConfig;
-                this.externalSMTPOpts['port'] = smtpConfig['port'].toString();
-            } else {
-                this.smtpServerType = 'platform-mail-server';
+            if (this.$refs.smtpEditConfig.value !== "") {
+                let smtpConfig = JSON.parse(this.$refs.smtpEditConfig.value);
+                if (smtpConfig['type'] === 'external') {
+                    this.smtpServerType = 'external-mail-server';
+                    this.externalSMTPOpts = smtpConfig;
+                    this.externalSMTPOpts['port'] = smtpConfig['port'].toString();
+                } else {
+                    this.smtpServerType = 'platform-mail-server';
+                }
             }
         }
 
         if (this.$refs.hasOwnProperty('cidrEditConfig')) {
-            let cidrConfig = JSON.parse(this.$refs.cidrEditConfig.value);
+            if (this.$refs.cidrEditConfig.value !== "") {
+                let cidrConfig = JSON.parse(this.$refs.cidrEditConfig.value);
 
-            if (cidrConfig.hasOwnProperty('citizen')) {
-                this.citizenCIDR = cidrConfig.citizen;
-                this.citizenCIDRValue.value = JSON.stringify(this.citizenCIDR);
-            }
+                if (cidrConfig.hasOwnProperty('citizen')) {
+                    this.citizenCIDR = cidrConfig.citizen;
+                    this.citizenCIDRValue.value = JSON.stringify(this.citizenCIDR);
+                }
 
-            if (cidrConfig.hasOwnProperty('officer')) {
-                this.officerCIDR = cidrConfig.officer;
-                this.officerCIDRValue.value = JSON.stringify(this.officerCIDR);
-            }
+                if (cidrConfig.hasOwnProperty('officer')) {
+                    this.officerCIDR = cidrConfig.officer;
+                    this.officerCIDRValue.value = JSON.stringify(this.officerCIDR);
+                }
 
-            if (cidrConfig.hasOwnProperty('admin')) {
-                this.adminCIDR = cidrConfig.admin;
-                this.adminCIDRValue.value = JSON.stringify(this.adminCIDR);
+                if (cidrConfig.hasOwnProperty('admin')) {
+                    this.adminCIDR = cidrConfig.admin;
+                    this.adminCIDRValue.value = JSON.stringify(this.adminCIDR);
+                }
             }
         }
     },
@@ -90,9 +94,11 @@ let app = Vue.createApp({
         },
         loadAdmins(admins) {
             if (!this.adminsLoaded) {
-                this.admins = JSON.parse(admins);
-                this.adminsValue = JSON.stringify(this.admins);
-                this.adminsLoaded = true;
+                if (admins !== "") {
+                    this.admins = JSON.parse(admins);
+                    this.adminsValue = JSON.stringify(this.admins);
+                    this.adminsLoaded = true;
+                }
             }
         },
         showAdminForm() {
