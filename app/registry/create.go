@@ -36,6 +36,7 @@ const (
 	AnnotationCreatorUsername = "registry-parameters/creator-username"
 	AnnotationCreatorEmail    = "registry-parameters/creator-email"
 	AnnotationValues          = "registry-parameters/values"
+	AdministratorsValuesKey   = "administrators"
 )
 
 type KeyManagement interface {
@@ -250,24 +251,16 @@ func (a *App) createRegistry(ctx context.Context, ginContext *gin.Context, r *re
 		return errors.Wrap(err, "unable to prepare mail server config")
 	}
 
+	if err := a.prepareAdminsConfig(r, vaultSecretData, values); err != nil {
+		return errors.Wrap(err, "unable to prepare admins config")
+	}
+
 	if err := a.createVaultSecrets(vaultSecretData); err != nil {
 		return errors.Wrap(err, "unable to create vault secrets")
 	}
 
 	if err := a.Services.Gerrit.CreateProject(ctx, r.Name); err != nil {
 		return errors.Wrap(err, "unable to create gerrit project")
-	}
-
-	if r.Admins != "" {
-		admins, err := validateAdmins(r.Admins)
-		if err != nil {
-			return errors.Wrap(err, "unable to validate admins")
-		}
-
-		//TODO: move admins creation to values yaml
-		if err := a.admins.SyncAdmins(ctx, r.Name, admins); err != nil {
-			return errors.Wrap(err, "unable to sync admins")
-		}
 	}
 
 	if err := CreateRegistryKeys(keyManagement{r: r}, ginContext.Request, k8sService); err != nil {
@@ -353,7 +346,34 @@ func (a *App) prepareCIDRConfig(r *registry, values map[string]interface{}) erro
 	return nil
 }
 
-func (a *App) prepareDNSConfig(ginContext *gin.Context, r *registry, secretData map[string]map[string]interface{}, values map[string]interface{}) error {
+func (a *App) prepareAdminsConfig(r *registry, secretData map[string]map[string]interface{},
+	values map[string]interface{}) error {
+	//TODO: don't recreate admin secrets for existing admin
+
+	if r.Admins != "" {
+		admins, err := validateAdmins(r.Admins)
+		if err != nil {
+			return errors.Wrap(err, "unable to validate admins")
+		}
+
+		adminsVaultPath := fmt.Sprintf("%s/administrators", a.vaultRegistryPath(r.Name))
+		for i, adm := range admins {
+			adminVaultPath := fmt.Sprintf("%s/%s", adminsVaultPath, adm.Email)
+			secretData[adminVaultPath] = map[string]interface{}{
+				"password": adm.TmpPassword,
+			}
+
+			admins[i].TmpPassword = adminVaultPath
+		}
+
+		values[AdministratorsValuesKey] = admins
+	}
+
+	return nil
+}
+
+func (a *App) prepareDNSConfig(ginContext *gin.Context, r *registry, secretData map[string]map[string]interface{},
+	values map[string]interface{}) error {
 	portals, ok := values["portals"]
 	if !ok {
 		portals = make(map[string]interface{})
@@ -448,7 +468,17 @@ func (a *App) prepareDNSConfig(ginContext *gin.Context, r *registry, secretData 
 		portalsDict["officer"] = officerDict
 	}
 
-	values["portals"] = portalsDict
+	valuesPortalsInterface, ok := values["portals"]
+	if !ok {
+		valuesPortalsInterface = map[string]interface{}{}
+	}
+	valuesPortalsDict := valuesPortalsInterface.(map[string]interface{})
+
+	for k, v := range portalsDict {
+		valuesPortalsDict[k] = v
+	}
+
+	values["portals"] = valuesPortalsDict
 
 	return nil
 }

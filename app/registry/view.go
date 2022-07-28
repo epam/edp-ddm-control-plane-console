@@ -39,11 +39,11 @@ func (a *App) viewRegistryProcessFunctions() []func(ctx context.Context, registr
 		a.viewRegistryGetRegistryAndBranches,
 		a.viewRegistryGetEDPComponents,
 		a.viewRegistryGetMergeRequests,
-		a.viewRegistryGetAdmins,
 		a.viewRegistryExternalRegistration,
 		a.viewDNSConfig,
 		a.viewSMTPConfig,
 		a.viewCIDRConfig,
+		a.viewAdministratorsConfig,
 	}
 }
 
@@ -153,16 +153,6 @@ func convertExternalRegFromInterface(in interface{}) ([]ExternalRegistration, er
 	return res, nil
 }
 
-func (a *App) viewRegistryGetAdmins(userCtx context.Context, registryName string, viewParams gin.H) error {
-	admins, err := a.admins.formatViewAdmins(userCtx, registryName)
-	if err != nil {
-		return errors.Wrap(err, "unable to load admins for codebase")
-	}
-
-	viewParams["admins"] = admins
-	return nil
-}
-
 func (a *App) viewGetValues(userCtx context.Context, registryName string, viewParams gin.H) (map[string]interface{}, error) {
 	values, ok := viewParams["values"]
 	if !ok {
@@ -179,6 +169,21 @@ func (a *App) viewGetValues(userCtx context.Context, registryName string, viewPa
 	}
 
 	return valuesDict, nil
+}
+
+func (a *App) viewAdministratorsConfig(userCtx context.Context, registryName string, viewParams gin.H) error {
+	valuesDict, err := a.viewGetValues(userCtx, registryName, viewParams)
+	if err != nil {
+		return errors.Wrap(err, "unable to get values")
+	}
+
+	admins, ok := valuesDict[AdministratorsValuesKey]
+	if !ok {
+		return nil
+	}
+
+	viewParams["admins"] = admins.([]interface{})
+	return nil
 }
 
 func (a *App) viewCIDRConfig(userCtx context.Context, registryName string, viewParams gin.H) error {

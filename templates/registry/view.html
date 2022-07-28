@@ -38,7 +38,11 @@
             {{if .admins }}
                 <div class="rg-info-line-horizontal">
                     <span>Адміністратори</span>
-                    <span>{{ .admins }}</span>
+                    <span>
+                        {{range $index, $adm := .admins}}
+                            {{ $adm.email }}
+                        {{end}}
+                    </span>
                 </div>
             {{end}}
             <div class="rg-info-line-horizontal">
