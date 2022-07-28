@@ -42,13 +42,7 @@ func (a *App) editRegistryGet(ctx *gin.Context) (response *router.Response, retE
 		return nil, errors.Wrap(err, "unable to get registry")
 	}
 
-	admins, err := a.admins.GetAdmins(userCtx, registryName)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to get registry admins")
-	}
 	model := registry{KeyDeviceType: KeyDeviceTypeFile}
-	adminsJs, _ := json.Marshal(admins)
-	model.Admins = string(adminsJs)
 
 	hwINITemplateContent, err := GetINITemplateContent(a.Config.HardwareINITemplatePath)
 	if err != nil {
@@ -63,21 +57,20 @@ func (a *App) editRegistryGet(ctx *gin.Context) (response *router.Response, retE
 	responseParams := gin.H{
 		"dnsManual":            false,
 		"registry":             reg,
-		"model":                model,
 		"page":                 "registry",
 		"hwINITemplateContent": hwINITemplateContent,
 		"updateBranches":       branches,
 		"hasUpdate":            hasUpdate,
 	}
 
-	if err := a.loadValuesEditConfig(ctx, registryName, responseParams); err != nil {
+	if err := a.loadValuesEditConfig(ctx, registryName, responseParams, &model); err != nil {
 		return nil, errors.Wrap(err, "unable to load edit values from config")
 	}
 
 	return router.MakeResponse(200, "registry/edit.html", responseParams), nil
 }
 
-func (a *App) loadValuesEditConfig(ctx context.Context, registryName string, rspParams gin.H) error {
+func (a *App) loadValuesEditConfig(ctx context.Context, registryName string, rspParams gin.H, r *registry) error {
 	values, err := a.getValuesFromGit(ctx, registryName)
 	if err != nil {
 		return errors.Wrap(err, "unable to get values from git")
@@ -91,18 +84,49 @@ func (a *App) loadValuesEditConfig(ctx context.Context, registryName string, rsp
 		return errors.Wrap(err, "unable to load cidr config")
 	}
 
+	if err := a.loadAdminsConfig(values, r); err != nil {
+		return errors.Wrap(err, "unable to load admins config")
+	}
+
+	rspParams["model"] = r
+
+	return nil
+}
+
+func (a *App) loadAdminsConfig(values map[string]interface{}, r *registry) error {
+	adminsInterface, ok := values[AdministratorsValuesKey]
+	if !ok {
+		r.Admins = "[]"
+		return nil
+	}
+
+	adminsJs, err := json.Marshal(adminsInterface)
+	if err != nil {
+		return errors.Wrap(err, "unable to marshal admins")
+	}
+
+	var admins []Admin
+	if err := json.Unmarshal(adminsJs, &admins); err != nil {
+		return errors.Wrap(err, "unable tro unmarshal admins")
+	}
+
+	//TODO: maybe load admin password
+	for i := range admins {
+		admins[i].TmpPassword = ""
+	}
+
+	adminsJs, err = json.Marshal(admins)
+	if err != nil {
+		return errors.Wrap(err, "unable to marshal admins")
+	}
+
+	r.Admins = string(adminsJs)
+
 	return nil
 }
 
 func (a *App) loadCIDRConfig(values map[string]interface{}, rspParams gin.H) error {
-	global, ok := values["global"]
-	if !ok {
-		rspParams["cidrConfig"] = "{}"
-		return nil
-	}
-
-	globalDict := global.(map[string]interface{})
-	cidr, ok := globalDict["cidr"]
+	cidr, ok := values["cidr"]
 	if !ok {
 		rspParams["cidrConfig"] = "{}"
 		return nil
@@ -223,7 +247,12 @@ func (a *App) editRegistry(ctx context.Context, ginContext *gin.Context, r *regi
 		cb.Annotations = make(map[string]string)
 	}
 
-	values, vaultSecretData := make(map[string]interface{}), make(map[string]map[string]interface{})
+	values, err := a.getValuesFromGit(ctx, r.Name)
+	if err != nil {
+		return errors.Wrap(err, "unable to get values from git")
+	}
+
+	vaultSecretData := make(map[string]map[string]interface{})
 	if err := a.prepareDNSConfig(ginContext, r, vaultSecretData, values); err != nil {
 		return errors.Wrap(err, "unable to prepare dns config")
 	}
@@ -234,6 +263,10 @@ func (a *App) editRegistry(ctx context.Context, ginContext *gin.Context, r *regi
 
 	if err := a.prepareCIDRConfig(r, values); err != nil {
 		return errors.Wrap(err, "unable to prepare cidr config")
+	}
+
+	if err := a.prepareAdminsConfig(r, vaultSecretData, values); err != nil {
+		return errors.Wrap(err, "unable to prepare admin values config")
 	}
 
 	if len(values) > 0 {
@@ -248,14 +281,6 @@ func (a *App) editRegistry(ctx context.Context, ginContext *gin.Context, r *regi
 		}
 	}
 
-	admins, err := validateAdmins(r.Admins)
-	if err != nil {
-		return errors.Wrap(err, "unable to validate admins")
-	}
-	if err := a.admins.SyncAdmins(ctx, r.Name, admins); err != nil {
-		return errors.Wrap(err, "unable to sync admins")
-	}
-
 	if err := cbService.Update(cb); err != nil {
 		return errors.Wrap(err, "unable to update codebase")
 	}
@@ -268,27 +293,15 @@ func (a *App) editRegistry(ctx context.Context, ginContext *gin.Context, r *regi
 	return nil
 }
 
-func (a *App) createEditMergeRequest(ctx *gin.Context, r *registry, globalValues map[string]interface{}) error {
+func (a *App) createEditMergeRequest(ctx *gin.Context, r *registry, editValues map[string]interface{}) error {
 	values, err := a.getValuesFromGit(ctx, r.Name)
 	if err != nil {
 		return errors.Wrap(err, "unable to get values from git")
 	}
 
-	globalInterface, ok := values["global"]
-	if !ok {
-		globalInterface = make(map[string]interface{})
+	for k, v := range editValues {
+		values[k] = v
 	}
-
-	globalDict, ok := globalInterface.(map[string]interface{})
-	if !ok {
-		return errors.New("wrong global dict type")
-	}
-
-	for k, v := range globalValues {
-		globalDict[k] = v
-	}
-
-	values["global"] = globalDict
 
 	valuesYaml, err := yaml.Marshal(values)
 	if err != nil {
