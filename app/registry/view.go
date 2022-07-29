@@ -247,15 +247,19 @@ func (a *App) viewDNSConfig(userCtx context.Context, registryName string, viewPa
 	}
 
 	portalsDict := portals.(map[string]interface{})
-	citizenDict := portalsDict["citizen"].(map[string]interface{})
-	officerDict := portalsDict["citizen"].(map[string]interface{})
 
-	if citizenCustomDNS, ok := citizenDict["customDns"]; ok {
-		viewParams["citizenPortalHost"] = citizenCustomDNS.(map[string]interface{})["host"].(string)
+	if _, ok := portalsDict["citizen"]; ok {
+		citizenDict := portalsDict["citizen"].(map[string]interface{})
+		if citizenCustomDNS, ok := citizenDict["customDns"]; ok {
+			viewParams["citizenPortalHost"] = citizenCustomDNS.(map[string]interface{})["host"].(string)
+		}
 	}
 
-	if officerCustomDNS, ok := officerDict["customDns"]; ok {
-		viewParams["officerPortalHost"] = officerCustomDNS.(map[string]interface{})["host"].(string)
+	if _, ok := portalsDict["officer"]; ok {
+		officerDict := portalsDict["officer"].(map[string]interface{})
+		if officerCustomDNS, ok := officerDict["customDns"]; ok {
+			viewParams["officerPortalHost"] = officerCustomDNS.(map[string]interface{})["host"].(string)
+		}
 	}
 
 	return nil
