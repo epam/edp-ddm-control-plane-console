@@ -363,7 +363,7 @@ func (a *App) prepareAdminsConfig(r *registry, secretData map[string]map[string]
 				"password": adm.TmpPassword,
 			}
 
-			admins[i].PasswordVaultSecret = adminsVaultPath
+			admins[i].PasswordVaultSecret = adminVaultPath
 			admins[i].PasswordVaultSecretKey = "password"
 			admins[i].TmpPassword = ""
 		}
