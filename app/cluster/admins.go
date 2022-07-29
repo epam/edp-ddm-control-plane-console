@@ -22,10 +22,10 @@ const (
 )
 
 type Admin struct {
-	Username               string `json:"username"`
-	Email                  string `json:"email"`
-	FirstName              string `json:"firstName"`
-	LastName               string `json:"lastName"`
+	Username               string `json:"username" yaml:"username"`
+	Email                  string `json:"email" yaml:"email"`
+	FirstName              string `json:"firstName" yaml:"firstName"`
+	LastName               string `json:"lastName" yaml:"lastName"`
 	TmpPassword            string `json:"tmpPassword" yaml:"-"`
 	PasswordVaultSecret    string `yaml:"passwordVaultSecret" json:"-"`
 	PasswordVaultSecretKey string `yaml:"passwordVaultSecretKey" json:"-"`

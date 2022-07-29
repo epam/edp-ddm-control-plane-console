@@ -14,11 +14,13 @@ import (
 )
 
 type Admin struct {
-	Username    string `json:"username" yaml:"username"`
-	Email       string `json:"email" yaml:"email"`
-	FirstName   string `json:"firstName" yaml:"firstName"`
-	LastName    string `json:"lastName" yaml:"lastName"`
-	TmpPassword string `json:"tmpPassword" yaml:"tmpPassword"`
+	Username               string `json:"username" yaml:"username"`
+	Email                  string `json:"email" yaml:"email"`
+	FirstName              string `json:"firstName" yaml:"firstName"`
+	LastName               string `json:"lastName" yaml:"lastName"`
+	TmpPassword            string `json:"tmpPassword,omitempty" yaml:"tmpPassword,omitempty"`
+	PasswordVaultSecret    string `yaml:"passwordVaultSecret" json:"passwordVaultSecret"`
+	PasswordVaultSecretKey string `yaml:"passwordVaultSecretKey" json:"passwordVaultSecretKey"`
 }
 
 type Admins struct {
