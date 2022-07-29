@@ -113,6 +113,8 @@ func (a *App) loadAdminsConfig(values map[string]interface{}, r *registry) error
 	//TODO: maybe load admin password
 	for i := range admins {
 		admins[i].TmpPassword = ""
+		admins[i].PasswordVaultSecret = ""
+		admins[i].PasswordVaultSecretKey = ""
 	}
 
 	adminsJs, err = json.Marshal(admins)
