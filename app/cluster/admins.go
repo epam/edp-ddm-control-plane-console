@@ -102,6 +102,7 @@ func (a *App) setAdminsVaultPassword(admins []Admin) error {
 			strings.ReplaceAll(a.Config.VaultClusterAdminsPathTemplate, "{admin}", admin.Email),
 			"{engine}", a.Config.VaultKVEngineName)
 
+		admins[i].PasswordVaultSecret = vaultPath
 		vaultPath = registry.ModifyVaultPath(vaultPath)
 
 		secretData := map[string]interface{}{
@@ -116,7 +117,6 @@ func (a *App) setAdminsVaultPassword(admins []Admin) error {
 		}
 
 		admins[i].PasswordVaultSecretKey = a.VaultClusterAdminsPasswordKey
-		admins[i].PasswordVaultSecret = vaultPath
 		admins[i].Username = admins[i].Email
 	}
 
