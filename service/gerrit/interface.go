@@ -1,6 +1,10 @@
 package gerrit
 
-import "context"
+import (
+	"context"
+
+	goGerrit "github.com/andygrunwald/go-gerrit"
+)
 
 type ServiceInterface interface {
 	GetProjects(ctx context.Context) ([]GerritProject, error)
@@ -11,4 +15,5 @@ type ServiceInterface interface {
 	CreateProject(ctx context.Context, name string) error
 	GetFileContents(ctx context.Context, projectName, branch, filePath string) (string, error)
 	CreateMergeRequestWithContents(ctx context.Context, mr *MergeRequest, contents map[string]string) error
+	GoGerritClient() *goGerrit.Client
 }

@@ -3,6 +3,7 @@ module ddm-admin-console
 go 1.14
 
 require (
+	github.com/andygrunwald/go-gerrit v0.0.0-20220714070712-4861c8ceba6b
 	github.com/gin-contrib/sessions v0.0.3
 	github.com/gin-gonic/gin v1.7.2
 	github.com/go-git/go-git v4.7.0+incompatible // indirect
@@ -18,6 +19,7 @@ require (
 	github.com/openshift/api v0.0.0-20210614085049-2deea64e2403
 	github.com/openshift/client-go v0.0.0-20210521082421-73d9475a9142
 	github.com/pkg/errors v0.9.1
+	github.com/sergi/go-diff v1.2.0
 	github.com/stretchr/testify v1.7.0
 	go.uber.org/zap v1.17.0
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
