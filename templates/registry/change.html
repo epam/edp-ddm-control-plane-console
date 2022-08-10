@@ -1,0 +1,12 @@
+{{ define "registry/change.html" }}
+    {{template "header" .}}
+
+        <h1>Change</h1>
+        {{range $fileName, $html := .changes}}
+            {{ $html }}
+            <hr />
+         {{end}}
+
+    {{template "scripts" .}}
+    {{template "footer" .}}
+{{end}}

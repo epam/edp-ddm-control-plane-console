@@ -4,8 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"path/filepath"
 	"time"
+
+	goGerrit "github.com/andygrunwald/go-gerrit"
 
 	coreV1Api "k8s.io/api/core/v1"
 
@@ -31,10 +34,12 @@ const (
 type Service struct {
 	Config
 	service.UserConfig
-	k8sClient  client.Client
-	scheme     *runtime.Scheme
-	restConfig *rest.Config
-	apiClient  *resty.Client
+	k8sClient          client.Client
+	scheme             *runtime.Scheme
+	restConfig         *rest.Config
+	apiClient          *resty.Client
+	goGerritClient     *goGerrit.Client
+	goGerritHTTPClient *http.Client
 }
 
 type MergeRequest struct {

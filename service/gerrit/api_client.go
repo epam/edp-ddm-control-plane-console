@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strings"
 
+	goGerrit "github.com/andygrunwald/go-gerrit"
 	"github.com/pkg/errors"
 	"gopkg.in/resty.v1"
 	coreV1Api "k8s.io/api/core/v1"
@@ -21,11 +22,36 @@ func (s *Service) initRestyClient() error {
 		return errors.Wrap(err, "unable to get admin secret")
 	}
 
+	gerritURL := strings.ReplaceAll(s.GerritAPIUrlTemplate, "{HOST}",
+		fmt.Sprintf("%s.%s", s.RootGerritName, s.Namespace))
+
 	s.apiClient = resty.New().
-		SetHostURL(strings.ReplaceAll(s.GerritAPIUrlTemplate, "{HOST}",
-			fmt.Sprintf("%s.%s", s.RootGerritName, s.Namespace))).
-		SetBasicAuth("admin", string(secret.Data["password"])).
+		SetHostURL(gerritURL).
+		SetBasicAuth(string(secret.Data["user"]), string(secret.Data["password"])).
 		SetDisableWarn(true)
+
+	var err error
+	s.goGerritClient, err = goGerrit.NewClient(strings.ReplaceAll(gerritURL, "/a/", "/"), s.goGerritHTTPClient)
+	if err != nil {
+		return errors.Wrap(err, "unable to init gerrit go client")
+	}
+	s.goGerritClient.Authentication.SetBasicAuth(string(secret.Data["user"]), string(secret.Data["password"]))
+
+	return nil
+}
+
+func (s *Service) GoGerritClient() *goGerrit.Client {
+	return s.goGerritClient
+}
+
+func checkErr(rsp *resty.Response, err error) error {
+	if err != nil {
+		return errors.Wrap(err, "error during request")
+	}
+
+	if rsp.StatusCode() >= 300 {
+		return errors.Errorf("wrong response code: %d, content: %s", rsp.StatusCode(), rsp.String())
+	}
 
 	return nil
 }
@@ -35,12 +61,8 @@ func (s *Service) GetFileContents(ctx context.Context, projectName, branch, file
 	path := fmt.Sprintf("projects/%s/branches/%s/files/%s/content", projectName, branch, filePath)
 	rsp, err := s.apiClient.NewRequest().SetContext(ctx).
 		Get(path)
-	if err != nil {
+	if err := checkErr(rsp, err); err != nil {
 		return "", errors.Wrap(err, "unable to get file content")
-	}
-
-	if rsp.StatusCode() >= 300 {
-		return "", errors.Errorf("wrong response code: %d, content: %s", rsp.StatusCode(), rsp.String())
 	}
 
 	bts, err := base64.StdEncoding.DecodeString(rsp.String())
@@ -50,3 +72,35 @@ func (s *Service) GetFileContents(ctx context.Context, projectName, branch, file
 
 	return string(bts), nil
 }
+
+func (s *Service) GetMRFiles(ctx context.Context, changeID string) ([]string, error) {
+	var rawRsp map[string]interface{}
+	rsp, err := s.apiClient.NewRequest().SetContext(ctx).SetBody(&rawRsp).
+		Get(fmt.Sprintf("/changes/%s/revisions/current/files", changeID))
+
+	if err := checkErr(rsp, err); err != nil {
+		return nil, errors.Wrap(err, "unable to get mr files")
+	}
+
+	files := make([]string, len(rawRsp))
+	for k := range rawRsp {
+		if k == "/COMMIT_MSG" {
+			continue
+		}
+
+		files = append(files, k)
+	}
+
+	return files, nil
+}
+
+//func (s *Service) GetChangeFileContent(ctx context.Context, changeID string, filePath string) (string, error) {
+//	s.goGerritClient.Changes.cont
+//}
+
+//
+//func (s *Service) GetFileDiff(ctx context.Context, changeID, filePath string) error {
+//	//https://gerrit-control-plane-platform-main.apps.master-for-install-43.mdtu-ddm.projects.epam.com/changes/<change id>/revisions/current/files/<file name>/diff?context=ALL&intraline=&whitespace=IGNORE_NONE
+//	rsp, err := s.apiClient.NewRequest().SetContext(ctx)
+//	return nil
+//}

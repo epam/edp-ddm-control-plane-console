@@ -291,6 +291,7 @@
                         <td class="mr-status">{{$al.Status.Value}}</td>
                         <td>
                             {{if $al.Status.ChangeURL}}
+                                <a href="/admin/registry/{{ $.registry.Name}}/change/{{ $al.Status.ChangeID }}">View Change</a>
                                 <a href="{{$al.Status.ChangeURL}}" target="_blank">
                                     <img title="Переглянути в Gerrit" alt="vcs" src="{{ $.BasePath }}/static/img/action-link.png" />
                                 </a>
