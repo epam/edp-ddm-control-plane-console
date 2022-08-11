@@ -26,6 +26,7 @@ func (cnf *Settings) RegistryConfig() registry.Config {
 		VaultCitizenPKKey:               cnf.VaultCitizenPKKey,
 		VaultCitizenSSLPath:             cnf.VaultCitizenSSLPath,
 		VaultOfficerSSLPath:             cnf.VaultOfficerSSLPath,
+		TempFolder:                      cnf.TempFolder,
 	}
 }
 

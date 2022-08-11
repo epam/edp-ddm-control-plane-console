@@ -36,6 +36,7 @@ type Config struct {
 	VaultCitizenPKKey               string
 	VaultCitizenSSLPath             string
 	VaultOfficerSSLPath             string
+	TempFolder                      string
 }
 
 type Services struct {

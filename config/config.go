@@ -52,6 +52,7 @@ type Settings struct {
 	VaultCitizenPKKey                  string `envconfig:"V_SSL_CITIZEN_PK_KEY" default:"key"`
 	VaultCitizenSSLPath                string `encvonfig:"V_SSL_CITIZEN_PATH" default:"custom-dns-names/{registry}/citizen-portal/{host}"`
 	VaultOfficerSSLPath                string `encvonfig:"V_SSL_CITIZEN_PATH" default:"custom-dns-names/{registry}/officer-portal/{host}"`
+	TempFolder                         string `envconfig:"TEMP_FOLDER" default:"/tmp"`
 }
 
 type Services struct {

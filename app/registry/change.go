@@ -2,10 +2,13 @@ package registry
 
 import (
 	"ddm-admin-console/router"
-	"log"
+	"fmt"
 	"net/url"
 	"os"
 	"os/exec"
+	"path"
+	"path/filepath"
+	"strings"
 
 	goGerrit "github.com/andygrunwald/go-gerrit"
 	"github.com/gin-gonic/gin"
@@ -30,62 +33,116 @@ func (a *App) viewChange(ctx *gin.Context) (response *router.Response, retErr er
 	}), nil
 }
 
-func (a *App) getChangeContents(changeID string) (map[string]string, error) {
+func (a *App) getChangeContents(changeID string) (string, error) {
 	changeInfo, _, err := a.Gerrit.GoGerritClient().Changes.GetChangeDetail(changeID, &goGerrit.ChangeOptions{})
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to get gerrit change details")
+		return "", errors.Wrap(err, "unable to get gerrit change details")
 	}
 
 	files, _, err := a.Gerrit.GoGerritClient().Changes.ListFiles(changeID, currentRevision, &goGerrit.FilesOptions{})
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to get change files")
+		return "", errors.Wrap(err, "unable to get change files")
 	}
 
-	//dmp := diffmatchpatch.New()
-	changes := make(map[string]string)
-	for fileName, fileInfo := range files {
+	changes := make([]string, 0, len(files)-1)
+	for fileName := range files {
 		if fileName == "/COMMIT_MSG" {
 			continue
 		}
 
-		log.Println(fileInfo)
-		originalContent, _, err := a.Gerrit.GoGerritClient().Projects.GetBranchContent(changeInfo.Project, changeInfo.Branch, url.PathEscape(fileName))
+		changesContent, err := a.getFileChanges(changeID, fileName, changeInfo.Project, changeInfo.Branch)
 		if err != nil {
-			return nil, errors.Wrap(err, "unable to get file content")
+			return "", errors.Wrap(err, "unable to get file changes")
 		}
 
-		f1, err := os.Create("/tmp/f1")
-		if err != nil {
-			return nil, errors.Wrap(err, "")
-		}
-		f1.WriteString(originalContent)
-		f1.Close()
-
-		content, _, err := a.Gerrit.GoGerritClient().Changes.GetContent(changeID, currentRevision, fileName)
-		if err != nil {
-			return nil, errors.Wrap(err, "unable to get file content")
-		}
-
-		f2, err := os.Create("/tmp/f2")
-		if err != nil {
-			return nil, errors.Wrap(err, "")
-		}
-		f2.WriteString(*content)
-		f2.Close()
-
-		out, err := exec.Command("diff", "--git", "/tmp/f1", "/tmp/f2").CombinedOutput()
-		if err != nil {
-			return nil, errors.Wrap(err, "")
-		}
-		changes[fileName] = string(out)
-
-		//log.Println(*content)
-
-		//log.Println(originalContent)
-		//dmp.DiffText1()
-		//changes[fileName] = template.HTML(dmp.DiffPrettyHtml(dmp.DiffMain(originalContent, *content, false)))
-		//log.Println(pretty)
+		changes = append(changes, changesContent)
 	}
 
-	return changes, nil
+	return strings.Join(changes, ""), nil
+}
+
+func (a *App) getFileChanges(changeID, fileName, projectName, branchName string) (string, error) {
+	originalContent, originalHttpRsp, err := a.Gerrit.GoGerritClient().Projects.GetBranchContent(projectName, branchName, url.PathEscape(fileName))
+	if err != nil && originalHttpRsp != nil && originalHttpRsp.StatusCode != 404 {
+		return "", errors.Wrap(err, "unable to get file content")
+	}
+	if originalHttpRsp == nil {
+		return "", errors.New("empty http response")
+	}
+	originalFilePath := path.Join(a.Config.TempFolder, "original", fileName)
+
+	if originalHttpRsp.StatusCode != 404 {
+		originalFolder := filepath.Dir(originalFilePath)
+		if err := os.MkdirAll(originalFolder, 0777); err != nil {
+			return "", errors.Wrap(err, "unable to create folder")
+		}
+
+		originalFile, err := os.Create(originalFilePath)
+		if err != nil {
+			return "", errors.Wrap(err, "")
+		}
+		if _, err := originalFile.WriteString(originalContent); err != nil {
+			return "", errors.Wrap(err, "")
+		}
+		if err := originalFile.Close(); err != nil {
+			return "", errors.Wrap(err, "")
+		}
+		defer os.RemoveAll(originalFilePath)
+	}
+
+	content, newHttpRsp, err := a.Gerrit.GoGerritClient().Changes.GetContent(changeID, currentRevision, fileName)
+	if err != nil && newHttpRsp != nil && newHttpRsp.StatusCode != 404 {
+		return "", errors.Wrap(err, "unable to get file content")
+	}
+	if newHttpRsp == nil {
+		return "", errors.New("empty response")
+	}
+	newFilePath := path.Join(a.Config.TempFolder, "new", fileName)
+
+	if newHttpRsp.StatusCode != 404 && content != nil {
+		newFolder := filepath.Dir(newFilePath)
+		if err := os.MkdirAll(newFolder, 0777); err != nil {
+			return "", errors.Wrap(err, "unable to create folder")
+		}
+
+		newFile, err := os.Create(newFilePath)
+		if err != nil {
+			return "", errors.Wrap(err, "")
+		}
+		if _, err := newFile.WriteString(*content); err != nil {
+			return "", errors.Wrap(err, "")
+		}
+		if err := newFile.Close(); err != nil {
+			return "", errors.Wrap(err, "")
+		}
+		defer os.RemoveAll(newFilePath)
+	}
+
+	return createDiff(fileName, originalFilePath, originalHttpRsp.StatusCode == 404,
+		newFilePath, newHttpRsp.StatusCode == 404), nil
+}
+
+func createDiff(fileName, originalFilePath string, newFileAdded bool, newFilePath string, fileDeleted bool) string {
+	var outDiff string
+	if newFileAdded {
+		out, _ := exec.Command("diff", "-u", "/dev/null", newFilePath).CombinedOutput()
+		//outDiff = string(out) + "new file mode 100644\n"
+		outDiff = fmt.Sprintf("diff --git a/%s b/%s\n%s", fileName, fileName, string(out))
+		//outDiff = string(out)
+	} else if fileDeleted {
+		out, _ := exec.Command("diff", "-u", originalFilePath, "/dev/null").CombinedOutput()
+		//outDiff = string(out) + "deleted file mode 100644\n"
+		//outDiff = string(out)
+		outDiff = fmt.Sprintf("diff --git a/%s b/%s\n%s", fileName, fileName, string(out))
+	} else {
+		out, _ := exec.Command("diff", "-u", originalFilePath, newFilePath).CombinedOutput()
+		//outDiff = string(out)
+		outDiff = fmt.Sprintf("diff --git a/%s b/%s\n%s", fileName, fileName, string(out))
+		//outDiff = string(out)
+	}
+
+	outDiff = strings.ReplaceAll(outDiff, newFilePath, fileName)
+	outDiff = strings.ReplaceAll(outDiff, originalFilePath, fileName)
+
+	return outDiff
 }

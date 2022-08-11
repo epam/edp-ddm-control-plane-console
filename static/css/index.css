@@ -12106,3 +12106,7 @@ p.error {
     border-radius: 4px;
     margin-right: 3px;
 }
+
+.mr-actions a {
+    margin-right: 10px;
+}
