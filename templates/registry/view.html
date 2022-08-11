@@ -289,11 +289,16 @@
                         <td>{{$al.RequestName}}</td>
                         <td>{{ i18n $al.Action}}</td>
                         <td class="mr-status">{{$al.Status.Value}}</td>
-                        <td>
+                        <td class="mr-actions">
                             {{if $al.Status.ChangeURL}}
-                                <a href="/admin/registry/{{ $.registry.Name}}/change/{{ $al.Status.ChangeID }}">View Change</a>
+                                <a title="Переглянути"
+                                   href="/admin/registry/{{ $.registry.Name}}/change/{{ $al.Status.ChangeID }}">
+                                    <i class="fa-solid fa-eye fa-lg"></i>
+                                </a>
+
                                 <a href="{{$al.Status.ChangeURL}}" target="_blank">
-                                    <img title="Переглянути в Gerrit" alt="vcs" src="{{ $.BasePath }}/static/img/action-link.png" />
+                                    <img style="vertical-align: sub;" title="Переглянути в Gerrit" alt="vcs"
+                                         src="{{ $.BasePath }}/static/img/action-link.png" />
                                 </a>
                             {{end}}
                         </td>
@@ -327,6 +332,18 @@
 
 
     <div class="popup-backdrop visible" v-cloak v-if="backdropShow"></div>
+
+    <div class="popup-window admin-window visible" v-cloak v-if="mrView">
+        <div class="popup-header">
+            <p>Запит на оновлення</p>
+            <a href="#" @click="hideMrView" class="popup-close hide-popup">
+                <img alt="close popup window" src="{{.BasePath}}/static/img/close.png" />
+            </a>
+        </div>
+        <div class="popup-body" style="border-bottom: none;">
+            <iframe></iframe>
+        </div>
+    </div>
 
     <div class="popup-window admin-window visible" v-cloak v-if="externalKey">
         <div class="popup-header">
