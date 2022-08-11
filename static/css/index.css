@@ -12110,3 +12110,14 @@ p.error {
 .mr-actions a {
     margin-right: 10px;
 }
+
+#mr-frame {
+    /*height: calc(100% - 10px);*/
+    height: 100%;
+    border: 0;
+}
+
+.mr-frame-body {
+    height: calc(100% - 50px);
+    padding: 0 0 5px 0;
+}
