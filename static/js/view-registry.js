@@ -37,9 +37,25 @@ let app = Vue.createApp({
             keyValue: '******',
             currentExternalKeyValue: '',
             accessGrantError: false,
+            mrView: false,
+            mrSrc: '',
         }
     },
     methods: {
+        hideMrView(e) {
+            $("body").css("overflow", "scroll");
+            this.backdropShow = false;
+            this.mrView = false;
+            e.preventDefault();
+        },
+        showMrView(src, e) {
+            this.mrView = true;
+            this.backdropShow = true;
+            $("body").css("overflow", "hidden");
+            e.preventDefault();
+            window.scrollTo(0, 0);
+            this.mrSrc = src;
+        },
         hideMrError(e) {
             this.mrError = false;
             this.backdropShow = false;
