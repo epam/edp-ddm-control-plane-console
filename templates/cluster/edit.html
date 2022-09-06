@@ -112,15 +112,6 @@
             </div>
         </form>
         {{end}}
-        <h1>Редагувати дані про ключ</h1>
-        <br />
-        <form class="registry-create-form" method="post" id="cluster-update-key" enctype="multipart/form-data" action="/admin/cluster/key">
-            {{ template "key-form" . }}
-            <div class="rc-form-group">
-                <button type="submit" name="submit">Підтвердити</button>
-            </div>
-        </form>
-
         {{template "admin-block" .}}
     </div>
     {{template  "scripts" .}}
