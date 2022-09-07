@@ -54,6 +54,8 @@ let setValidationMessages = function(){
             'ca-cert': 'Будь-ласка оберіть публічні сертифікати АЦСК',
             'ca-json': 'Будь-ласка оберіть список АЦСК',
             'admins': 'Будь-ласка вкажіть адміністраторів у відповідному форматі',
+            'officer-dns': 'Невірний формат',
+            'citizen-dns': 'Невірний формат',
         };
         let errorMessage = errorMessages[inputName];
         if (errorMessage) {
