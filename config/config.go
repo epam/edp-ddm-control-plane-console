@@ -53,6 +53,8 @@ type Settings struct {
 	VaultCitizenSSLPath                string `encvonfig:"V_SSL_CITIZEN_PATH" default:"custom-dns-names/{registry}/citizen-portal/{host}"`
 	VaultOfficerSSLPath                string `encvonfig:"V_SSL_CITIZEN_PATH" default:"custom-dns-names/{registry}/officer-portal/{host}"`
 	TempFolder                         string `envconfig:"TEMP_FOLDER" default:"/tmp"`
+	RegistryDNSManualPath              string `envconfig:"REGISTRY_DNS_MANUAL_PATH" default:"platform/1.6/tech/infrastructure/custom-dns.html"`
+	DDMManualEDPComponent              string `envconfig:"DDM_MANUAL_EDP_COMPONENT" default:"ddm-architecture"`
 }
 
 type Services struct {
