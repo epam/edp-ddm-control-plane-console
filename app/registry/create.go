@@ -10,7 +10,9 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 	"time"
@@ -78,8 +80,13 @@ func (a *App) createRegistryGet(ctx *gin.Context) (response *router.Response, re
 		return nil, errors.Wrap(err, "unable to get ini template data")
 	}
 
+	dnsManual, err := a.getDNSManualURL(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to get dns manual")
+	}
+
 	return router.MakeResponse(200, "registry/create.html", gin.H{
-		"dnsManual":            false,
+		"dnsManual":            dnsManual,
 		"page":                 "registry",
 		"gerritProjects":       prjs,
 		"model":                registry{KeyDeviceType: KeyDeviceTypeFile},
@@ -87,6 +94,22 @@ func (a *App) createRegistryGet(ctx *gin.Context) (response *router.Response, re
 		"smtpConfig":           "{}",
 		"cidrConfig":           "{}",
 	}), nil
+}
+
+func (a *App) getDNSManualURL(ctx context.Context) (string, error) {
+	com, err := a.EDPComponent.Get(ctx, a.Config.DDMManualEDPComponent)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to get edp component")
+	}
+
+	u, err := url.Parse(com.Spec.Url)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to parse url")
+	}
+
+	u.Path = path.Join(u.Path, a.Config.RegistryDNSManualPath)
+
+	return u.String(), nil
 }
 
 func headsCount(refs []string) int {

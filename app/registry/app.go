@@ -37,6 +37,8 @@ type Config struct {
 	VaultCitizenSSLPath             string
 	VaultOfficerSSLPath             string
 	TempFolder                      string
+	RegistryDNSManualPath           string
+	DDMManualEDPComponent           string
 }
 
 type Services struct {

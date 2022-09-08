@@ -27,6 +27,8 @@ func (cnf *Settings) RegistryConfig() registry.Config {
 		VaultCitizenSSLPath:             cnf.VaultCitizenSSLPath,
 		VaultOfficerSSLPath:             cnf.VaultOfficerSSLPath,
 		TempFolder:                      cnf.TempFolder,
+		RegistryDNSManualPath:           cnf.RegistryDNSManualPath,
+		DDMManualEDPComponent:           cnf.DDMManualEDPComponent,
 	}
 }
 
