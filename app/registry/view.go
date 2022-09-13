@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
@@ -210,15 +211,15 @@ func (a *App) viewCIDRConfig(userCtx context.Context, registryName string, viewP
 	}
 
 	if _, ok := whiteListDict["adminRoutes"]; ok {
-		viewParams["adminCIDR"] = whiteListDict["adminRoutes"].([]interface{})
+		viewParams["adminCIDR"] = strings.Split(whiteListDict["adminRoutes"].(string), " ")
 	}
 
 	if _, ok := whiteListDict["citizenPortal"]; ok {
-		viewParams["citizenCIDR"] = whiteListDict["citizenPortal"].([]interface{})
+		viewParams["citizenCIDR"] = strings.Split(whiteListDict["citizenPortal"].(string), " ")
 	}
 
 	if _, ok := whiteListDict["officerPortal"]; ok {
-		viewParams["officerCIDR"] = whiteListDict["officerPortal"].([]interface{})
+		viewParams["officerCIDR"] = strings.Split(whiteListDict["officerPortal"].(string), " ")
 	}
 
 	return nil

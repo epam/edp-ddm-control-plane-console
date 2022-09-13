@@ -353,7 +353,7 @@ func (a *App) prepareCIDRConfig(r *registry, values map[string]interface{}) erro
 			return errors.Wrap(err, "unable to decode cidr")
 		}
 
-		whiteListDict["citizenPortal"] = cidr
+		whiteListDict["citizenPortal"] = strings.Join(cidr, " ")
 	}
 
 	if r.CIDROfficer != "" {
@@ -362,7 +362,7 @@ func (a *App) prepareCIDRConfig(r *registry, values map[string]interface{}) erro
 			return errors.Wrap(err, "unable to decode cidr")
 		}
 
-		whiteListDict["officerPortal"] = cidr
+		whiteListDict["officerPortal"] = strings.Join(cidr, " ")
 	}
 
 	if r.CIDRAdmin != "" {
@@ -371,7 +371,7 @@ func (a *App) prepareCIDRConfig(r *registry, values map[string]interface{}) erro
 			return errors.Wrap(err, "unable to decode cidr")
 		}
 
-		whiteListDict["adminRoutes"] = cidr
+		whiteListDict["adminRoutes"] = strings.Join(cidr, " ")
 	}
 
 	globalDict["whiteListIP"] = whiteListDict
