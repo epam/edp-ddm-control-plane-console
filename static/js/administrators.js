@@ -44,6 +44,7 @@ let app = Vue.createApp({
     },
     data() {
         return {
+            registryFormSubmitted: false,
             officerCIDRValue: { value: '' },
             officerCIDR: [],
             citizenCIDRValue: { value: '' },
@@ -80,6 +81,11 @@ let app = Vue.createApp({
     },
     methods: {
         registryFormSubmit(e) {
+            if (this.registryFormSubmitted) {
+                e.preventDefault();
+                return;
+            }
+
             if (this.admins.length === 0) {
                 this.adminsError = true;
                 e.preventDefault();
@@ -91,6 +97,7 @@ let app = Vue.createApp({
             }
 
             this.mailServerOpts = JSON.stringify(this.externalSMTPOpts);
+            this.registryFormSubmitted = true;
         },
         loadAdmins(admins) {
             if (!this.adminsLoaded) {
