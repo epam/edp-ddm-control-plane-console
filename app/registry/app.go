@@ -28,12 +28,6 @@ type Config struct {
 	VaultRegistrySecretPathTemplate string
 	VaultRegistrySMTPPwdSecretKey   string
 	VaultKVEngineName               string
-	VaultOfficerCACertKey           string
-	VaultOfficerCertKey             string
-	VaultOfficerPKKey               string
-	VaultCitizenCACertKey           string
-	VaultCitizenCertKey             string
-	VaultCitizenPKKey               string
 	VaultCitizenSSLPath             string
 	VaultOfficerSSLPath             string
 	TempFolder                      string
