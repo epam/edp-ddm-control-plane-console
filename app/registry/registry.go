@@ -45,6 +45,7 @@ type registry struct {
 	CIDROfficer         string   `form:"officer-cidr"`
 	CIDRCitizen         string   `form:"citizen-cidr"`
 	CIDRAdmin           string   `form:"admin-cidr"`
+	Resources           string   `form:"resources"`
 }
 
 func (r *registry) KeysRequired() bool {
