@@ -37,6 +37,7 @@ const (
 	AnnotationCreatorEmail    = "registry-parameters/creator-email"
 	AnnotationValues          = "registry-parameters/values"
 	AdministratorsValuesKey   = "administrators"
+	ResourcesValuesKey        = "registry"
 )
 
 type KeyManagement interface {
@@ -253,6 +254,10 @@ func (a *App) createRegistry(ctx context.Context, ginContext *gin.Context, r *re
 
 	if err := a.prepareAdminsConfig(r, vaultSecretData, values); err != nil {
 		return errors.Wrap(err, "unable to prepare admins config")
+	}
+
+	if err := a.prepareRegistryResources(r, values); err != nil {
+		return errors.Wrap(err, "unable to prepare registry resources config")
 	}
 
 	if err := a.createVaultSecrets(vaultSecretData); err != nil {
