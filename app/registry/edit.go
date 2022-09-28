@@ -316,7 +316,7 @@ func (a *App) createEditMergeRequest(ctx *gin.Context, r *registry, editValues m
 	}
 
 	for _, mr := range mrs {
-		if mr.Status.Value == "NEW" {
+		if mr.Status.Value == gerrit.StatusNew {
 			return MRExists("there is already open merge request(s) for this registry")
 		}
 	}
