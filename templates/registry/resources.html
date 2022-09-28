@@ -2,6 +2,8 @@
     <h3>Ресурси реєстру</h3>
     <hr />
         <input type="hidden" name="resources" :value="registryResources.encoded" />
+        <input type="hidden" id="preload-resources" ref="resourcesEditConfig" value="{{ .model.Resources }}" />
+
         <div class="registry-resources">
             <div class="rc-form-group res-cat-select">
                 <select v-model="registryResources.cat">

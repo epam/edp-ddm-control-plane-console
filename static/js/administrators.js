@@ -41,6 +41,33 @@ let app = Vue.createApp({
                 }
             }
         }
+
+        if (this.$refs.hasOwnProperty('resourcesEditConfig')) {
+            if (this.$refs.resourcesEditConfig.value !== "") {
+                let resourcesConfig = JSON.parse(this.$refs.resourcesEditConfig.value);
+
+                for (let i in resourcesConfig) {
+                    this.registryResources.cats.splice(
+                        this.registryResources.cats.indexOf(i), 1);
+
+                    let envVars = [];
+
+                    for (let j in resourcesConfig[i].container.envVars) {
+                        envVars.push({
+                            name: j,
+                            value: resourcesConfig[i].container.envVars[j],
+                        })
+                    }
+
+                    resourcesConfig[i].container.envVars = envVars;
+
+                    this.registryResources.addedCats.push({
+                        name: i,
+                        config: resourcesConfig[i],
+                    });
+                }
+            }
+        }
     },
     data() {
         return {
@@ -161,7 +188,6 @@ let app = Vue.createApp({
                 };
             });
 
-            debugger;
             this.registryResources.encoded = JSON.stringify(prepare);
         },
         registryFormSubmit(e) {
