@@ -164,7 +164,7 @@ let app = Vue.createApp({
             });
 
             this.registryResources.cats.splice(
-                this.registryResources.cats.indexOf(this.registryResources.cat), 1)
+                this.registryResources.cats.indexOf(this.registryResources.cat), 1);
         },
         addEnvVar: function(envVars, event) {
             event.preventDefault();
@@ -172,6 +172,14 @@ let app = Vue.createApp({
         },
         removeEnvVar: function(envVars, env) {
             envVars.splice(envVars.indexOf(env), 1);
+        },
+        removeResourceCat: function (cat, event) {
+            event.preventDefault();
+
+            this.registryResources.cats.push(cat.name);
+
+            this.registryResources.addedCats.splice(
+                this.registryResources.addedCats.indexOf(cat), 1);
         },
         encodeRegistryResources: function() {
             let prepare = {};
