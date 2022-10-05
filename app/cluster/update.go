@@ -35,12 +35,13 @@ func (a *App) clusterUpdate(ctx *gin.Context) (*router.Response, error) {
 	}
 
 	if err := a.Services.Gerrit.CreateMergeRequest(ctx, &gerrit.MergeRequest{
-		CommitMessage: fmt.Sprintf("Update registry to %s", ur.Branch),
-		SourceBranch:  ur.Branch,
-		ProjectName:   prj.Spec.Name,
-		Name:          fmt.Sprintf("%s-update-%d", a.Config.CodebaseName, time.Now().Unix()),
-		AuthorName:    ctx.GetString(router.UserNameSessionKey),
-		AuthorEmail:   ctx.GetString(router.UserEmailSessionKey),
+		CommitMessage:       fmt.Sprintf("Update cluster to %s", ur.Branch),
+		SourceBranch:        ur.Branch,
+		ProjectName:         prj.Spec.Name,
+		Name:                fmt.Sprintf("%s-update-%d", a.Config.CodebaseName, time.Now().Unix()),
+		AuthorName:          ctx.GetString(router.UserNameSessionKey),
+		AuthorEmail:         ctx.GetString(router.UserEmailSessionKey),
+		AdditionalArguments: []string{"-X", "ours"},
 	}); err != nil {
 		return nil, errors.Wrap(err, "unable to create update merge request")
 	}
