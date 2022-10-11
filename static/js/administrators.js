@@ -68,6 +68,7 @@ let app = Vue.createApp({
             requiredError: false,
             emailFormatError: false,
             adminsLoaded: false,
+            adminsChanged: true,
             adminsError: false,
             smtpServerType: null,
             mailServerOpts: '',
@@ -105,6 +106,7 @@ let app = Vue.createApp({
                     this.admins = JSON.parse(admins);
                     this.adminsValue = JSON.stringify(this.admins);
                     this.adminsLoaded = true;
+                    this.adminsChanged = false;
                 }
             }
         },
@@ -166,6 +168,7 @@ let app = Vue.createApp({
                 }
             }
             this.adminsValue = JSON.stringify(this.admins);
+            this.adminsChanged = true;
         },
         createAdmin: function (e) {
             this.requiredError = false;
@@ -206,6 +209,7 @@ let app = Vue.createApp({
             };
 
             this.adminsValue = JSON.stringify(this.admins);
+            this.adminsChanged = true;
         }
     }
 })

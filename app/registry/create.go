@@ -384,7 +384,7 @@ func (a *App) prepareAdminsConfig(r *registry, secretData map[string]map[string]
 	values map[string]interface{}) error {
 	//TODO: don't recreate admin secrets for existing admin
 
-	if r.Admins != "" {
+	if r.Admins != "" && r.AdminsChanged == "on" {
 		admins, err := validateAdmins(r.Admins)
 		if err != nil {
 			return errors.Wrap(err, "unable to validate admins")
