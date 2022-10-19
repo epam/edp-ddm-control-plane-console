@@ -215,11 +215,12 @@ func (a *App) createRegistryPost(ctx *gin.Context) (response *router.Response, r
 			return nil, errors.Wrap(err, "unable to parse registry form")
 		}
 
-		cidrConfig, _ := r.CIDRConfig()
-		cidrConfigJSON, _ := json.Marshal(cidrConfig)
+		//cidrConfig, _ := r.CIDRConfig()
+		//cidrConfigJSON, _ := json.Marshal(cidrConfig)
 
 		return router.MakeResponse(200, "registry/create.html",
-			gin.H{"page": "registry", "errorsMap": validationErrors, "model": r, "cidrConfig": string(cidrConfigJSON),
+			gin.H{"page": "registry", "errorsMap": validationErrors, "model": r,
+				//"cidrConfig": string(cidrConfigJSON),
 				"hwINITemplateContent": hwINITemplateContent, "gerritProjects": prjs}), nil
 	}
 
@@ -364,14 +365,47 @@ func (a *App) vaultRegistryPath(registryName string) string {
 }
 
 func (a *App) prepareCIDRConfig(r *registry, values map[string]interface{}) error {
-	cidrDict, err := r.CIDRConfig()
-	if err != nil {
-		return errors.Wrap(err, "unable to decode cidr")
+	globalInterface, ok := values["global"]
+	if !ok {
+		globalInterface = make(map[string]interface{})
+	}
+	globalDict := globalInterface.(map[string]interface{})
+
+	whiteListInterface, ok := globalDict["whiteListIP"]
+	if !ok {
+		whiteListInterface = make(map[string]interface{})
+	}
+	whiteListDict := whiteListInterface.(map[string]interface{})
+
+	if r.CIDRCitizen != "" {
+		var cidr []string
+		if err := json.Unmarshal([]byte(r.CIDRCitizen), &cidr); err != nil {
+			return errors.Wrap(err, "unable to decode cidr")
+		}
+
+		whiteListDict["citizenPortal"] = strings.Join(cidr, " ")
 	}
 
-	if len(cidrDict) > 0 {
-		values["cidr"] = cidrDict
+	if r.CIDROfficer != "" {
+		var cidr []string
+		if err := json.Unmarshal([]byte(r.CIDROfficer), &cidr); err != nil {
+			return errors.Wrap(err, "unable to decode cidr")
+		}
+
+		whiteListDict["officerPortal"] = strings.Join(cidr, " ")
 	}
+
+	if r.CIDRAdmin != "" {
+		var cidr []string
+		if err := json.Unmarshal([]byte(r.CIDRAdmin), &cidr); err != nil {
+			return errors.Wrap(err, "unable to decode cidr")
+		}
+
+		whiteListDict["adminRoutes"] = strings.Join(cidr, " ")
+	}
+
+	globalDict["whiteListIP"] = whiteListDict
+	values["global"] = globalDict
 
 	return nil
 }
@@ -380,7 +414,7 @@ func (a *App) prepareAdminsConfig(r *registry, secretData map[string]map[string]
 	values map[string]interface{}) error {
 	//TODO: don't recreate admin secrets for existing admin
 
-	if r.Admins != "" {
+	if r.Admins != "" && r.AdminsChanged == "on" {
 		admins, err := validateAdmins(r.Admins)
 		if err != nil {
 			return errors.Wrap(err, "unable to validate admins")
@@ -652,9 +686,14 @@ func (a *App) prepareMailServerConfig(ginContext *gin.Context, r *registry, secr
 		}
 	}
 
-	global := make(map[string]interface{})
-	global["notifications"] = notifications
-	values["global"] = global
+	globalInterface, ok := values["global"]
+	if !ok {
+		globalInterface = make(map[string]interface{})
+	}
+	globalDict := globalInterface.(map[string]interface{})
+
+	globalDict["notifications"] = notifications
+	values["global"] = globalDict
 
 	return nil
 }

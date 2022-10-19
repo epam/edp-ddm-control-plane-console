@@ -44,6 +44,7 @@ let app = Vue.createApp({
     },
     data() {
         return {
+            registryFormSubmitted: false,
             officerCIDRValue: { value: '' },
             officerCIDR: [],
             citizenCIDRValue: { value: '' },
@@ -67,6 +68,7 @@ let app = Vue.createApp({
             requiredError: false,
             emailFormatError: false,
             adminsLoaded: false,
+            adminsChanged: true,
             adminsError: false,
             smtpServerType: null,
             mailServerOpts: '',
@@ -80,6 +82,11 @@ let app = Vue.createApp({
     },
     methods: {
         registryFormSubmit(e) {
+            if (this.registryFormSubmitted) {
+                e.preventDefault();
+                return;
+            }
+
             if (this.admins.length === 0) {
                 this.adminsError = true;
                 e.preventDefault();
@@ -91,6 +98,7 @@ let app = Vue.createApp({
             }
 
             this.mailServerOpts = JSON.stringify(this.externalSMTPOpts);
+            this.registryFormSubmitted = true;
         },
         loadAdmins(admins) {
             if (!this.adminsLoaded) {
@@ -98,6 +106,7 @@ let app = Vue.createApp({
                     this.admins = JSON.parse(admins);
                     this.adminsValue = JSON.stringify(this.admins);
                     this.adminsLoaded = true;
+                    this.adminsChanged = false;
                 }
             }
         },
@@ -159,6 +168,7 @@ let app = Vue.createApp({
                 }
             }
             this.adminsValue = JSON.stringify(this.admins);
+            this.adminsChanged = true;
         },
         createAdmin: function (e) {
             this.requiredError = false;
@@ -199,6 +209,7 @@ let app = Vue.createApp({
             };
 
             this.adminsValue = JSON.stringify(this.admins);
+            this.adminsChanged = true;
         }
     }
 })

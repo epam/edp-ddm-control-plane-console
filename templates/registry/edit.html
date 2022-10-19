@@ -27,6 +27,8 @@
                 <label for="admins">Адміністратори</label>
                 <input type="hidden" id="admins" name="admins" v-model="adminsValue"
                        :admins="loadAdmins('{{ .model.Admins }}')" />
+                <input type="checkbox" style="display: none;" v-model="adminsChanged"
+                       name="admins-changed" />
 
                 <div class="advanced-admins">
                     <div v-cloak v-for="adm in admins" class="child-admin">
@@ -71,6 +73,15 @@
 
             <div id="dns-block" style="display: none;margin-bottom: 10px;">
                 {{template "reg-dns" .}}
+            </div>
+
+            <div>
+                <input class="hide-check" data-target="cidr-block" name="edit-cidr" type="checkbox" id="edit-cidr">
+                <label for="edit-cidr">Редагувати налаштування CIDR</label>
+            </div>
+
+            <div id="cidr-block" style="display: none;margin-bottom: 10px;">
+                {{template "cidr-block" .}}
             </div>
 
 
