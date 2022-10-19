@@ -35,6 +35,7 @@
             <div :class="{ error: adminsError }" class="rc-form-group {{ if .errorsMap.Admins }}error{{end}}">
                 <label for="admins">Адміністратори</label>
                 <input type="hidden" id="admins" name="admins" v-model="adminsValue" :admins="loadAdmins('{{ .model.Admins }}')" />
+                <input type="checkbox" style="display: none;" v-model="adminsChanged" checked="checked" name="admins-changed" />
                 <div class="advanced-admins" ref="admins">
                     <div v-cloak v-for="adm in admins" class="child-admin">
                         [[ adm.email ]]
@@ -77,7 +78,9 @@
             </div>
             {{template "reg-smtp" .}}
             {{template "key-form" .}}
-            {{template "reg-dns" .}}
+
+            {{template "cidr-block" .}}
+
 
             <div class="rc-form-group">
                 <button type="submit" name="submit">Підтвердити</button>
