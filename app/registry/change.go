@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"context"
 	"ddm-admin-console/router"
 	"fmt"
 	"io/ioutil"
@@ -30,6 +31,10 @@ func (a *App) abandonChange(ctx *gin.Context) (response *router.Response, retErr
 		return nil, errors.Wrap(err, "unable to abandon change")
 	}
 
+	if err := a.updateMRStatus(ctx, changeID, "ABANDONED"); err != nil {
+		return nil, errors.Wrap(err, "unable to change MR status")
+	}
+
 	return router.MakeResponse(200, "registry/change-abandoned.html", gin.H{}), nil
 }
 
@@ -55,13 +60,38 @@ func (a *App) submitChange(ctx *gin.Context) (response *router.Response, retErr 
 	if _, rsp, err := a.Gerrit.GoGerritClient().Changes.SubmitChange(changeID, &goGerrit.SubmitInput{}); err != nil {
 		if rsp != nil {
 			body, _ := ioutil.ReadAll(rsp.Body)
-			return nil, errors.Wrapf(err, "unable to abandon change, error: %s", string(body))
+			return nil, errors.Wrapf(err, "unable to submit change, error: %s", string(body))
 		}
 
-		return nil, errors.Wrap(err, "unable to abandon change")
+		return nil, errors.Wrap(err, "unable to submit change")
+	}
+
+	if err := a.updateMRStatus(ctx, changeID, "MERGED"); err != nil {
+		return nil, errors.Wrap(err, "unable to change MR status")
 	}
 
 	return router.MakeResponse(200, "registry/change-submitted.html", gin.H{}), nil
+}
+
+func (a *App) updateMRStatus(ctx context.Context, changeID, status string) error {
+	mr, err := a.Gerrit.GetMergeRequestByChangeID(ctx, changeID)
+	if err != nil {
+		return errors.Wrap(err, "unable to get MR")
+	}
+
+	mr.Status.Value = status
+
+	for i := 0; i < 5; i++ {
+		if err := a.Gerrit.UpdateMergeRequestStatus(ctx, mr); err != nil {
+			if strings.Contains(err.Error(), "changed") {
+				continue
+			}
+
+			return errors.Wrap(err, "unable to update MR status")
+		}
+	}
+
+	return nil
 }
 
 func (a *App) viewChange(ctx *gin.Context) (response *router.Response, retErr error) {
@@ -78,9 +108,10 @@ func (a *App) viewChange(ctx *gin.Context) (response *router.Response, retErr er
 	}
 
 	return router.MakeResponse(200, "registry/change.html", gin.H{
-		"page":    "registry",
-		"changes": changes,
-		"change":  changeInfo,
+		"page":     "registry",
+		"changes":  changes,
+		"change":   changeInfo,
+		"changeID": changeID,
 	}), nil
 }
 

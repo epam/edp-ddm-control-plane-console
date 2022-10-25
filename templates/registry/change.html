@@ -5,8 +5,8 @@
     <div id="changes"></div>
     {{if eq .change.Status "NEW"}}
     <div class="change-actions">
-        <a class="change-abandon" href="/admin/abandon-change/{{.change.ID}}">Відхилити</a>
-        <a class="change-submit" href="/admin/submit-change/{{.change.ID}}">Підтвердити</a>
+        <a class="change-abandon" href="/admin/abandon-change/{{.changeID}}">Відхилити</a>
+        <a class="change-submit" href="/admin/submit-change/{{.changeID}}">Підтвердити</a>
     </div>
     {{end}}
     <script type="text/javascript" src="/static/js/diff2html-ui.min.js"></script>
