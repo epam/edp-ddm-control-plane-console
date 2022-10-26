@@ -27,6 +27,7 @@ rules:
     - get
     - create
     - watch
+    - update
 - apiGroups:
   - '*'
   attributeRestrictions: null
