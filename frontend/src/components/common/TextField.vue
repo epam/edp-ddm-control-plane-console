@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import Typography from '@/components/common/Typography.vue';
 import { getErrorMessage } from '@/utils';
+import { watch, toRefs } from 'vue';
 
 interface TextFieldProps {
   name?: string,
@@ -11,10 +12,28 @@ interface TextFieldProps {
   value?: HTMLInputElement['value']
   required?: boolean
   placeholder?: HTMLInputElement['placeholder'],
+  allowedCharacters?: string,
 }
 
-defineProps<TextFieldProps>();
-defineEmits(['update:modelValue']);
+const props = defineProps<TextFieldProps>();
+const $emit = defineEmits(['update:modelValue']);
+const { name, label, description, error, modelValue, required, placeholder, allowedCharacters } = toRefs(props);
+
+watch(modelValue, (value) => {
+  const charactersRegexp = allowedCharacters?.value;
+  if (charactersRegexp) {
+    const match = value.match(RegExp(charactersRegexp, 'g'));
+    const matchedValue = match?.length ? match.join('') : '';
+    if (matchedValue !== value) {
+      $emit('update:modelValue', matchedValue);
+    }
+  }
+});
+
+const onChange = (value: any, type: string) => {
+  const val = type === 'number' ? +value : value;
+  $emit('update:modelValue', val);
+};
 </script>
 <script lang="ts">
 export default {
@@ -33,10 +52,11 @@ export default {
       :placeholder="placeholder"
       v-bind="$attrs"
       :value="modelValue ?? value"
-      @input="$emit('update:modelValue', ($event.target as any).value)"
+      @input="onChange(($event.target as any).value, $attrs.type as string)"
     />
-    <Typography v-if="error" class="form-input-group-error-message" variant="small">{{ getErrorMessage(error) }}</Typography>
+    <Typography v-if="error" class="form-input-group-error-message" variant="small">{{ getErrorMessage(error, name) }}</Typography>
     <Typography class="form-input-group-error-description" v-if="description" variant="small">{{ description }}</Typography>
+    <slot></slot>
   </div>
 </template>
 
@@ -66,6 +86,17 @@ export default {
   &::placeholder {
     color: $black-color;
     opacity: 0.25;
+  }
+
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  &[type=number] {
+    -moz-appearance:textfield;
+    appearance:textfield;
   }
 }
 
