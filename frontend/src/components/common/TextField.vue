@@ -12,6 +12,7 @@ interface TextFieldProps {
   value?: HTMLInputElement['value']
   required?: boolean
   placeholder?: HTMLInputElement['placeholder'],
+  rootClass?: string
   allowedCharacters?: string,
 }
 
@@ -42,7 +43,7 @@ export default {
 </script>
 
 <template>
-  <div class="form-input-group" :class="{ 'error': error }">
+  <div class="form-input-group" :class="[ error ? 'error' : '', rootClass ? rootClass : '']">
     <label :for="name">
       {{ label }} <b v-if="required" class="red-star">*</b>
     </label>
@@ -55,7 +56,7 @@ export default {
       @input="onChange(($event.target as any).value, $attrs.type as string)"
     />
     <Typography v-if="error" class="form-input-group-error-message" variant="small">{{ getErrorMessage(error, name) }}</Typography>
-    <Typography class="form-input-group-error-description" v-if="description" variant="small">{{ description }}</Typography>
+    <Typography v-if="description" class="form-input-group-error-description" variant="small">{{ description }}</Typography>
     <slot></slot>
   </div>
 </template>

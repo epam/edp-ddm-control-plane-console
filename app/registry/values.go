@@ -67,7 +67,8 @@ type Portals struct {
 }
 
 type Portal struct {
-	CustomDNS CustomDNS `yaml:"customDns" json:"customDns"`
+	CustomDNS  CustomDNS  `yaml:"customDns" json:"customDns"`
+	SignWidget SignWidget `yaml:"signWidget" json:"signWidget"`
 }
 
 type CustomDNS struct {
@@ -115,8 +116,22 @@ type KeycloakAuthFlowsOfficerAuthFlow struct {
 	WidgetHeight int `yaml:"widgetHeight" json:"widgetHeight"`
 }
 
+type KeycloakWidgetAuthSettings struct {
+	Url    string `yaml:"url" json:"url,omitempty"`
+	Height int    `yaml:"height" json:"height,omitempty"`
+}
+
+type KeycloakRegistryIdGovUaSettings struct {
+	Url          string `yaml:"url" json:"url,omitempty"`
+	ClientSecret string `yaml:"clientSecret" json:"clientSecret,omitempty"`
+	ClientId     string `yaml:"clientId" json:"clientId,omitempty"`
+}
+
 type KeycloakAuthFlowsCitizenAuthFlow struct {
-	EDRCheck bool `yaml:"edrCheck" json:"edrCheck"`
+	EDRCheck        bool                            `yaml:"edrCheck" json:"edrCheck"`
+	AuthType        string                          `yaml:"authType" json:"authType"`
+	Widget          KeycloakWidgetAuthSettings      `yaml:"widget" json:"widget"`
+	RegistryIdGovUa KeycloakRegistryIdGovUaSettings `yaml:"registryIdGovUa" json:"registryIdGovUa"`
 }
 
 type KeycloakRealms struct {
@@ -129,7 +144,9 @@ type KeycloakRealmsOfficerPortal struct {
 }
 
 type SignWidget struct {
-	URL string `yaml:"url" json:"url"`
+	URL                string `yaml:"url" json:"url"`
+	Height             int    `yaml:"height" json:"height"`
+	CopyFromAuthWidget bool   `yaml:"copyFromAuthWidget" json:"copyFromAuthWidget"`
 }
 
 type Notifications struct {
