@@ -80,7 +80,7 @@ yup.addMethod(yup.string, "parseCronExpression", function (errorMessage) {
 
 const validationSchema = yup.object({
   cronSchedule: parseCronExpressionRules(),
-  days: yup.string().required().matches(/^[1-9]+$/),
+  days: yup.string().required().matches(/^[1-9]+$/, 'invalidFromat'),
   obcCronExpression: parseCronExpressionRules(),
 });
 

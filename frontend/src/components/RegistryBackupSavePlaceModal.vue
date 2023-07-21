@@ -18,8 +18,8 @@ interface RegistryBackupSavePlaceModalProps {
 }
 
 const validationSchema = yup.object({
-  backupBucket: yup.string().required().min(3).max(63).matches(/^[a-z0-9][a-z0-9.-]*$/i),
-  endpoint: yup.string().required().matches(/^[a-z0-9.\-/:]+$/i),
+  backupBucket: yup.string().required().min(3).max(63).matches(/^[a-z0-9][a-z0-9.-]*$/i, 'invalidFromat'),
+  endpoint: yup.string().required().matches(/^[a-z0-9.\-/:]+$/i, 'invalidFromat'),
   login: yup.string().required(),
   password: yup.string().required(),
 });
