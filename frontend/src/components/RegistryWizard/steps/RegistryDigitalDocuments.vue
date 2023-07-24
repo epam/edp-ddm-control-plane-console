@@ -16,7 +16,7 @@ const validationRules = () => {
   return string()
     .required()
     .max(4)
-    .matches(/^(?:[1-9][0-9]{0,3}(?:\.[1-9])?|\d{1}\.\d{1})?$/, 'invalidFromat')
+    .matches(/^(?:[1-9][0-9]{0,3}(?:\.[1-9])?|\d{1}\.\d{1})?$/)
     .test({
       message: 'moreThanMaxValue',
       test: function (value) {

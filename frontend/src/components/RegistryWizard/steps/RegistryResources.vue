@@ -13,8 +13,8 @@ export default defineComponent({
   components: { TextField },
   setup(props) {
     const validationSchema = Yup.object({
-      restApi: Yup.string().required().matches(REGEX_POSITIVE_VALUE, 'invalidFromat'),
-      kafkaApi: Yup.string().required().matches(REGEX_POSITIVE_VALUE, 'invalidFromat'),
+      restApi: Yup.string().required().matches(REGEX_POSITIVE_VALUE),
+      kafkaApi: Yup.string().required().matches(REGEX_POSITIVE_VALUE),
     });
     const { errors, validate } = useForm({
       validationSchema,

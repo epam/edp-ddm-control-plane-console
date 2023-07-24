@@ -33,7 +33,7 @@ const numberSchema = yup.number()
 .max(Number.MAX_SAFE_INTEGER, 'moreThanMaxValue')
 .integer();
 const validationSchema = yup.object({
-  name: yup.string().required().min(3).max(32).matches(/^[a-z0-9]([a-z0-9-]){1,30}[a-z0-9]$/, 'invalidFromat').test({
+  name: yup.string().required().min(3).max(32).matches(/^[a-z0-9]([a-z0-9-]){1,30}[a-z0-9]$/).test({
     message: 'isUnique',
     test: function (value) {
       if (publicApiValues.value?.name) {
@@ -42,7 +42,7 @@ const validationSchema = yup.object({
       return publicApiList.value?.findIndex(({ name }) => name === value) === -1;
     },
   }),
-  url: yup.string().required().matches(/^[A-Za-z0-9-/]*$/i, 'invalidFromat').test({
+  url: yup.string().required().matches(/^[A-Za-z0-9-/]*$/i).test({
     message: 'isUnique',
     test: function (value) {
       if (publicApiValues.value?.url === value) {

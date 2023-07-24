@@ -44,13 +44,13 @@ const parseCronExpressionRules = () => {
 
 const validationSchema = yup.object({
   NexusSchedule: parseCronExpressionRules(),
-  NexusExpiresInDays: yup.string().required().matches(/^[1-9]+$/, 'invalidFromat'),
+  NexusExpiresInDays: yup.string().required().matches(/^[1-9]+$/),
   ControlPlaneSchedule: parseCronExpressionRules(),
-  ControlPlaneExpiresInDays: yup.string().required().matches(/^[1-9]+$/, 'invalidFromat'),
+  ControlPlaneExpiresInDays: yup.string().required().matches(/^[1-9]+$/),
   UserManagementSchedule: parseCronExpressionRules(),
-  UserManagementExpiresInDays: yup.string().required().matches(/^[1-9]+$/, 'invalidFromat'),
+  UserManagementExpiresInDays: yup.string().required().matches(/^[1-9]+$/),
   MonitoringSchedule: parseCronExpressionRules(),
-  MonitoringExpiresInDays: yup.string().required().matches(/^[1-9]+$/, 'invalidFromat'),
+  MonitoringExpiresInDays: yup.string().required().matches(/^[1-9]+$/),
 });
 
 const { handleSubmit, useFieldModel, setErrors, validate, values, errors } = useForm({
