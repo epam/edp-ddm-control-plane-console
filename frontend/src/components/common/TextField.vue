@@ -12,13 +12,13 @@ interface TextFieldProps {
   value?: HTMLInputElement['value']
   required?: boolean
   placeholder?: HTMLInputElement['placeholder'],
-  rootClass?: string
+  rootClass?: string,
   allowedCharacters?: string,
 }
 
 const props = defineProps<TextFieldProps>();
 const $emit = defineEmits(['update:modelValue']);
-const { name, label, description, error, modelValue, required, placeholder, allowedCharacters } = toRefs(props);
+const { name, label, description, error, modelValue, required, placeholder, rootClass, allowedCharacters } = toRefs(props);
 
 watch(modelValue, (value) => {
   const charactersRegexp = allowedCharacters?.value;
