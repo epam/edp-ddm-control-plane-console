@@ -71,11 +71,11 @@ func Make(router router.Interface, services Services, cnf Config) (*App, error) 
 		router:   router,
 		admins:   MakeAdmins(services.Keycloak, cnf.UsersRealm, cnf.UsersNamespace),
 	}
+	app.codebaseLabels = make(map[string]string)
 
 	if cnf.RegistryCodebaseLabels != "" {
 		labels := strings.Split(cnf.RegistryCodebaseLabels, ",")
 		if len(labels) > 0 {
-			app.codebaseLabels = make(map[string]string)
 			for _, l := range labels {
 				labelParts := strings.Split(l, "=")
 				if len(labelParts) == 2 {

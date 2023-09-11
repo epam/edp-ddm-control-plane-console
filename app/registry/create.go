@@ -670,9 +670,12 @@ func (a *App) prepareMailServerConfig(_ *gin.Context, r *registry, _values *Valu
 
 func (a *App) prepareRegistryCodebase(r *registry) *codebase.Codebase {
 	jobProvisioning := "default"
+	a.codebaseLabels["registry-parameters/templatePushed"] = "no"
+	print(a.codebaseLabels)
 	startVersion := "0.0.1"
 	jenkinsSlave := "gitops"
 	gitURL := codebase.RepoNotReady
+	gitURLPath := fmt.Sprintf("/%s", r.Name)
 	cb := codebase.Codebase{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v2.edp.epam.com/v1alpha1",
@@ -690,8 +693,8 @@ func (a *App) prepareRegistryCodebase(r *registry) *codebase.Codebase {
 			Strategy:         "import",
 			DeploymentScript: "openshift-template",
 			GitServer:        "gerrit",
-			GitUrlPath:       &gitURL,
-			CiTool:           "Jenkins",
+			GitUrlPath:       &gitURLPath,
+			CiTool:           "jenkins",
 			JobProvisioning:  &jobProvisioning,
 			Versioning: codebase.Versioning{
 				StartFrom: &startVersion,
