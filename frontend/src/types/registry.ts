@@ -51,6 +51,9 @@ export interface PortalSettings {
     height: number,
   }
 }
+export interface OfficerPortalSettings extends PortalSettings {
+  individualAccessEnabled: boolean,
+}
 
 export enum CitizenAuthType {
   widget = 'widget',
@@ -116,6 +119,7 @@ export interface RegistryWizardTemplateVariables {
     }
     portals: {
       citizen: PortalSettings
+      officer: OfficerPortalSettings,
     }
     signWidget: {
       url: string

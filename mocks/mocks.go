@@ -231,7 +231,7 @@ func initMockGerrit(cnf *config.Settings) *mockGerrit.ServiceInterface {
 			}},
 		},
 		Portals: registry.Portals{
-			Officer: registry.Portal{
+			Officer: registry.OfficerPortalSettings{
 				CustomDNS: registry.CustomDNS{Enabled: true, Host: "officer.com"},
 			},
 		},
@@ -292,10 +292,10 @@ func initMockGerrit(cnf *config.Settings) *mockGerrit.ServiceInterface {
 				CertificatePath: "/foo2/bar/com",
 			},
 		}},
-        Velero: cluster.Velero{Backup: cluster.BackupSchedule{Nexus: cluster.ScheduleItem{
-            Schedule:      "30 10 * * *",
-            ExpiresInDays: 5,
-        }}},
+		Velero: cluster.Velero{Backup: cluster.BackupSchedule{Nexus: cluster.ScheduleItem{
+			Schedule:      "30 10 * * *",
+			ExpiresInDays: 5,
+		}}},
 	}
 	bts, err := yaml.Marshal(mockClusterValues)
 	if err != nil {

@@ -62,11 +62,15 @@ type CrunchyPostgresPostgresqlParameters struct {
 }
 
 type Portals struct {
-	Citizen Portal `yaml:"citizen" json:"citizen"`
-	Officer Portal `yaml:"officer" json:"officer"`
+	Citizen CitizenPortalSettings `yaml:"citizen" json:"citizen"`
+	Officer OfficerPortalSettings `yaml:"officer" json:"officer"`
 }
-
-type Portal struct {
+type OfficerPortalSettings struct {
+	CustomDNS               CustomDNS  `yaml:"customDns" json:"customDns"`
+	SignWidget              SignWidget `yaml:"signWidget" json:"signWidget"`
+	IndividualAccessEnabled bool       `yaml:"individualAccessEnabled" json:"individualAccessEnabled"`
+}
+type CitizenPortalSettings struct {
 	CustomDNS  CustomDNS  `yaml:"customDns" json:"customDns"`
 	SignWidget SignWidget `yaml:"signWidget" json:"signWidget"`
 }

@@ -55,6 +55,7 @@ type registry struct {
 	SupAuthClientSecret           string   `form:"sup-auth-client-secret"`
 	BackupScheduleEnabled         string   `form:"backup-schedule-enabled"`
 	SelfRegistration              string   `form:"self-registration-enabled"`
+	RecIndividualAccessEnabled    string   `form:"rec-individual-access-enabled"`
 	CronSchedule                  string   `form:"cron-schedule"`
 	CronScheduleDays              string   `form:"cron-schedule-days"`
 	KeycloakCustomHostname        string   `form:"keycloak-custom-hostname"`
