@@ -83,6 +83,29 @@ func (_m *ServiceInterface) GetAllCategory(ctx context.Context, ns string) (map[
 	return r0, r1
 }
 
+// GetAllCategoryPlatform provides a mock function with given fields: ctx
+func (_m *ServiceInterface) GetAllCategoryPlatform(ctx context.Context) (map[string][]edpcomponent.EDPComponentItem, error) {
+	ret := _m.Called(ctx)
+
+	var r0 map[string][]edpcomponent.EDPComponentItem
+	if rf, ok := ret.Get(0).(func(context.Context) map[string][]edpcomponent.EDPComponentItem); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[string][]edpcomponent.EDPComponentItem)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetAllNamespace provides a mock function with given fields: ctx, ns, onlyVisible
 func (_m *ServiceInterface) GetAllNamespace(ctx context.Context, ns string, onlyVisible bool) ([]edpcomponent.EDPComponent, error) {
 	ret := _m.Called(ctx, ns, onlyVisible)

@@ -815,6 +815,10 @@ export default {
                 this.adminCIDRValue.value = JSON.stringify(this.adminCIDR);
             }
         }
+
+        if (window.location.hash === '#upgrade') {
+          this.clusterSettings.activeTab = 'platformUpdate';
+        }
     },
     computed: {
         customHosts() {
@@ -830,7 +834,7 @@ export default {
         <input type="hidden" ref="adminsDataRef" :value="adminsData" />
         <input type="hidden" id="preload-cidr" ref="cidrEditConfig" :value="cidrConfig" />
         <div class="registry-header">
-            <a href="/admin/cluster/management" class="registry-add">
+            <a href="/admin/cluster/management" onclick="window.history.back(); return false;" class="registry-add">
                 <img alt="add registry" src="@/assets/img/action-back.png" />
                 <span>НАЗАД</span>
             </a>

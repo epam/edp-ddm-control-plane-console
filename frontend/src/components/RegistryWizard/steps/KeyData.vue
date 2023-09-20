@@ -151,9 +151,7 @@ export default defineComponent({
 </style>
 
 <template>
-  <div class="form-group">
-    <Typography variant="h3">Дані про ключ</Typography>
-  </div>
+  <h2>Дані про ключ</h2>
   <Typography variant="bodyText" class="key-data-page-description">{{ pageDescription }}</Typography>
 
   <input type="checkbox" style="display: none;" v-model="changed" name="key-data-changed" />
