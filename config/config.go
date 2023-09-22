@@ -4,6 +4,7 @@ import (
 	"ddm-admin-console/service/codebase"
 	edpcomponent "ddm-admin-console/service/edp_component"
 	"ddm-admin-console/service/gerrit"
+	"ddm-admin-console/service/gitserver"
 	"ddm-admin-console/service/jenkins"
 	"ddm-admin-console/service/k8s"
 	"ddm-admin-console/service/keycloak"
@@ -77,6 +78,7 @@ type Services struct {
 	K8S          k8s.ServiceInterface
 	OpenShift    openshift.ServiceInterface
 	Gerrit       gerrit.ServiceInterface
+	GitServer    gitserver.ServiceInterface
 	Jenkins      jenkins.ServiceInterface
 	Keycloak     keycloak.ServiceInterface
 	Vault        vault.ServiceInterface
