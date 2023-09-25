@@ -61,7 +61,7 @@ const validationSchema = Yup.object<FormValues>({
   widgetHeight: Yup.number()
   .when('authType', {
     is: (value: CitizenAuthType) => value === CitizenAuthType.widget,
-    then: (schema) => schema.required().min(1).integer().positive().typeError('wrongFormat'),
+    then: (schema) => schema.required().min(1, 'required').integer().positive().typeError('wrongFormat'),
   }),
   clientId: Yup.string()
     .when('authType', {

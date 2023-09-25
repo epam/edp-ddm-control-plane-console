@@ -28,6 +28,7 @@ interface RegistryRecipientAuthProps {
       idGovUa: {
         clientId: string
         url: string
+        secretKey: string
       }
     }
     realms: {
@@ -47,6 +48,7 @@ interface RegistryRecipientAuthProps {
 }
 
 const props = defineProps<RegistryRecipientAuthProps>();
+const isSecretExists = props.keycloakSettings?.identityProviders?.idGovUa?.secretKey.length > 0;
 const selfRegistrationEnabled = ref(props.keycloakSettings?.realms?.officerPortal?.selfRegistration || false);
 const isEnabledPortal = ref(props.isEnabledPortal);
 const portal = ref(props.isEnabledPortal ? '' : PORTALS.officer);
@@ -67,7 +69,7 @@ const validationSchema = Yup.object<FormValues>({
   widgetHeight: Yup.number()
   .when('authType', {
     is: (value: OfficerAuthType) => value === OfficerAuthType.widget,
-    then: (schema) => schema.required().min(1).integer().positive().typeError('wrongFormat'),
+    then: (schema) => schema.required().min(1, 'required').integer().positive().typeError('wrongFormat'),
   }),
   clientId: Yup.string()
     .when('authType', {
@@ -76,7 +78,7 @@ const validationSchema = Yup.object<FormValues>({
     }),
   secret: Yup.string()
     .when('authType', {
-      is: (value: OfficerAuthType) => value === OfficerAuthType.registryIdGovUa,
+      is: (value: OfficerAuthType) => value === OfficerAuthType.registryIdGovUa && !isSecretExists,
       then: (schema) => schema.required(),
     }),
 });
@@ -85,7 +87,11 @@ const { errors, validate, setFieldValue } = useForm<FormValues>({
   validationSchema,
   initialValues: {
     authType: props.keycloakSettings?.realms?.officerPortal?.browserFlow as OfficerAuthType.widget || defaultValues.authType,
-    url: props.signWidgetSettings?.url || defaultValues.url,
+    url: (
+      props.keycloakSettings?.realms?.officerPortal?.browserFlow === OfficerAuthType.widget
+      ? props.signWidgetSettings?.url
+      : props.keycloakSettings?.identityProviders.idGovUa.url
+      ) || defaultValues.url,
     widgetHeight: props.keycloakSettings?.authFlows?.officerAuthFlow?.widgetHeight ?? defaultValues.widgetHeight,
     clientId: props.keycloakSettings?.identityProviders.idGovUa.clientId || defaultValues.clientId,
     secret: defaultValues.secret,
@@ -135,7 +141,6 @@ function handleChangeAuthType() {
     setFieldValue('url', props.keycloakSettings.identityProviders.idGovUa.url);
     if (props.keycloakSettings.identityProviders.idGovUa.clientId !== "") {
       setFieldValue('clientId', props.keycloakSettings.identityProviders.idGovUa.clientId);
-      setFieldValue('secret', "*****");
     }
   }
 }
@@ -184,7 +189,7 @@ function handleChangeAuthType() {
       description="URL, повинен починатись з http:// або https://"
     />
 
-    <div v-if="true || authType == 'dso-officer-auth-flow'">
+    <div v-if="authType === OfficerAuthType.widget">
       <TextField
         required
         type="number"
@@ -195,7 +200,7 @@ function handleChangeAuthType() {
       />
     </div>
 
-    <div v-if="authType == 'id-gov-ua-officer-redirector'">
+    <div v-if="authType === OfficerAuthType.registryIdGovUa">
       <TextField
         required
         label="Ідентифікатор клієнта (client_id)"
@@ -210,6 +215,7 @@ function handleChangeAuthType() {
         v-model="secret"
         :error="errors.secret"
         type="password"
+        placeholder="******"
       />
     </div>
 
