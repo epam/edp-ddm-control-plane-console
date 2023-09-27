@@ -233,8 +233,8 @@ func initMockGerrit(cnf *config.Settings) *mockGerrit.ServiceInterface {
 				},
 				StorageSize: "10Gi",
 			},
-			Notifications: registry.Notifications{Email: map[string]interface{}{
-				"type": registry.SMTPTypePlatform,
+			Notifications: registry.Notifications{Email: registry.ExternalEmailSettings{
+				Type: registry.SMTPTypePlatform,
 			}},
 		},
 		Portals: registry.Portals{

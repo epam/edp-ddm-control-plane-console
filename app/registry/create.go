@@ -578,12 +578,27 @@ func (a *App) prepareDNSConfig(ginContext *gin.Context, r *registry, _values *Va
 
 	return valuesChanged, nil
 }
+func (a *App) isSmtpPasswordSet(path string) bool {
+	data, err := a.Vault.Read(path)
+	if err != nil && !errors.Is(err, vault.ErrSecretIsNil) {
+		return false
+	}
+	password, ok := data[a.Config.VaultRegistrySMTPPwdSecretKey]
+	if !ok {
+		return false
+	}
+	if password == "" {
+		return false
+	}
+	return true
+}
 
 func (a *App) prepareMailServerConfig(_ *gin.Context, r *registry, _values *Values,
 	secretData map[string]map[string]interface{}, mrActions *[]string) (bool, error) {
 	values := _values.OriginalYaml
 
-	email := make(map[string]interface{})
+	var email ExternalEmailSettings
+	var vaultPath string
 
 	if r.MailServerType == SMTPTypeExternal {
 		var smptOptsDict map[string]string
@@ -592,17 +607,21 @@ func (a *App) prepareMailServerConfig(_ *gin.Context, r *registry, _values *Valu
 		}
 
 		pwd, ok := smptOptsDict["password"]
-		if !ok {
+		passwordExist := a.isSmtpPasswordSet(_values.Global.Notifications.Email.VaultPath)
+		if !ok && !passwordExist {
 			return false, errors.New("no password in mail server opts")
 		}
+		if pwd != "" {
+			vaultPath = a.vaultRegistryPathKey(r.Name, fmt.Sprintf("%s-%s", "smtp", time.Now().Format("20060201T150405Z")))
+			if _, ok := secretData[vaultPath]; !ok {
+				secretData[vaultPath] = make(map[string]interface{})
+			}
 
-		vaultPath := a.vaultRegistryPathKey(r.Name, "smtp")
-
-		if _, ok := secretData[vaultPath]; !ok {
-			secretData[vaultPath] = make(map[string]interface{})
+			secretData[vaultPath][a.Config.VaultRegistrySMTPPwdSecretKey] = pwd
+		} else {
+			vaultPath = _values.Global.Notifications.Email.VaultPath
 		}
 
-		secretData[vaultPath][a.Config.VaultRegistrySMTPPwdSecretKey] = pwd
 		//TODO: remove password from dict
 
 		port, err := strconv.ParseInt(smptOptsDict["port"], 10, 32)
@@ -610,18 +629,17 @@ func (a *App) prepareMailServerConfig(_ *gin.Context, r *registry, _values *Valu
 			return false, errors.Wrapf(err, "wrong smtp port value: %s", smptOptsDict["port"])
 		}
 
-		email = map[string]interface{}{
-			"type":      "external",
-			"host":      smptOptsDict["host"],
-			"port":      port,
-			"address":   smptOptsDict["address"],
-			"password":  smptOptsDict["password"],
-			"vaultPath": a.vaultRegistryPath(r.Name),
-			"vaultKey":  a.Config.VaultRegistrySMTPPwdSecretKey,
+		email = ExternalEmailSettings{
+			Type:      "external",
+			Host:      smptOptsDict["host"],
+			Port:      port,
+			Address:   smptOptsDict["address"],
+			VaultPath: vaultPath,
+			VaultKey:  a.Config.VaultRegistrySMTPPwdSecretKey,
 		}
 	} else {
-		email = map[string]interface{}{
-			"type": "internal",
+		email = ExternalEmailSettings{
+			Type: "internal",
 		}
 	}
 
