@@ -61,7 +61,7 @@ const validationSchema = Yup.object<FormValues>({
   widgetHeight: Yup.number()
   .when('authType', {
     is: (value: CitizenAuthType) => value === CitizenAuthType.widget,
-    then: (schema) => schema.required().min(1, 'required').integer().positive().typeError('wrongFormat'),
+    then: (schema) => schema.required().min(1, 'required').integer().typeError('wrongFormat'),
   }),
   clientId: Yup.string()
     .when('authType', {
@@ -76,7 +76,7 @@ const validationSchema = Yup.object<FormValues>({
   signWidgetHeight: Yup.number()
     .when('copyFromAuthWidget', {
       is: (value: boolean) => !value,
-      then: (schema) => schema.required().min(1).integer().positive().typeError('wrongFormat'),
+      then: (schema) => schema.required().min(1, 'required').integer().typeError('wrongFormat'),
     }),
   signWidgetUrl: Yup.string()
     .when('copyFromAuthWidget', {
