@@ -41,6 +41,7 @@ export default defineComponent({
       <div class="toggle-switch">
           <input v-model="pageRoot.$data.wizard.tabs.dns.editVisible.officer"
                   class="switch-input" type="checkbox"
+                  @blur="pageRoot.$data.wizard.tabs.dns.editVisible.officer = ($event.target as any).value.trim()"
                   id="officer-switch-input" name="officer-dns-enabled" />
           <label for="officer-switch-input">Toggle</label>
           <span style="color: #000000;">Використати власні значення</span>
@@ -49,6 +50,7 @@ export default defineComponent({
       <div v-show="pageRoot.$data.wizard.tabs.dns.editVisible.officer" class="text-input-label">Доменне імʼя для кабінету посадової особи</div>
       <input :class="{'error': pageRoot.$data.wizard.tabs.dns.formatError.officer}" v-show="pageRoot.$data.wizard.tabs.dns.editVisible.officer"
               pattern="^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)+([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$"
+              @blur="pageRoot.$data.wizard.tabs.dns.data.officer = ($event.target as any).value.trim()"
               type="text" name="officer-dns" id="officer-dns" v-model="pageRoot.$data.wizard.tabs.dns.data.officer"
               :placeholder="pageRoot.$data.wizard.tabs.dns.preloadValues.officer" />
       <span v-if="pageRoot.$data.wizard.tabs.dns.formatError.officer">Невірний формат</span>
@@ -65,6 +67,7 @@ export default defineComponent({
     <label for="citizen-dns" class="header-label">кабінет отримувача послуг</label>
     <div class="toggle-switch">
           <input v-model="pageRoot.$data.wizard.tabs.dns.editVisible.citizen"
+                  @blur="pageRoot.$data.wizard.tabs.dns.editVisible.citizen = ($event.target as any).value.trim()"
                   class="switch-input" type="checkbox"
                   id="citizen-switch-input" name="citizen-dns-enabled" />
           <label for="citizen-switch-input">Toggle</label>
@@ -74,6 +77,7 @@ export default defineComponent({
     <input :class="{'error': pageRoot.$data.wizard.tabs.dns.formatError.citizen }" v-show="pageRoot.$data.wizard.tabs.dns.editVisible.citizen"
               pattern="^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)+([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$"
               type="text" name="citizen-dns" id="citizen-dns" v-model="pageRoot.$data.wizard.tabs.dns.data.citizen"
+              @blur="pageRoot.$data.wizard.tabs.dns.data.citizen = ($event.target as any).value.trim()"
               :placeholder="pageRoot.$data.wizard.tabs.dns.preloadValues.citizen" />
       <span v-if="pageRoot.$data.wizard.tabs.dns.formatError.citizen">Невірний формат</span>
       <p v-show="pageRoot.$data.wizard.tabs.dns.editVisible.citizen">Назва не може перевищувати довжину у 63 символи. Допустимі символи “a-z”, “.”, “-”, “_”</p>

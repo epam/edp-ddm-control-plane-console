@@ -65,7 +65,7 @@ export default defineComponent({
                 <p class="popup-error" v-cloak v-if="cidrFormatError">Перевірте формат IP-адреси</p>
                 <div class="rc-form-group">
                     <label for="cidr-value">{{ subTitle }}</label>
-                    <input id="cidr-value" type="text" v-model="editCIDR" />
+                    <input id="cidr-value" type="text" v-model="editCIDR" @blur="$data.editCIDR = ($event.target as any).value.trim()"/>
                     <p v-if="maskAllowed">Допустимі символи "0-9", "/", ".". Приклад: 172.16.0.0/12.</p>
                     <p v-if="!maskAllowed">Допустимі символи "0-9", "." Наприклад: 127.0.0.1</p>
                 </div>

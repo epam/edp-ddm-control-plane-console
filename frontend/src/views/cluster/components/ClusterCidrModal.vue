@@ -27,7 +27,7 @@ export default {
       this.$emit('hideCidrForm');
     },
     updateValue(event: any) {
-      this.$emit('update:modelValue', (event.target as HTMLInputElement).value);
+      this.$emit('update:modelValue', (event.target as HTMLInputElement).value.trim());
     }
   },
   watch: {

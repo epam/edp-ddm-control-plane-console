@@ -14,11 +14,12 @@ interface TextFieldProps {
   placeholder?: HTMLInputElement['placeholder'],
   rootClass?: string,
   allowedCharacters?: string,
+  avoidTrim?: boolean,
 }
 
 const props = defineProps<TextFieldProps>();
 const $emit = defineEmits(['update:modelValue']);
-const { name, label, description, error, modelValue, required, placeholder, rootClass, allowedCharacters } = toRefs(props);
+const { name, label, description, error, modelValue, required, placeholder, rootClass, allowedCharacters, avoidTrim } = toRefs(props);
 
 watch(modelValue, (value) => {
   const charactersRegexp = allowedCharacters?.value;
@@ -32,7 +33,11 @@ watch(modelValue, (value) => {
 });
 
 const onChange = (value: any, type: string) => {
-  const val = type === 'number' ? +value : value;
+  let val = value;
+  if (!avoidTrim.value) {
+    val = value.trim();
+  }
+  val = type === 'number' ? +val : val;
   $emit('update:modelValue', val);
 };
 </script>

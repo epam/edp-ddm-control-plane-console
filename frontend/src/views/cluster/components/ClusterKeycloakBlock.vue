@@ -171,6 +171,7 @@ export default {
                     <label for="cluster-keycloak-dns-value">Доменне імʼя для Keycloak</label>
                     <input id="cluster-keycloak-dns-value" maxlength="63" type="text"
                         v-model="clusterSettings.keycloak.hostname"
+                        @blur="clusterSettings.keycloak.hostname = ($event.target as any).value.trim()"
                         :class="{ 'error': clusterSettings.keycloak.hostnameError != '' }"
                         :disabled="clusterSettings.keycloak.editDisabled" />
                     <p>Назва не може перевищувати довжину у 63 символи. Допустимі символи “a-z”, “.”, “-”, “_”</p>

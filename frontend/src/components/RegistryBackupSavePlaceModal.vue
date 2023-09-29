@@ -85,6 +85,7 @@ const submit = handleSubmit((data: Data) => {
         v-model="values.password"
         :error="errors?.password"
         required
+        avoidTrim
       />
     </form>
   </Modal>
