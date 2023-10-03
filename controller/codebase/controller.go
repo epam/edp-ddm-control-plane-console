@@ -207,7 +207,7 @@ func (c *Controller) checkBranchesStatus(ctx context.Context, instance *codebase
 }
 
 func (c *Controller) updateImportRepo(ctx context.Context, instance *codebaseService.Codebase) error {
-	if value, key := instance.ObjectMeta.Labels["registry-parameters/templatePushed"]; !key || value != "no" {
+	if instance.Spec.GitUrlPath == nil || *instance.Spec.GitUrlPath != codebaseService.RepoNotReady {
 		return nil
 	}
 
@@ -226,7 +226,8 @@ func (c *Controller) updateImportRepo(ctx context.Context, instance *codebaseSer
 		return fmt.Errorf("unable to push registry template, %w", err)
 	}
 
-	instance.ObjectMeta.Labels["registry-parameters/templatePushed"] = "yes"
+	gitUrlPath := fmt.Sprintf("/%s", instance.Name)
+	instance.Spec.GitUrlPath = &gitUrlPath
 
 	if err := c.k8sClient.Update(ctx, instance); err != nil {
 		return fmt.Errorf("unable to update codebase, %w", err)
