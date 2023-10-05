@@ -53,6 +53,10 @@ export interface PortalSettings {
     copyFromAuthWidget: boolean,
     url: string,
     height: number,
+  },
+  customDns?: {
+    enabled: boolean,
+    host: string
   }
 }
 export interface OfficerPortalSettings extends PortalSettings {

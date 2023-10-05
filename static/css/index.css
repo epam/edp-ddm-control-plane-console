@@ -12584,14 +12584,6 @@ p.error {
     color: #9e9e9e;
 }
 
-.dns-inputs label:last-of-type {
-    margin-top: 8px;
-}
-
-.dns-inputs label {
-    text-transform: uppercase;
-}
-
 .text-input-label {
     font-size: 16px;
     font-weight: 700;

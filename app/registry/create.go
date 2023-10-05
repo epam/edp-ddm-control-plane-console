@@ -514,31 +514,29 @@ func (a *App) prepareDNSConfig(ginContext *gin.Context, r *registry, _values *Va
 		valuesChanged = true
 
 		certFile, _, err := ginContext.Request.FormFile("officer-ssl")
-		if err != nil {
-			return false, errors.Wrap(err, "unable to get officer ssl certificate")
+		if err == nil {
+			certData, err := ioutil.ReadAll(certFile)
+			if err != nil {
+				return false, errors.Wrap(err, "unable to read officer ssl data")
+			}
+
+			pemInfo, err := DecodePEM(certData)
+			if err != nil {
+				return false, validator.ValidationErrors([]validator.FieldError{
+					router.MakeFieldError("DNSNameOfficer", "pem-decode-error")})
+			}
+
+			secretPath := strings.ReplaceAll(a.Config.VaultOfficerSSLPath, "{registry}", r.Name)
+			secretPath = strings.ReplaceAll(secretPath, "{host}", r.DNSNameOfficer)
+
+			if _, ok := secretData[secretPath]; !ok {
+				secretData[secretPath] = make(map[string]interface{})
+			}
+
+			secretData[secretPath][VaultKeyCACert] = pemInfo.CACert
+			secretData[secretPath][VaultKeyCert] = pemInfo.Cert
+			secretData[secretPath][VaultKeyPK] = pemInfo.PrivateKey
 		}
-
-		certData, err := ioutil.ReadAll(certFile)
-		if err != nil {
-			return false, errors.Wrap(err, "unable to read officer ssl data")
-		}
-
-		pemInfo, err := DecodePEM(certData)
-		if err != nil {
-			return false, validator.ValidationErrors([]validator.FieldError{
-				router.MakeFieldError("DNSNameOfficer", "pem-decode-error")})
-		}
-
-		secretPath := strings.ReplaceAll(a.Config.VaultOfficerSSLPath, "{registry}", r.Name)
-		secretPath = strings.ReplaceAll(secretPath, "{host}", r.DNSNameOfficer)
-
-		if _, ok := secretData[secretPath]; !ok {
-			secretData[secretPath] = make(map[string]interface{})
-		}
-
-		secretData[secretPath][VaultKeyCACert] = pemInfo.CACert
-		secretData[secretPath][VaultKeyCert] = pemInfo.Cert
-		secretData[secretPath][VaultKeyPK] = pemInfo.PrivateKey
 	}
 
 	if r.DNSNameCitizenEnabled == "" && _values.Portals.Citizen.CustomDNS.Enabled {
@@ -549,31 +547,29 @@ func (a *App) prepareDNSConfig(ginContext *gin.Context, r *registry, _values *Va
 		valuesChanged = true
 
 		certFile, _, err := ginContext.Request.FormFile("citizen-ssl")
-		if err != nil {
-			return false, errors.Wrap(err, "unable to get citizen ssl certificate")
+		if err == nil {
+			certData, err := ioutil.ReadAll(certFile)
+			if err != nil {
+				return false, errors.Wrap(err, "unable to read citizen ssl data")
+			}
+
+			pemInfo, err := DecodePEM(certData)
+			if err != nil {
+				return false, validator.ValidationErrors([]validator.FieldError{
+					router.MakeFieldError("DNSNameCitizen", "pem-decode-error")})
+			}
+
+			secretPath := strings.ReplaceAll(a.Config.VaultCitizenSSLPath, "{registry}", r.Name)
+			secretPath = strings.ReplaceAll(secretPath, "{host}", r.DNSNameCitizen)
+
+			if _, ok := secretData[secretPath]; !ok {
+				secretData[secretPath] = make(map[string]interface{})
+			}
+
+			secretData[secretPath][VaultKeyCACert] = pemInfo.CACert
+			secretData[secretPath][VaultKeyCert] = pemInfo.Cert
+			secretData[secretPath][VaultKeyPK] = pemInfo.PrivateKey
 		}
-
-		certData, err := ioutil.ReadAll(certFile)
-		if err != nil {
-			return false, errors.Wrap(err, "unable to read citizen ssl data")
-		}
-
-		pemInfo, err := DecodePEM(certData)
-		if err != nil {
-			return false, validator.ValidationErrors([]validator.FieldError{
-				router.MakeFieldError("DNSNameCitizen", "pem-decode-error")})
-		}
-
-		secretPath := strings.ReplaceAll(a.Config.VaultCitizenSSLPath, "{registry}", r.Name)
-		secretPath = strings.ReplaceAll(secretPath, "{host}", r.DNSNameCitizen)
-
-		if _, ok := secretData[secretPath]; !ok {
-			secretData[secretPath] = make(map[string]interface{})
-		}
-
-		secretData[secretPath][VaultKeyCACert] = pemInfo.CACert
-		secretData[secretPath][VaultKeyCert] = pemInfo.Cert
-		secretData[secretPath][VaultKeyPK] = pemInfo.PrivateKey
 	}
 
 	if valuesChanged {

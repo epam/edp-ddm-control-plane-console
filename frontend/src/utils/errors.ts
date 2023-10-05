@@ -10,6 +10,8 @@ export const getErrorMessage = (key: string): string => {
       return 'Вкажіть ліміт мінімум в одному полі';
     case 'registryNameAlreadyExists':
       return 'Реєстр з такою назвою вже існує';
+    case 'invalidFileType':
+      return 'Невірний тип файлу';
     default:
       return 'Перевірте формат поля';
   }

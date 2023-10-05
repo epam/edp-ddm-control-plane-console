@@ -168,7 +168,14 @@ export default defineComponent({
                     />
                 </div>
                 <div class="wizard-tab" v-show="pageRoot.$data.wizard.activeTab == 'dns'">
-                    <RegistryDns ref="dnsTab" />
+                    <RegistryDns
+                      ref="dnsTab"
+                      :dns-manual="templateVariables.dnsManual"
+                      :keycloak-hostname="templateVariables.keycloakHostname"
+                      :keycloak-hostnames="templateVariables.keycloakHostnames"
+                      :keycloak-custom-host="templateVariables.keycloakCustomHost"
+                      :portals="templateVariables.registryValues?.portals"
+                    />
                 </div>
                 <div class="wizard-tab" v-show="pageRoot.$data.wizard.activeTab == 'cidr'">
                     <RegistryCidr ref="cidrTab" />

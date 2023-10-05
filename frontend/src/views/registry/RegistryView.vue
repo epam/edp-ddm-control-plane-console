@@ -667,21 +667,15 @@ export default defineComponent({
             this.externalSystem.startValidation = true;
             this.externalSystem.urlValidationFailed = false;
 
-            if (!this.externalSystem.registryName) {
+            if (!this.externalSystem.registryName || !this.externalSystem.data.url) {
                 e.preventDefault();
                 return;
             }
 
             // eslint-disable-next-line no-prototype-builtins
-            if (this.externalSystem.data.url.hasOwnProperty('url') && this.externalSystem.data.url !== '' && !this.isURL(this.externalSystem.data.url)) {
+            if (!this.isURL(this.externalSystem.data.url)) {
                 e.preventDefault();
                 this.externalSystem.urlValidationFailed = true;
-                return;
-            }
-
-            // eslint-disable-next-line no-prototype-builtins
-            if (this.externalSystem.data.url.hasOwnProperty('url') && this.externalSystem.data.url === "") {
-                e.preventDefault();
                 return;
             }
 

@@ -1,6 +1,5 @@
 /* eslint-disable no-prototype-builtins */
 import { defineComponent } from 'vue';
-import axios from 'axios';
 import $ from 'jquery';
 
 export default defineComponent({
@@ -9,14 +8,10 @@ export default defineComponent({
     'decodeResourcesEnvVars',
     'wizardEditSubmit',
     'wizardNext',
-    'dnsPreloadDataFromValues',
     'wizardPrev',
     'selectWizardTab',
     'wizardTabChanged',
     'wizardEmptyValidation',
-    'wizardGeneralValidation',
-    'wizardDNSValidation',
-    'wizardCheckPEMFiles',
     'checkObjectFieldsEmpty',
     'wizardAdministratorsValidation',
     'wizardTemplateValidation',
@@ -27,7 +22,6 @@ export default defineComponent({
     'removeResourceCat',
     'encodeRegistryResources',
     'registryFormSubmit',
-    'prepareDNSConfig',
     'loadAdmins',
     'showAdminForm',
     'hideAdminForm',
@@ -71,7 +65,6 @@ export default defineComponent({
 
     if (this.templateVariables.registryValues) {
       this.registryValues = this.templateVariables.registryValues;
-      this.dnsPreloadDataFromValues();
     }
     if (childRefs.hasOwnProperty("registryUpdate")) {
       this.wizard.tabs.update.visible = true;
@@ -152,22 +145,15 @@ export default defineComponent({
           },
           resources: {
             title: "Ресурси реєстру",
-            visible: true, validatorRef: 'resourcesTab',
+            visible: true, 
+            validatorRef: 'resourcesTab',
             disabled: true
           },
           dns: {
             title: "DNS",
             disabled: true,
-            validated: false,
-            data: { officer: "", citizen: "", },
-            beginValidation: false,
-            formatError: { officer: false, citizen: false, },
-            requiredError: { officer: false, citizen: false, },
-            typeError: { officer: false, citizen: false, },
-            editVisible: { officer: false, citizen: false },
-            validator: this.wizardDNSValidation,
             visible: true,
-            preloadValues: {}
+            validatorRef: 'dnsTab',
           },
           cidr: {
             title: "Обмеження доступу",
@@ -273,17 +259,6 @@ export default defineComponent({
         }
       }
     },
-    dnsPreloadDataFromValues() {
-      if (this.registryValues && this.registryValues.hasOwnProperty("portals")) {
-        for (const p in this.registryValues.portals) {
-          if (this.registryValues.portals[p].hasOwnProperty("customDns")) {
-            this.wizard.tabs.dns.editVisible[p] = this.registryValues.portals[p].customDns.enabled;
-            this.wizard.tabs.dns.data[p] = this.registryValues.portals[p].customDns.host;
-            this.wizard.tabs.dns.preloadValues[p] = this.registryValues.portals[p].customDns.host;
-          }
-        }
-      }
-    },
     wizardPrev() {
       const tabKeys = Object.keys(this.wizard.tabs);
       for (let i = 0; i < tabKeys.length; i++) {
@@ -329,106 +304,6 @@ export default defineComponent({
         resolve();
       });
     },
-    wizardGeneralValidation(tab: any) {
-      return new Promise < void  > ((resolve) => {
-        tab.requiredError = false;
-        tab.formatError = false;
-        tab.existsError = false;
-        tab.validated = false;
-        if (tab.registryName === "") {
-          tab.requiredError = true;
-          return;
-        }
-        if (tab.registryName.length < 3) {
-          tab.formatError = true;
-          return;
-        }
-        if (!/^[a-z0-9]([-a-z0-9]*[a-z0-9])?([a-z0-9]([-a-z0-9]*[a-z0-9])?)*$/.test(tab.registryName)) {
-          tab.formatError = true;
-          return;
-        }
-        if (this.wizard.registryAction === "edit") {
-          tab.validated = true;
-          resolve();
-          return;
-        }
-        axios.get(`/admin/registry/check/${tab.registryName}`)
-          .then(function () {
-            tab.existsError = true;
-          })
-          .catch(function () {
-            tab.validated = true;
-            resolve();
-          });
-      });
-    },
-    wizardDNSValidation(tab: any) {
-      const childRefs = this.getChildrenRefs();
-      return new Promise < void  > ((resolve) => {
-        tab.beginValidation = true;
-        tab.validated = false;
-        let validationFailed = false;
-        const filesToCheck = [];
-        for (const k in this.wizard.tabs.dns.data) {
-          this.wizard.tabs.dns.formatError[k] = false;
-          this.wizard.tabs.dns.requiredError[k] = false;
-          this.wizard.tabs.dns.typeError[k] = false;
-          if (!this.wizard.tabs.dns.editVisible[k]) {
-            continue;
-          }
-          const fileInput = childRefs[`${k}SSL`];
-          if (this.wizard.tabs.dns.data[k] !== "") {
-            if (!/^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\.)+([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9-]*[A-Za-z0-9])$/.test(this.wizard.tabs.dns.data[k])) {
-              this.wizard.tabs.dns.formatError[k] = true;
-              validationFailed = true;
-            }
-            if (fileInput.files.length === 0 &&
-              (!this.wizard.tabs.dns.preloadValues.hasOwnProperty(k) || this.wizard.tabs.dns.preloadValues[k] !== this.wizard.tabs.dns.data[k])) {
-              this.wizard.tabs.dns.requiredError[k] = true;
-              validationFailed = true;
-            }
-            else if (fileInput.files.length > 0) {
-              filesToCheck.push({ name: k, file: fileInput.files[0] });
-            }
-          }
-          else if (fileInput.files.length > 0) {
-            this.wizard.tabs.dns.formatError[k] = true;
-            validationFailed = true;
-          }
-        }
-        if (validationFailed) {
-          return;
-        }
-        if (filesToCheck.length > 0) {
-          this.wizardCheckPEMFiles(filesToCheck, resolve, tab);
-          return;
-        }
-        tab.validated = true;
-        tab.beginValidation = false;
-        resolve();
-      });
-    },
-    wizardCheckPEMFiles(filesToCheck: Array<any>, resolve: () => void, tab: any) {
-      if (filesToCheck.length === 0) {
-        tab.validated = true;
-        tab.beginValidation = false;
-        resolve();
-        return;
-      }
-      const f = filesToCheck.pop();
-      const formData = new FormData();
-      formData.append("file", f?.file || '');
-
-      axios.post("/admin/registry/check-pem", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data"
-        }
-      }).then(() => {
-        this.wizardCheckPEMFiles(filesToCheck, resolve, tab);
-      }).catch(() => {
-        this.wizard.tabs.dns.typeError[f.name] = true;
-      });
-    },
     wizardAdministratorsValidation(tab: any) {
       const admins = this.admins;
       return new Promise < void  > ((resolve) => {
@@ -466,20 +341,8 @@ export default defineComponent({
         e.preventDefault();
         return;
       }
-      this.prepareDNSConfig();
       this.mailServerOpts = JSON.stringify(this.externalSMTPOpts);
       this.registryFormSubmitted = true;
-    },
-    prepareDNSConfig() {
-      const childRefs = this.getChildrenRefs();
-      for (const k in this.wizard.tabs.dns.data) {
-        const fileInput = childRefs[`${k}SSL`];
-        if (this.wizard.tabs.dns.editVisible[k] &&
-          this.wizard.tabs.dns.data[k] === this.wizard.tabs.dns.preloadValues[k] &&
-          fileInput.files.length === 0) {
-          this.wizard.tabs.dns.data[k] = "";
-        }
-      }
     },
     loadAdmins(admins: string) {
       if (!this.adminsLoaded) {
