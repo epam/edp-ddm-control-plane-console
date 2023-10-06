@@ -141,7 +141,10 @@ export default defineComponent({
           resources: {
             title: "Ресурси реєстру", visible: true, validatorRef: 'resourcesTab',
           },
-          dns: { title: "DNS", validated: false, data: { officer: "", citizen: "", }, beginValidation: false, formatError: { officer: false, citizen: false, }, requiredError: { officer: false, citizen: false, }, typeError: { officer: false, citizen: false, }, editVisible: { officer: false, citizen: false }, validator: this.wizardDNSValidation, visible: true, preloadValues: {} },
+          dns: { title: "DNS", validated: false, data: { officer: "", citizen: "", }, beginValidation: false,
+            formatError: { officer: false, citizen: false, },
+            requiredError: { officer: false, citizen: false, }, typeError: { officer: false, citizen: false, },
+            editVisible: { officer: false, citizen: false }, validator: this.wizardDNSValidation, visible: true, preloadValues: {} },
           cidr: { title: "Обмеження доступу", validated: true, visible: true, },
           supplierAuthentication: {
             title: "Автентифікація надавачів послуг",
@@ -174,6 +177,9 @@ export default defineComponent({
     } as any;
   },
   methods: {
+    goBack() {
+      window.history.back();
+    },
     getChildrenRefs() {
       const wizardRefs = this.$refs.wizard?.$refs || {};
       return {
@@ -197,6 +203,7 @@ export default defineComponent({
         this.disabled = true;
         this.registryFormSubmit(event);
         this.$nextTick(() => {
+          window.localStorage.setItem("mr-scroll", "true");
           childRefs.registryWizardForm.submit();
         });
       }).catch(() => {});
@@ -316,6 +323,9 @@ export default defineComponent({
           this.wizard.tabs.dns.formatError[k] = false;
           this.wizard.tabs.dns.requiredError[k] = false;
           this.wizard.tabs.dns.typeError[k] = false;
+          if (!this.wizard.tabs.dns.editVisible[k]) {
+            continue;
+          }
           const fileInput = childRefs[`${k}SSL`];
           if (this.wizard.tabs.dns.data[k] !== "") {
             if (!/^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\.)+([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9-]*[A-Za-z0-9])$/.test(this.wizard.tabs.dns.data[k])) {

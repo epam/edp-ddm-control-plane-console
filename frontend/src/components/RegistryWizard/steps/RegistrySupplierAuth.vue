@@ -12,6 +12,7 @@ interface FormValues {
   widgetHeight: number,
   clientId: string,
   secret: string,
+  individualAccessEnabled: boolean,
 }
 interface RegistryRecipientAuthProps {
   keycloakSettings: {
@@ -38,6 +39,9 @@ interface RegistryRecipientAuthProps {
   signWidgetSettings: {
     url: string
   },
+  officerPortalSettings: {
+    individualAccessEnabled: boolean,
+  },
 }
 
 const props = defineProps<RegistryRecipientAuthProps>();
@@ -48,6 +52,7 @@ const defaultValues = {
   widgetHeight: 720,
   clientId: "",
   secret: "",
+  individualAccessEnabled: false,
 };
 
 const validationSchema = Yup.object<FormValues>({
@@ -80,6 +85,7 @@ const { errors, validate, setFieldValue } = useForm<FormValues>({
     widgetHeight: props.keycloakSettings?.authFlows?.officerAuthFlow?.widgetHeight ?? defaultValues.widgetHeight,
     clientId: props.keycloakSettings?.identityProviders.idGovUa.clientId || defaultValues.clientId,
     secret: defaultValues.secret,
+    individualAccessEnabled: props.officerPortalSettings?.individualAccessEnabled || defaultValues.individualAccessEnabled
   }
 });
 
@@ -88,6 +94,7 @@ const { value: url } = useField('url');
 const { value: widgetHeight } = useField('widgetHeight');
 const { value: clientId } = useField('clientId');
 const { value: secret } = useField('secret');
+const { value: individualAccessEnabled } = useField('individualAccessEnabled');
 
 function validator() {
   return new Promise((resolve) => {
@@ -129,6 +136,16 @@ function handleChangeAuthType() {
 
 <template>
   <Typography variant="h5" upper-case class="heading">Автентифікація надавачів послуг</Typography>
+  <div>
+    <Typography variant="h5" upper-case class="subheading">Управління доступом</Typography>
+    <Typography variant="bodyText" class="mb16">Налаштування доступу користувачам до Кабінету користувача з використанням КЕП фізичної особи.</Typography>
+    <div class="toggle-switch backup-switch">
+      <input v-model="individualAccessEnabled" class="switch-input"
+            type="checkbox" id="rec-individual-access-enabled" name="rec-individual-access-enabled" />
+      <label for="rec-individual-access-enabled">Toggle</label>
+      <span>Дозволити доступ з КЕП фізичної особи</span>
+    </div>
+  </div>
   <Typography variant="bodyText" class="mb16">
     Є можливість використовувати власний віджет автентифікації або налаштувати інтеграцію з id.gov.ua.
   </Typography>
@@ -199,10 +216,11 @@ function handleChangeAuthType() {
   .rc-self-registration {
     margin-top: 32px;
   }
+
   .mb16 {
     margin-bottom: 16px;
   }
-  
+
   .heading {
     margin-bottom: 24px;
   }

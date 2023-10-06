@@ -1028,7 +1028,7 @@ let app = Vue.createApp({
             e.preventDefault();
             let cidrVal = String(this.editCIDR).toLowerCase();
             if (cidrVal !== '0.0.0.0/0' && !cidrVal.
-            match(/^([01]?\d\d?|2[0-4]\d|25[0-5])(?:\.(?:[01]?\d\d?|2[0-4]\d|25[0-5])){3}(?:\/[0-2]\d|\/3[0-2])?$/)) {
+            match(/^([01]?\d\d?|2[0-4]\d|25[0-5])(?:\.(?:[01]?\d\d?|2[0-4]\d|25[0-5])){3}\/(?:[0-9]|[0-2]\d|3[0-2])$/)) {
                 this.cidrFormatError = true;
                 return;
             }

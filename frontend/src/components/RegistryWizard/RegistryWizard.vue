@@ -156,8 +156,9 @@ export default defineComponent({
                 </div>
                 <div class="wizard-tab" v-show="pageRoot.$data.wizard.activeTab == 'supplierAuthentication'">
                     <RegistrySupplierAuth
-                        :keycloak-settings="templateVariables.registryValues?.keycloak" 
+                        :keycloak-settings="templateVariables.registryValues?.keycloak"
                         :sign-widget-settings="templateVariables.registryValues?.signWidget"
+                        :officer-portal-settings="templateVariables.registryValues?.portals?.officer"
                         ref="supplierAuthTab"
                     />
                 </div>
