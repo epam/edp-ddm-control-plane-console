@@ -216,8 +216,8 @@ type Codebase struct {
 
 	Spec     CodebaseSpec     `json:"spec,omitempty"`
 	Status   CodebaseStatus   `json:"status,omitempty"`
-	Branches []CodebaseBranch `json:"-"`
-	Version  *version.Version `json:"-"`
+	Branches []CodebaseBranch `json:"branches,omitempty"`
+	Version  *version.Version `json:"version,omitempty"`
 }
 
 func (in *Codebase) Admins() string {

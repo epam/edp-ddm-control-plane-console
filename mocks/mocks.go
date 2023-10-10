@@ -40,6 +40,13 @@ func InitServices(cnf *config.Settings) *config.Services {
 		},
 		FullName: "mock",
 	}, nil)
+	openShift.On("GetInfrastructureCluster", mock.Anything).Return(&openshift.ClusterInfrastructure{
+		Status: openshift.ClusterStatus{
+			PlatformStatus: openshift.Status{
+				Type: "AWS",
+			},
+		},
+	})
 
 	pms := mockPermissions.ServiceInterface{}
 	pms.On("DeleteTokenContext", mock.Anything).Return(nil)

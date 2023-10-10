@@ -1670,9 +1670,10 @@ export default defineComponent({
                               <img :src="`data:image/svg+xml;base64,${$ec.Icon}`" :alt="`${$ec.Type} logo`"
                                   class="item-image" />
                               <div class="item-content">
-                                  <a target="_blank" :href="$ec.Url">
+                                  <a target="_blank" :href="$ec.Url" :class="{ disabled: $ec.Visible == 'false' }">
                                       {{ $ec.Title }}
-                                      <img src="@/assets/img/action-link.png" :alt="`${$ec.Type} link`">
+                                      <span v-if="$ec.Visible == 'false'">(вимкнено)</span>
+                                      <img v-else src="@/assets/img/action-link.png" :alt="`${$ec.Type} link`">
                                   </a>
                                   <div class="description">{{ $ec.Description }}</div>
                               </div>

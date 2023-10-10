@@ -12477,6 +12477,14 @@ p.error {
     background: #E6F3FA;
 }
 
+.wizard-contents li.active a {
+  color: #008ACE;
+}
+
+.wizard-contents li.disabled a {
+  color: rgba(0, 0, 0, 0.25);
+}
+
 .wizard-body {
     border-left: 1px solid #000000;
     /*padding-top: 16px;*/

@@ -63,7 +63,6 @@ export default defineComponent({
       if (childRefs.wizardAction.value === "edit") {
         const registryData = JSON.parse(childRefs.registryData.value);
         this.wizard.tabs.general.registryName = registryData.name;
-        this.wizard.tabs.template.visible = false;
         this.wizard.tabs.confirmation.visible = false;
         this.adminsChanged = false;
         this.cidrChanged = false;
@@ -113,65 +112,115 @@ export default defineComponent({
           general: {
             title: "Загальні",
             validated: false,
-            registryName: "",
-            requiredError: false,
-            existsError: false,
-            formatError: false,
-            validator: this.wizardGeneralValidation,
             visible: true,
+            validatorRef: 'generalTab',
+            disabled: false,
           },
-          administrators: { title: "Адміністратори", validated: false, requiredError: false,
-            validator: this.wizardAdministratorsValidation, visible: true, },
-          template: {
-            title: "Шаблон реєстру",
-            validatorRef: 'templateTab',
-            visible: true
+          administrators: {
+            title: "Адміністратори",
+            validated: false,
+             requiredError: false,
+            validator: this.wizardAdministratorsValidation,
+            visible: true,
+            disabled: true
           },
-          mail: { title: "Поштовий сервер", validated: false, beginValidation: false, validator: this.wizardMailValidation, visible: true, },
+          mail: {
+            title: "Поштовий сервер",
+            validated: false,
+            beginValidation: false,
+            validator: this.wizardMailValidation,
+            visible: true,
+            disabled: true
+          },
           key: {
             title: "Дані про ключ",
             visible: true,
             validatorRef: 'keyDataTab',
+            disabled: true
           },
           keyVerification: {
             title: 'Дані для перевірки підписів',
             visible: true,
             validatorRef: 'keyVerificationTab',
+            disabled: true
+          },
+          parametersVirtualMachines: {
+            title: "Параметри віртуальних машин",
+            visible: true,
+            validatorRef: 'parametersVirtualMachinesTab',
+            disabled: true
           },
           resources: {
-            title: "Ресурси реєстру", visible: true, validatorRef: 'resourcesTab',
+            title: "Ресурси реєстру",
+            visible: true, validatorRef: 'resourcesTab',
+            disabled: true
           },
-          dns: { title: "DNS", validated: false, data: { officer: "", citizen: "", }, beginValidation: false,
+          dns: {
+            title: "DNS",
+            disabled: true,
+            validated: false,
+            data: { officer: "", citizen: "", },
+            beginValidation: false,
             formatError: { officer: false, citizen: false, },
-            requiredError: { officer: false, citizen: false, }, typeError: { officer: false, citizen: false, },
-            editVisible: { officer: false, citizen: false }, validator: this.wizardDNSValidation, visible: true, preloadValues: {} },
-          cidr: { title: "Обмеження доступу", validated: true, visible: true, },
+            requiredError: { officer: false, citizen: false, },
+            typeError: { officer: false, citizen: false, },
+            editVisible: { officer: false, citizen: false },
+            validator: this.wizardDNSValidation,
+            visible: true,
+            preloadValues: {}
+          },
+          cidr: {
+            title: "Обмеження доступу",
+            validated: true,
+            visible: true,
+            disabled: true
+          },
           supplierAuthentication: {
-            title: "Автентифікація надавачів послуг",
+            title: "Кабінет надавача послуг",
             validatorRef: 'supplierAuthTab',
             visible: true,
+            disabled: true
           },
           recipientAuthentication: {
-            title: 'Автентифікація отримувачів послуг',
+            title: 'Кабінет отримувача послуг',
             validatorRef: 'recipientAuthTab',
             visible: true,
+            disabled: true
+          },
+          adminAuthentication: {
+            title: 'Кабінет адміністратора регламенту',
+            visible: true,
+            disabled: true
+          },
+          geoDataSettings: {
+            title: 'Підсистема управління геоданими',
+            visible: true,
+            disabled: true
           },
           digitalDocuments: {
             title: "Цифрові документи",
             visible: true,
             validatorRef: 'digitalDocumentsTab',
+            disabled: true
           },
           backupSchedule: {
             title: "Резервне копіювання",
             validatorRef: 'backupScheduleTab',
             visible: true,
+            disabled: true
           },
           trembita: {
             title: "ШБО Трембіта",
             validatorRef: 'trembitaTab',
             visible: true,
+            disabled: true
           },
-          confirmation: { title: "Підтвердження", validated: true, visible: true, }
+          confirmation: {
+            title: "Підтвердження",
+            validated: true,
+            visible: true,
+            disabled: true
+          }
         },
       },
     } as any;
@@ -193,6 +242,8 @@ export default defineComponent({
         ...(wizardRefs.recipientAuthTab?.$refs || {}),
         ...(wizardRefs.backupScheduleTab?.$refs || {}),
         ...(wizardRefs.digitalDocumentsTab?.$refs || {}),
+        ...(wizardRefs.generalTab?.$refs || {}),
+        ...(wizardRefs.parametersVirtualMachinesTab?.$refs || {}),
       };
     },
     wizardEditSubmit(event: any) {
@@ -216,6 +267,7 @@ export default defineComponent({
           const wizard = this.wizard;
           this.callValidator(tab).then(function () {
             wizard.activeTab = tabKeys[i + 1];
+            wizard.tabs[wizard.activeTab].disabled = false;
           });
           break;
         }
@@ -236,11 +288,8 @@ export default defineComponent({
       const tabKeys = Object.keys(this.wizard.tabs);
       for (let i = 0; i < tabKeys.length; i++) {
         if (tabKeys[i] === this.wizard.activeTab) {
-          const tab = this.wizard.tabs[tabKeys[i]];
-          const wizard = this.wizard;
-          this.callValidator(tab).then(function () {
-            wizard.activeTab = tabKeys[i - 1];
-          });
+          this.wizard.activeTab = tabKeys[i - 1];
+          this.wizard.tabs[tabKeys[i]].disabled = true;
           break;
         }
       }
@@ -256,25 +305,26 @@ export default defineComponent({
 
       return this.wizardEmptyValidation(tab);
     },
-    selectWizardTab(tabName: string, e: any) {
-      e.preventDefault();
-      const tab = this.wizard.tabs[this.wizard.activeTab];
-      const wizard = this.wizard;
-      this.callValidator(tab).then(function () {
-        if (wizard.registryAction === "create") {
-          for (const k in wizard.tabs) {
-            if (!wizard.tabs[k].validated) {
-              return;
-            }
-            if (k === tabName) {
-              break;
-            }
-          }
+    selectWizardTab(tabName: string, action: string) {
+      if (action === 'edit') {
+        const tab = this.wizard.tabs[this.wizard.activeTab];
+        this.callValidator(tab).then(() => {
+          this.wizard.activeTab = tabName;
+        });
+        return;
+      }
+      let disabled = false;
+      this.wizard.activeTab = tabName;
+      for (const key in this.wizard.tabs) {
+        if (key === tabName) {
+          disabled = true;
+          this.wizard.tabs[key].disabled = false;
+        } else {
+          this.wizard.tabs[key].disabled = disabled;
         }
-        wizard.activeTab = tabName;
-      });
+      }
     },
-    wizardEmptyValidation(tab: string) {
+    wizardEmptyValidation() {
       return new Promise < void  > ((resolve) => {
         resolve();
       });
@@ -303,10 +353,10 @@ export default defineComponent({
           return;
         }
         axios.get(`/admin/registry/check/${tab.registryName}`)
-          .then(function (response) {
+          .then(function () {
             tab.existsError = true;
           })
-          .catch(function (error) {
+          .catch(function () {
             tab.validated = true;
             resolve();
           });
@@ -373,9 +423,9 @@ export default defineComponent({
         headers: {
           "Content-Type": "multipart/form-data"
         }
-      }).then((rsp) => {
+      }).then(() => {
         this.wizardCheckPEMFiles(filesToCheck, resolve, tab);
-      }).catch((error) => {
+      }).catch(() => {
         this.wizard.tabs.dns.typeError[f.name] = true;
       });
     },

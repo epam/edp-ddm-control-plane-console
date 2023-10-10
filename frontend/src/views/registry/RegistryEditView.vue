@@ -20,7 +20,6 @@ export default defineComponent({
             </a>
         </div>
         <h1>Редагувати реєстр "{{templateVariables.registry.metadata.name}}"</h1>
-        <div class="registry-description">Можлива зміна опису реєстру. Змінити назву неможливо.</div>
 
         <RegistryWizard ref="wizard" :form-submitted="registryFormSubmitted"/>
 

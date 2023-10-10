@@ -8,6 +8,8 @@ export const getErrorMessage = (key: string): string => {
       return 'Неунікальне значення';
     case 'rateLimitError':
       return 'Вкажіть ліміт мінімум в одному полі';
+    case 'registryNameAlreadyExists':
+      return 'Реєстр з такою назвою вже існує';
     default:
       return 'Перевірте формат поля';
   }
