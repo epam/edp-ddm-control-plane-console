@@ -164,8 +164,17 @@ type SignWidget struct {
 	CopyFromAuthWidget bool   `yaml:"copyFromAuthWidget" json:"copyFromAuthWidget"`
 }
 
+type ExternalEmailSettings struct {
+	Type      string `yaml:"type" json:"type"`
+	Host      string `yaml:"host" json:"host"`
+	Port      int64  `yaml:"port" json:"port"`
+	Address   string `yaml:"address" json:"address"`
+	VaultPath string `yaml:"vaultPath" json:"vaultPath"`
+	VaultKey  string `yaml:"vaultKey" json:"vaultKey"`
+}
+
 type Notifications struct {
-	Email map[string]interface{} `yaml:"email" json:"email"`
+	Email ExternalEmailSettings `yaml:"email" json:"email"`
 }
 
 type ExternalSystem struct {

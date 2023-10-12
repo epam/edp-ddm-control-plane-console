@@ -132,6 +132,7 @@ export interface RegistryWizardTemplateVariables {
         idGovUa: {
           clientId: string
           url: string
+          secretKey: string
         }
       }
       realms: {
