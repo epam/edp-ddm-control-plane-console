@@ -20,7 +20,6 @@ export default defineComponent({
             </a>
         </div>
         <h1>Створити новий реєстр</h1>
-        <div class="registry-description">Щоб створити реєстр, вкажіть його назву та додайте опис.</div>
 
         <RegistryWizard ref="wizard" :form-submitted="registryFormSubmitted" />
 

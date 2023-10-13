@@ -86,14 +86,27 @@ func (a *App) editRegistryGet(ctx *gin.Context) (response router.Response, retEr
 		return nil, fmt.Errorf("unable to get dns manual, %w", err)
 	}
 
+	infrastructureCluster, err := a.Services.OpenShift.GetInfrastructureCluster(userCtx)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get infrastructure cluster, %w", err)
+	}
+
+	valuesFromDefaultBranch, err := a.GetValuesFromBranch(a.Config.RegistryTemplateName, registryVersion.Original())
+	if err != nil {
+		return nil, fmt.Errorf("unable to get template content, %w", err)
+	}
+
 	responseParams := gin.H{
-		"dnsManual":       dnsManual,
-		"registry":        reg,
-		"page":            "registry",
-		"updateBranches":  branches,
-		"hasUpdate":       hasUpdate,
-		"action":          "edit",
-		"registryVersion": MajorVersion(registryVersion.Core().Original()),
+		"dnsManual":             dnsManual,
+		"registry":              reg,
+		"page":                  "registry",
+		"updateBranches":        branches,
+		"hasUpdate":             hasUpdate,
+		"action":                "edit",
+		"registryVersion":       MajorVersion(registryVersion.Core().Original()),
+		"platformStatusType":    infrastructureCluster.Status.PlatformStatus.Type,
+		"isPlatformAdmin":       ctx.GetBool(router.CanViewClusterManagementSessionKey),
+		"defaultRegistryValues": valuesFromDefaultBranch,
 	}
 
 	values, err := GetValuesFromGit(registryName, MasterBranch, a.Gerrit)
@@ -350,10 +363,9 @@ func (a *App) editRegistryPost(ctx *gin.Context) (response router.Response, retE
 	}
 
 	r := registry{
-		Name:                registryName,
-		RegistryGitBranch:   cb.Spec.DefaultBranch,
-		RegistryGitTemplate: cb.Spec.Repository.Url,
-		Scenario:            ScenarioKeyNotRequired,
+		Name:              registryName,
+		RegistryGitBranch: cb.Spec.DefaultBranch,
+		Scenario:          ScenarioKeyNotRequired,
 	}
 
 	if err := ctx.ShouldBind(&r); err != nil {

@@ -16,7 +16,7 @@ const (
 	idGovUASecretPath         = "officer-id-gov-ua-client-info"
 	idGovUASecretClientID     = "clientId"
 	idGovUASecretClientSecret = "clientSecret"
-	emptyClientSecret         = "*****"
+	emptyClientSecret         = ""
 )
 
 func (a *App) prepareSupplierAuthConfig(ctx *gin.Context, r *registry, values *Values,
