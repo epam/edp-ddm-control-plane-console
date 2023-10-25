@@ -27,6 +27,7 @@ type Values struct {
 	DigitalDocuments DigitalDocuments          `yaml:"digitalDocuments" json:"digitalDocuments"`
 	PublicApi        []PublicAPI               `yaml:"publicApi" json:"publicApi"`
 	Griada           Griada                    `yaml:"griada" json:"griada"`
+	DigitalSignature DigitalSignature          `yaml:"digital-signature" json:"digital-signature"`
 }
 
 type Griada struct {
@@ -80,6 +81,7 @@ type OfficerPortalSettings struct {
 	CustomDNS               CustomDNS  `yaml:"customDns" json:"customDns"`
 	SignWidget              SignWidget `yaml:"signWidget" json:"signWidget"`
 	IndividualAccessEnabled bool       `yaml:"individualAccessEnabled" json:"individualAccessEnabled"`
+	EnableSingleIdentity    bool       `yaml:"singleIdentityEnabled" json:"singleIdentityEnabled"`
 }
 type CitizenPortalSettings struct {
 	CustomDNS  CustomDNS  `yaml:"customDns" json:"customDns"`
@@ -121,6 +123,7 @@ type KeycloakIdentityProvidersIDGovUA struct {
 	URL       string `yaml:"url" json:"url"`
 	SecretKey string `yaml:"secretKey" json:"secretKey"`
 	ClientID  string `yaml:"-" json:"clientId"`
+	KeyName   string `yaml:"keyName" json:"keyName"`
 }
 
 type KeycloakAuthFlows struct {
@@ -140,6 +143,7 @@ type KeycloakRegistryIdGovUaSettings struct {
 	Url          string `yaml:"url" json:"url,omitempty"`
 	ClientSecret string `yaml:"clientSecret" json:"clientSecret,omitempty"`
 	ClientId     string `yaml:"clientId" json:"clientId,omitempty"`
+	KeyName      string `yaml:"keyName" json:"keyName"`
 }
 
 type KeycloakAuthFlowsCitizenAuthFlow struct {
@@ -213,6 +217,8 @@ type Global struct {
 	ComputeResources ComputeResources       `yaml:"computeResources" json:"computeResources"`
 	ExcludePortals   []string               `yaml:"excludePortals" json:"excludePortals"`
 	GeoServerEnabled bool                   `yaml:"geoServerEnabled" json:"geoServerEnabled"`
+	Language         string                 `yaml:"language" json:"language"`
+	Region           string                 `yaml:"region" json:"region"`
 }
 
 type ComputeResources struct {
